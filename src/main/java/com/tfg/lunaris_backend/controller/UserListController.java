@@ -13,11 +13,6 @@ public class UserListController {
     @Autowired
     private UserListRepository userlistRepository;
 
-    @GetMapping("/")
-    public String home() {
-        return "Hola desde LunarisBackend!";
-    }
-
     @GetMapping("/user_list")
     public List<UserList> getAllUsers() {
         return userlistRepository.findAll();

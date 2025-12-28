@@ -13,11 +13,6 @@ public class SagaController {
     @Autowired
     private SagaRepository sagaRepository;
 
-    @GetMapping("/")
-    public String home() {
-        return "Hola desde LunarisBackend!";
-    }
-
     @GetMapping("/sagas")
     public List<Saga> getAllSagas() {
         return sagaRepository.findAll();

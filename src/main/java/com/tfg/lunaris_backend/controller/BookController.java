@@ -13,11 +13,6 @@ public class BookController {
     @Autowired
     private BookRepository bookRepository;
 
-    @GetMapping("/")
-    public String home() {
-        return "Hola desde LunarisBackend!";
-    }
-
     @GetMapping("/books")
     public List<Book> getAllBooks() {
         return bookRepository.findAll();

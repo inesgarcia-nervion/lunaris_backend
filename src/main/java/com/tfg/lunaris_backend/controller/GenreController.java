@@ -13,11 +13,6 @@ public class GenreController {
     @Autowired
     private GenreRepository genreRepository;
 
-    @GetMapping("/")
-    public String home() {
-        return "Hola desde LunarisBackend!";
-    }
-
     @GetMapping("/genres")
     public List<Genre> getAllGenres() {
         return genreRepository.findAll();

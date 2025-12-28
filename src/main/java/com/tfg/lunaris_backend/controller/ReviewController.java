@@ -13,11 +13,6 @@ public class ReviewController {
     @Autowired
     private ReviewRepository reviewRepository;
 
-    @GetMapping("/")
-    public String home() {
-        return "Hola desde LunarisBackend!";
-    }
-
     @GetMapping("/reviews")
     public List<Review> getAllReviews() {
         return reviewRepository.findAll();

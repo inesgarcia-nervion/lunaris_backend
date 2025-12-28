@@ -13,11 +13,6 @@ public class AuthorController {
     @Autowired
     private AuthorRepository authorRepository;
 
-    @GetMapping("/")
-    public String home() {
-        return "Hola desde LunarisBackend!";
-    }
-
     @GetMapping("/authors")
     public List<Author> getAllAuthors() {
         return authorRepository.findAll();
