@@ -4,22 +4,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tfg.lunaris_backend.model.User;
-import com.tfg.lunaris_backend.repository.UserRepository;
+import com.tfg.lunaris_backend.model.Review;
+import com.tfg.lunaris_backend.repository.ReviewRepository;
 import java.util.List;
 
 @RestController
-public class UserController {
+public class ReviewController {
     @Autowired
-    private UserRepository userRepository;
+    private ReviewRepository reviewRepository;
 
     @GetMapping("/")
     public String home() {
         return "Hola desde LunarisBackend!";
     }
 
-    @GetMapping("/users")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    @GetMapping("/reviews")
+    public List<Review> getAllReviews() {
+        return reviewRepository.findAll();
     }
 }

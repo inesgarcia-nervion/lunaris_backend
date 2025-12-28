@@ -4,22 +4,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tfg.lunaris_backend.model.User;
-import com.tfg.lunaris_backend.repository.UserRepository;
+import com.tfg.lunaris_backend.model.Saga;
+import com.tfg.lunaris_backend.repository.SagaRepository;
 import java.util.List;
 
 @RestController
-public class UserController {
+public class SagaController {
     @Autowired
-    private UserRepository userRepository;
+    private SagaRepository sagaRepository;
 
     @GetMapping("/")
     public String home() {
         return "Hola desde LunarisBackend!";
     }
 
-    @GetMapping("/users")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    @GetMapping("/sagas")
+    public List<Saga> getAllSagas() {
+        return sagaRepository.findAll();
     }
 }
