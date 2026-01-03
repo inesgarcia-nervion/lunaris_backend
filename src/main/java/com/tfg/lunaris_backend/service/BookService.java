@@ -70,11 +70,11 @@ public class BookService {
         book.setCoverImage(openLibraryBook.getCoverUrl());
         book.setApiId(openLibraryBook.getKey());
 
-        // Descripción puede ser vacía inicialmente
-        book.setDescription("");
+        // Copiar descripción si está disponible
+        book.setDescription(openLibraryBook.getDescription() != null ? openLibraryBook.getDescription() : "");
 
-        // Score puede venir de ratings si están disponibles
-        book.setScore(0.0);
+        // Copiar puntuación si está disponible, sino usar 0.0
+        book.setScore(openLibraryBook.getRatingsAverage() != null ? openLibraryBook.getRatingsAverage() : 0.0);
 
         return bookRepository.save(book);
     }
