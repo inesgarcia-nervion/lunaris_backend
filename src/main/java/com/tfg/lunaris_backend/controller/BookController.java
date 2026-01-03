@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tfg.lunaris_backend.dto.OpenLibraryBookDto;
 import com.tfg.lunaris_backend.model.Book;
 import com.tfg.lunaris_backend.service.BookService;
 import java.util.List;
@@ -42,4 +43,11 @@ public class BookController {
     public void deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
     }
+
+    // Importar libro desde Open Library a la base de datos
+    @PostMapping("/books/import/openlibrary")
+    public Book importFromOpenLibrary(@RequestBody OpenLibraryBookDto openLibraryBook) {
+        return bookService.importFromOpenLibrary(openLibraryBook);
+    }
+
 }

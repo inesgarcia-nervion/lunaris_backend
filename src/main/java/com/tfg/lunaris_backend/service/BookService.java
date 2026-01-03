@@ -3,10 +3,12 @@ package com.tfg.lunaris_backend.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.tfg.lunaris_backend.dto.OpenLibraryBookDto;
 import com.tfg.lunaris_backend.exceptions.BookNotFoundException;
 import com.tfg.lunaris_backend.model.Book;
 import com.tfg.lunaris_backend.repository.BookRepository;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BookService {
@@ -47,5 +49,33 @@ public class BookService {
     // DELETE
     public void deleteBook(Long id) {
         bookRepository.deleteById(id);
+    }
+
+    // Importa un libro desde Open Library a la base de datos
+    public Book importFromOpenLibrary(OpenLibraryBookDto openLibraryBook) {
+        // Verificar si el libro ya existe por apiId
+        Optional<Book> existingBook = bookRepository.findAll().stream()
+                .filter(b -> b.getApiId() != null && b.getApiId().equals(openLibraryBook.getKey()))
+                .findFirst();
+
+        if (existingBook.isPresent()) {
+            return existingBook.get(); // Retornar el libro existente
+        }
+
+        // Crear nuevo libro
+        Book book = new Book();
+        book.setTitle(openLibraryBook.getTitle());
+        book.setAuthor(openLibraryBook.getFirstAuthor());
+        book.setReleaseYear(openLibraryBook.getFirstPublishYear());
+        book.setCoverImage(openLibraryBook.getCoverUrl());
+        book.setApiId(openLibraryBook.getKey());
+
+        // Descripción puede ser vacía inicialmente
+        book.setDescription("");
+
+        // Score puede venir de ratings si están disponibles
+        book.setScore(0.0);
+
+        return bookRepository.save(book);
     }
 }
