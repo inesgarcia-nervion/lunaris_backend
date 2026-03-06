@@ -1,4 +1,4 @@
-package com.tfg.lunaris_backend.security;
+package com.tfg.lunaris_backend.presentation.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

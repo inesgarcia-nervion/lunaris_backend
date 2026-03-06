@@ -5,7 +5,7 @@ import com.tfg.lunaris_backend.domain.dto.AuthResponse;
 import com.tfg.lunaris_backend.domain.dto.NewPasswordRequest;
 import com.tfg.lunaris_backend.domain.dto.PasswordResetRequest;
 import com.tfg.lunaris_backend.domain.service.PasswordResetService;
-import com.tfg.lunaris_backend.security.JwtUtils;
+import com.tfg.lunaris_backend.presentation.security.JwtUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

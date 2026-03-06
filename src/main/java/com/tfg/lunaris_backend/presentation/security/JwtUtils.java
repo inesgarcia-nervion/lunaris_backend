@@ -1,4 +1,4 @@
-package com.tfg.lunaris_backend.security;
+package com.tfg.lunaris_backend.presentation.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
