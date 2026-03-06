@@ -1,0 +1,78 @@
+package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.tfg.lunaris_backend.data.repository.UserRepository;
+import com.tfg.lunaris_backend.domain.model.User;
+import com.tfg.lunaris_backend.presentation.exceptions.UserNotFoundException;
+
+import java.util.List;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    // GET
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    // GET BY ID
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con id " + id));
+    }
+
+    // CREATE (POST)
+    public User createUser(User user) {
+        // encode password before saving
+        if (user.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        return userRepository.save(user);
+    }
+
+    // UPDATE
+    public User updateUser(Long id, User userDetails) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con id " + id));
+        if (userDetails.getUsername() != null && !userDetails.getUsername().isEmpty()) {
+            user.setUsername(userDetails.getUsername());
+        }
+        if (userDetails.getEmail() != null && !userDetails.getEmail().isEmpty()) {
+            user.setEmail(userDetails.getEmail());
+        }
+        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+        }
+        return userRepository.save(user);
+    }
+
+    // DELETE
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    // UPDATE by username
+    public User updateUserByUsername(String username, User userDetails) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con username " + username));
+        if (userDetails.getUsername() != null && !userDetails.getUsername().isEmpty()) {
+            user.setUsername(userDetails.getUsername());
+        }
+        if (userDetails.getEmail() != null && !userDetails.getEmail().isEmpty()) {
+            user.setEmail(userDetails.getEmail());
+        }
+        if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+        }
+        return userRepository.save(user);
+    }
+}
