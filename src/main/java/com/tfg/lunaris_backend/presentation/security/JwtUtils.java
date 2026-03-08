@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtUtils {
@@ -31,10 +32,15 @@ public class JwtUtils {
     }
 
     public String generateToken(String username) {
+        return generateToken(username, "USER");
+    }
+
+    public String generateToken(String username, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
         return Jwts.builder()
                 .setSubject(username)
+                .claim("roles", List.of(role))
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(key, SignatureAlgorithm.HS256)

@@ -5,6 +5,7 @@ import com.tfg.lunaris_backend.domain.dto.AuthResponse;
 import com.tfg.lunaris_backend.domain.dto.NewPasswordRequest;
 import com.tfg.lunaris_backend.domain.dto.PasswordResetRequest;
 import com.tfg.lunaris_backend.domain.service.PasswordResetService;
+import com.tfg.lunaris_backend.data.repository.UserRepository;
 import com.tfg.lunaris_backend.presentation.security.JwtUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class AuthController {
     private JwtUtils jwtUtils;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private PasswordResetService passwordResetService;
 
     @PostMapping("/login")
@@ -35,7 +39,11 @@ public class AuthController {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-            String token = jwtUtils.generateToken(request.getUsername());
+            String role = userRepository.findByUsername(request.getUsername())
+                    .map(u -> u.getRole() != null ? u.getRole() : "USER")
+                    .orElse("USER");
+
+            String token = jwtUtils.generateToken(request.getUsername(), role);
             return ResponseEntity.ok(new AuthResponse(token));
         } catch (AuthenticationException ex) {
             return ResponseEntity.status(401).body("Credenciales inválidas");

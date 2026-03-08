@@ -41,13 +41,15 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/users").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/").permitAll()
-                    .requestMatchers("/auth/**").permitAll()
-                    // Allow public access to OpenLibrary proxy endpoints so searches work without login
-                    .requestMatchers("/api/openlibrary/**").permitAll()
-                    .anyRequest().authenticated())
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        // Allow public access to OpenLibrary proxy endpoints so searches work without
+                        // login
+                        .requestMatchers("/api/openlibrary/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/books/search").permitAll()
+                        .anyRequest().authenticated())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(Customizer.withDefaults());
 

@@ -10,6 +10,7 @@ import com.tfg.lunaris_backend.presentation.exceptions.BookNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class BookService {
@@ -30,6 +31,9 @@ public class BookService {
 
     // CREATE (POST)
     public Book createBook(Book book) {
+        if (book.getApiId() == null || book.getApiId().isBlank()) {
+            book.setApiId("custom-" + UUID.randomUUID());
+        }
         return bookRepository.save(book);
     }
 
@@ -50,6 +54,11 @@ public class BookService {
     // DELETE
     public void deleteBook(Long id) {
         bookRepository.deleteById(id);
+    }
+
+    // SEARCH by title or author
+    public List<Book> searchBooks(String query) {
+        return bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(query, query);
     }
 
     // Importa un libro desde Open Library a la base de datos

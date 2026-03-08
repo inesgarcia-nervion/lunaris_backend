@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
@@ -43,6 +44,11 @@ public class BookController {
     @DeleteMapping("/books/{id}")
     public void deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
+    }
+
+    @GetMapping("/books/search")
+    public List<Book> searchBooks(@RequestParam("q") String query) {
+        return bookService.searchBooks(query);
     }
 
     // Importar libro desde Open Library a la base de datos
