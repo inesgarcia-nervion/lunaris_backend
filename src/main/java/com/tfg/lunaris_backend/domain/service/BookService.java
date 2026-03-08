@@ -4,10 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.tfg.lunaris_backend.data.repository.BookRepository;
+import com.tfg.lunaris_backend.data.repository.GenreRepository;
+import com.tfg.lunaris_backend.domain.dto.BookCreateRequest;
 import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
 import com.tfg.lunaris_backend.domain.model.Book;
+import com.tfg.lunaris_backend.domain.model.Genre;
 import com.tfg.lunaris_backend.presentation.exceptions.BookNotFoundException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +21,9 @@ public class BookService {
 
     @Autowired
     private BookRepository bookRepository;
+
+    @Autowired
+    private GenreRepository genreRepository;
 
     // GET
     public List<Book> getAllBooks() {
@@ -30,10 +37,26 @@ public class BookService {
     }
 
     // CREATE (POST)
-    public Book createBook(Book book) {
-        if (book.getApiId() == null || book.getApiId().isBlank()) {
-            book.setApiId("custom-" + UUID.randomUUID());
+    public Book createBook(BookCreateRequest request) {
+        Book book = new Book();
+        book.setTitle(request.getTitle());
+        book.setAuthor(request.getAuthor());
+        book.setDescription(request.getDescription());
+        book.setCoverImage(request.getCoverImage());
+        book.setReleaseYear(request.getReleaseYear());
+        book.setScore(request.getScore());
+        book.setApiId(request.getApiId() != null && !request.getApiId().isBlank()
+                ? request.getApiId()
+                : "custom-" + UUID.randomUUID());
+
+        if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
+            List<Genre> genres = new ArrayList<>();
+            for (Long genreId : request.getGenreIds()) {
+                genreRepository.findById(genreId).ifPresent(genres::add);
+            }
+            book.setGenres(genres);
         }
+
         return bookRepository.save(book);
     }
 

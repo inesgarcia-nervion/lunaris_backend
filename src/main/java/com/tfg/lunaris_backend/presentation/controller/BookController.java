@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tfg.lunaris_backend.domain.dto.BookCreateRequest;
 import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
 import com.tfg.lunaris_backend.domain.model.Book;
 import com.tfg.lunaris_backend.domain.service.BookService;
@@ -32,8 +33,8 @@ public class BookController {
     }
 
     @PostMapping("/books")
-    public Book createBook(@RequestBody Book book) {
-        return bookService.createBook(book);
+    public Book createBook(@RequestBody BookCreateRequest request) {
+        return bookService.createBook(request);
     }
 
     @PutMapping("/books/{id}")

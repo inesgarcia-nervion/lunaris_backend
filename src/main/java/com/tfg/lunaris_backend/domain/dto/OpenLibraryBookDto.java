@@ -42,6 +42,9 @@ public class OpenLibraryBookDto {
     @JsonProperty("ratings_average")
     private Double ratingsAverage;
 
+    @JsonProperty("subject")
+    private List<String> subject;
+
     public String getFirstAuthor() {
         return (authorNames != null && !authorNames.isEmpty()) ? authorNames.get(0) : null;
     }

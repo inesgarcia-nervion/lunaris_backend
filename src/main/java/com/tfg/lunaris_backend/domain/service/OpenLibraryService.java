@@ -42,7 +42,7 @@ public class OpenLibraryService {
                     .queryParam("limit", limit)
                     .queryParam("offset", offset)
                     .queryParam("fields",
-                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average")
+                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject")
                     .build()
                     .toUriString();
 
@@ -86,7 +86,7 @@ public class OpenLibraryService {
                     .queryParam("limit", limit)
                     .queryParam("offset", offset)
                     .queryParam("fields",
-                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average")
+                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject")
                     .build()
                     .toUriString();
 
@@ -121,7 +121,7 @@ public class OpenLibraryService {
                     .queryParam("limit", limit)
                     .queryParam("offset", offset)
                     .queryParam("fields",
-                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average")
+                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject")
                     .build()
                     .toUriString();
 
