@@ -26,9 +26,11 @@ public class GenreService {
                 .orElseThrow(() -> new GenreNotFoundException("Género no encontrado con id " + id));
     }
 
-    // CREATE (POST)
+    // CREATE (POST) - find-or-create: returns existing genre if same name already
+    // exists
     public Genre createGenre(Genre genre) {
-        return genreRepository.save(genre);
+        return genreRepository.findByNameIgnoreCase(genre.getName())
+                .orElseGet(() -> genreRepository.save(genre));
     }
 
     // UPDATE
