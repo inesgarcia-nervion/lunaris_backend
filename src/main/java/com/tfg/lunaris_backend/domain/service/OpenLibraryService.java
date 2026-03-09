@@ -29,8 +29,8 @@ public class OpenLibraryService {
             if (limit == null) {
                 limit = 10;
             }
-            if (limit > 100) {
-                limit = 100; // Open Library tiene un límite máximo
+            if (limit > 1000) {
+                limit = 1000; // Open Library soporta hasta 1000 resultados por petición
             }
             if (offset == null) {
                 offset = 0;
@@ -74,8 +74,8 @@ public class OpenLibraryService {
             if (limit == null) {
                 limit = 10;
             }
-            if (limit > 100) {
-                limit = 100;
+            if (limit > 1000) {
+                limit = 1000;
             }
             if (offset == null) {
                 offset = 0;
@@ -109,8 +109,8 @@ public class OpenLibraryService {
             if (limit == null) {
                 limit = 10;
             }
-            if (limit > 100) {
-                limit = 100;
+            if (limit > 1000) {
+                limit = 1000;
             }
             if (offset == null) {
                 offset = 0;
