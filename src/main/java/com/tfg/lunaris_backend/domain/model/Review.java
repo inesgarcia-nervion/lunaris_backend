@@ -15,6 +15,10 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String comment;
-    private int rating;
+    private Double rating; // allow decimals (one decimal)
     private String date;
+    // Link review to a book via its api id (OpenLibrary key or custom-... id)
+    private String bookApiId;
+    // Optionally store reviewer username
+    private String username;
 }

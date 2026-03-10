@@ -20,6 +20,11 @@ public class ReviewService {
         return reviewRepository.findAll();
     }
 
+    // GET BY BOOK API ID
+    public List<Review> getReviewsByBookApiId(String bookApiId) {
+        return reviewRepository.findByBookApiId(bookApiId);
+    }
+
     // GET BY ID
     public Review getReviewById(Long id) {
         return reviewRepository.findById(id)
