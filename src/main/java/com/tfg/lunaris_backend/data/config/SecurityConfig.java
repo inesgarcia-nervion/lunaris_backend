@@ -49,6 +49,9 @@ public class SecurityConfig {
                         // login
                         .requestMatchers("/api/openlibrary/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/books/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/reviews").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/reviews/book").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/books/by-api-id").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(Customizer.withDefaults());

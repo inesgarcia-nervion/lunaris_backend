@@ -14,6 +14,7 @@ import com.tfg.lunaris_backend.presentation.exceptions.BookNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -82,6 +83,10 @@ public class BookService {
     // SEARCH by title or author
     public List<Book> searchBooks(String query) {
         return bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(query, query);
+    }
+
+    public Optional<Book> findByApiId(String apiId) {
+        return bookRepository.findByApiId(apiId);
     }
 
     // Importa un libro desde Open Library a la base de datos

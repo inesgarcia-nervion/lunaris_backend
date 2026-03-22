@@ -19,6 +19,10 @@ public class Review {
     private String date;
     // Link review to a book via its api id (OpenLibrary key or custom-... id)
     private String bookApiId;
+    // Optionally store book title so menu can display it without extra API calls
+    private String bookTitle;
+    // Store pre-resolved cover URL so menu can display it without extra API calls
+    private String coverUrl;
     // Optionally store reviewer username
     private String username;
 }

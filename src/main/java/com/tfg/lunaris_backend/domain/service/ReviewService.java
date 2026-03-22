@@ -15,9 +15,9 @@ public class ReviewService {
     @Autowired
     private ReviewRepository reviewRepository;
 
-    // GET
+    // GET (newest first)
     public List<Review> getAllReviews() {
-        return reviewRepository.findAll();
+        return reviewRepository.findAllByOrderByIdDesc();
     }
 
     // GET BY BOOK API ID
@@ -43,6 +43,10 @@ public class ReviewService {
         review.setComment(reviewDetails.getComment());
         review.setRating(reviewDetails.getRating());
         review.setDate(reviewDetails.getDate());
+        if (reviewDetails.getBookTitle() != null)
+            review.setBookTitle(reviewDetails.getBookTitle());
+        if (reviewDetails.getCoverUrl() != null)
+            review.setCoverUrl(reviewDetails.getCoverUrl());
         return reviewRepository.save(review);
     }
 

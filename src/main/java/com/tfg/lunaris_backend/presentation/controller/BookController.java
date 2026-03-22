@@ -52,6 +52,13 @@ public class BookController {
         return bookService.searchBooks(query);
     }
 
+    @GetMapping("/books/by-api-id")
+    public org.springframework.http.ResponseEntity<Book> getByApiId(@RequestParam("apiId") String apiId) {
+        return bookService.findByApiId(apiId)
+                .map(org.springframework.http.ResponseEntity::ok)
+                .orElse(org.springframework.http.ResponseEntity.notFound().build());
+    }
+
     // Importar libro desde Open Library a la base de datos
     @PostMapping("/books/import/openlibrary")
     public Book importFromOpenLibrary(@RequestBody OpenLibraryBookDto openLibraryBook) {
