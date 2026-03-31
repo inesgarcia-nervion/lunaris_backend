@@ -8,6 +8,8 @@ import com.tfg.lunaris_backend.domain.model.UserList;
 import com.tfg.lunaris_backend.presentation.exceptions.UserListNotFoundException;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class UserListService {
@@ -18,6 +20,11 @@ public class UserListService {
     // GET
     public List<UserList> getAllUserLists() {
         return userListRepository.findAll();
+    }
+
+    // GET - paginated
+    public Page<UserList> getAllUserLists(Pageable pageable) {
+        return userListRepository.findAll(pageable);
     }
 
     // GET BY ID

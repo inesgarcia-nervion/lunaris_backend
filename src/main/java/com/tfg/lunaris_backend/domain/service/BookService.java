@@ -14,8 +14,9 @@ import com.tfg.lunaris_backend.presentation.exceptions.BookNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class BookService {
@@ -29,6 +30,11 @@ public class BookService {
     // GET
     public List<Book> getAllBooks() {
         return bookRepository.findAll();
+    }
+
+    // GET - paginated
+    public Page<Book> getAllBooks(Pageable pageable) {
+        return bookRepository.findAll(pageable);
     }
 
     // GET BY ID
@@ -83,6 +89,11 @@ public class BookService {
     // SEARCH by title or author
     public List<Book> searchBooks(String query) {
         return bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(query, query);
+    }
+
+    // SEARCH paginated
+    public Page<Book> searchBooks(String query, Pageable pageable) {
+        return bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(query, query, pageable);
     }
 
     public Optional<Book> findByApiId(String apiId) {

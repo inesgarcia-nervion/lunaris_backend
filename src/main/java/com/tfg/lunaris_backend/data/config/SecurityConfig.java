@@ -45,6 +45,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        // Allow POST to genres and reviews in development to ease frontend testing
+                        .requestMatchers(HttpMethod.POST, "/genres").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/reviews").permitAll()
                         // Allow public access to OpenLibrary proxy endpoints so searches work without
                         // login
                         .requestMatchers("/api/openlibrary/**").permitAll()

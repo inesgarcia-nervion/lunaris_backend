@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.tfg.lunaris_backend.domain.model.UserList;
 import com.tfg.lunaris_backend.domain.service.UserListService;
-
-import java.util.List;
 
 @RestController
 public class UserListController {
@@ -20,8 +20,8 @@ public class UserListController {
     private UserListService userListService;
 
     @GetMapping("/user_list")
-    public List<UserList> getAllUserLists() {
-        return userListService.getAllUserLists();
+    public Page<UserList> getAllUserLists(Pageable pageable) {
+        return userListService.getAllUserLists(pageable);
     }
 
     @GetMapping("/user_list/{id}")
