@@ -20,6 +20,10 @@ public class OpenLibraryService {
     @Autowired
     private RestTemplate restTemplate;
 
+    // Simple retry configuration for flaky external API calls
+    private static final int MAX_RETRIES = 3;
+    private static final long INITIAL_BACKOFF_MS = 1000; // 1s
+
     // Busca libros en Open Library por título, autor o texto libre
     public OpenLibrarySearchResponseDto searchBooks(String query, Integer limit, Integer offset) {
         try {
@@ -50,8 +54,7 @@ public class OpenLibraryService {
 
             log.info("Buscando en Open Library: {}", url);
 
-            OpenLibrarySearchResponseDto response = restTemplate.getForObject(url, OpenLibrarySearchResponseDto.class);
-
+            OpenLibrarySearchResponseDto response = fetchWithRetries(url);
             if (response != null) {
                 log.info("Se encontraron {} libros", response.getNumFound());
                 return response;
@@ -84,6 +87,39 @@ public class OpenLibraryService {
         }
     }
 
+    /**
+     * Fetch URL with simple retry and exponential backoff. Returns empty DTO on
+     * persistent failures.
+     */
+    private OpenLibrarySearchResponseDto fetchWithRetries(String url) {
+        long backoff = INITIAL_BACKOFF_MS;
+        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                OpenLibrarySearchResponseDto resp = restTemplate.getForObject(url, OpenLibrarySearchResponseDto.class);
+                if (resp != null && resp.getDocs() != null && !resp.getDocs().isEmpty()) {
+                    return resp;
+                }
+                // If empty but HTTP OK, treat as possible transient and retry
+                log.warn("OpenLibrary returned empty result (attempt {}), retrying... url={}", attempt, url);
+            } catch (RestClientException e) {
+                log.warn("RestTemplate call failed on attempt {}: {}", attempt, e.getMessage());
+            }
+            try {
+                Thread.sleep(backoff);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+            backoff *= 2;
+        }
+        // give up, return empty DTO
+        OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
+        empty.setNumFound(0);
+        empty.setStart(0);
+        empty.setDocs(Collections.emptyList());
+        return empty;
+    }
+
     // Busca libros por título específicamente
     public OpenLibrarySearchResponseDto searchByTitle(String title, Integer limit, Integer offset) {
         try {
@@ -111,8 +147,7 @@ public class OpenLibraryService {
                     .toUriString();
 
             log.info("Buscando por título en Open Library: {}", title);
-
-            return restTemplate.getForObject(url, OpenLibrarySearchResponseDto.class);
+            return fetchWithRetries(url);
         } catch (Exception e) {
             log.error("Error al buscar por título: {}", e.getMessage(), e);
             throw new RuntimeException("Error al buscar por título: " + e.getMessage(), e);
@@ -146,8 +181,7 @@ public class OpenLibraryService {
                     .toUriString();
 
             log.info("Buscando por autor en Open Library: {}", author);
-
-            return restTemplate.getForObject(url, OpenLibrarySearchResponseDto.class);
+            return fetchWithRetries(url);
         } catch (Exception e) {
             log.error("Error al buscar por autor: {}", e.getMessage(), e);
             throw new RuntimeException("Error al buscar por autor: " + e.getMessage(), e);
