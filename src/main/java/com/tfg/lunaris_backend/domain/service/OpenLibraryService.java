@@ -3,6 +3,8 @@ package com.tfg.lunaris_backend.domain.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClientException;
+import java.util.Collections;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.tfg.lunaris_backend.domain.dto.OpenLibrarySearchResponseDto;
@@ -52,15 +54,33 @@ public class OpenLibraryService {
 
             if (response != null) {
                 log.info("Se encontraron {} libros", response.getNumFound());
+                return response;
             }
-
-            return response;
+            // Si la respuesta es null, devolver un DTO vacío en lugar de propagar null
+            log.warn("Respuesta nula de OpenLibrary para la consulta: {}", query);
+            OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
+            empty.setNumFound(0);
+            empty.setStart(offset);
+            empty.setDocs(Collections.emptyList());
+            return empty;
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
             throw e;
+        } catch (RestClientException e) {
+            // Timeout or HTTP error when calling OpenLibrary: log and return empty result
+            log.warn("Error en llamada a OpenLibrary (RestClientException): {}", e.getMessage());
+            OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
+            empty.setNumFound(0);
+            empty.setStart(offset);
+            empty.setDocs(Collections.emptyList());
+            return empty;
         } catch (Exception e) {
-            log.error("Error al buscar en Open Library: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al buscar en Open Library: " + e.getMessage(), e);
+            log.error("Error inesperado al buscar en Open Library: {}", e.getMessage(), e);
+            OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
+            empty.setNumFound(0);
+            empty.setStart(offset);
+            empty.setDocs(Collections.emptyList());
+            return empty;
         }
     }
 
