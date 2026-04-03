@@ -15,6 +15,7 @@ import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
 import com.tfg.lunaris_backend.domain.model.Book;
 import com.tfg.lunaris_backend.domain.service.BookService;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -49,8 +50,8 @@ public class BookController {
     }
 
     @GetMapping("/books/search")
-    public Page<Book> searchBooks(@RequestParam("q") String query, Pageable pageable) {
-        return bookService.searchBooks(query, pageable);
+    public List<Book> searchBooks(@RequestParam("q") String query) {
+        return bookService.searchBooks(query);
     }
 
     @GetMapping("/books/by-api-id")
