@@ -52,6 +52,7 @@ public class SecurityConfig {
                         // Allow public access to OpenLibrary proxy endpoints so searches work without
                         // login
                         .requestMatchers("/api/openlibrary/**").permitAll()
+                        .requestMatchers("/api/saga/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/books/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/reviews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/reviews/book").permitAll()
