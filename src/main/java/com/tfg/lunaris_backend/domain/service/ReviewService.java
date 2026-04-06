@@ -13,6 +13,11 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Servicio que maneja la lógica de negocio relacionada con las reseñas.
+ * 
+ * Proporciona métodos para crear, obtener y eliminar reseñas.
+ */
 @Service
 public class ReviewService {
 
@@ -21,21 +26,33 @@ public class ReviewService {
 
     private final RestTemplate rest = new RestTemplate();
 
-    // GET (newest first)
+    /**
+     * Obtiene todas las reseñas ordenadas por ID de forma descendente.
+     * Si alguna reseña tiene datos de libro faltantes, intenta enriquecerlos consultando la API de Open Library.
+     * @return lista de reseñas
+     */
     public List<Review> getAllReviews() {
         List<Review> reviews = reviewRepository.findAllByOrderByIdDesc();
         enrichMissingBookData(reviews);
         return reviews;
     }
 
-    // GET BY BOOK API ID
+    /**
+     * Obtiene todas las reseñas asociadas a un identificador de libro externo.
+     * Si alguna reseña tiene datos de libro faltantes, intenta enriquecerlos consultando la API de Open Library.
+     * @param bookApiId identificador externo del libro
+     * @return lista de reseñas para el libro
+     */
     public List<Review> getReviewsByBookApiId(String bookApiId) {
         List<Review> reviews = reviewRepository.findByBookApiId(bookApiId);
         enrichMissingBookData(reviews);
         return reviews;
     }
 
-    // For reviews that reference OpenLibrary works but lack title/cover, fetch and persist them
+    /**
+     * Enriquecer los datos faltantes de los libros en las reseñas consultando la API de Open Library.
+     * @param reviews lista de reseñas a enriquecer
+     */
     private void enrichMissingBookData(List<Review> reviews) {
         if (reviews == null || reviews.isEmpty()) return;
         for (Review r : reviews) {
@@ -45,11 +62,9 @@ public class ReviewService {
                 boolean missingCover = r.getCoverUrl() == null || r.getCoverUrl().isBlank();
                 if (!missingTitle && !missingCover) continue;
                 String apiId = r.getBookApiId();
-                // normalize: accept "/works/OL...W" or "works/OL...W" or just "OL...W"
                 String workKey = apiId;
                 if (workKey.startsWith("/")) workKey = workKey.substring(1);
                 if (workKey.startsWith("works/")) workKey = workKey.substring("works/".length());
-                // Only handle OpenLibrary works (OL...W)
                 if (!workKey.startsWith("OL") || !workKey.endsWith("W")) continue;
                 String url = "https://openlibrary.org/works/" + workKey + ".json";
                 ResponseEntity<Map> resp = rest.getForEntity(url, Map.class);
@@ -69,30 +84,43 @@ public class ReviewService {
                         }
                         if (coverUrl != null) r.setCoverUrl(coverUrl);
                     } else {
-                        // fallback to covers by work key
                         r.setCoverUrl("https://covers.openlibrary.org/b/works/" + workKey + "-M.jpg");
                     }
                 }
-                // persist any changes
                 reviewRepository.save(r);
             } catch (Exception e) {
-                // ignore per-item failures to avoid breaking the whole response
+                // Ignorar errores al enriquecer datos de libros
             }
         }
     }
 
-    // GET BY ID
+    /**
+     * Obtiene una reseña por su ID.
+     * @param id ID de la reseña
+     * @return reseña encontrada
+     * @throws ReviewNotFoundException si la reseña no existe
+     */
     public Review getReviewById(Long id) {
         return reviewRepository.findById(id)
                 .orElseThrow(() -> new ReviewNotFoundException("Reseña no encontrada con id " + id));
     }
 
-    // CREATE (POST)
+    /**
+     * Crea una nueva reseña.
+     * @param review reseña a crear
+     * @return reseña creada
+     */
     public Review createReview(Review review) {
         return reviewRepository.save(review);
     }
 
-    // UPDATE
+    /**
+    * Actualiza una reseña existente.
+    * @param id ID de la reseña a actualizar
+    * @param reviewDetails detalles de la reseña a actualizar
+    * @return reseña actualizada
+    * @throws ReviewNotFoundException si la reseña no existe
+    */
     public Review updateReview(Long id, Review reviewDetails) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ReviewNotFoundException("Reseña no encontrada con id " + id));
@@ -106,7 +134,10 @@ public class ReviewService {
         return reviewRepository.save(review);
     }
 
-    // DELETE
+    /**
+     * Elimina una reseña por su ID.
+     * @param id ID de la reseña a eliminar
+     */
     public void deleteReview(Long id) {
         reviewRepository.deleteById(id);
     }

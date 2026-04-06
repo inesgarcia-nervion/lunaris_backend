@@ -14,31 +14,55 @@ import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Controlador que maneja las operaciones relacionadas con los posts.
+ * 
+ * Proporciona endpoints para crear, obtener y eliminar posts.
+ */
 @RestController
 public class PostController {
 
     @Autowired
     private PostService postService;
 
+    /**
+     * Endpoint para obtener todos los posts. Devuelve una lista de todos los posts disponibles.
+     * @return lista de posts
+     */
     @GetMapping("/posts")
     public List<Post> getAllPosts() {
         return postService.getAllPosts();
     }
 
+    /**
+     * Endpoint para obtener un post por su ID. Devuelve el post correspondiente si existe.
+     * @param id identificador del post
+     * @return post encontrado
+     */
     @GetMapping("/posts/{id}")
     public Post getPostById(@PathVariable Long id) {
         return postService.getPostById(id);
     }
 
+    /**
+     * Endpoint para crear un nuevo post. Si la autenticación está disponible, se establece automáticamente el nombre de usuario.
+     * @param post objeto con los datos del post a crear
+     * @param auth información de autenticación del usuario
+     * @return post creado
+     */
     @PostMapping("/posts")
     public Post createPost(@RequestBody Post post, Authentication auth) {
-        // If authentication is available, set username automatically
         if (auth != null && (post.getUsername() == null || post.getUsername().isBlank())) {
             post.setUsername(auth.getName());
         }
         return postService.createPost(post);
     }
 
+    /**
+    * Endpoint para eliminar un post por su ID. Solo el autor del post o un usuario con rol ADMIN pueden eliminarlo.
+    * @param id identificador del post a eliminar
+    * @param auth información de autenticación del usuario
+    */
     @DeleteMapping("/posts/{id}")
     public void deletePost(@PathVariable Long id, Authentication auth) {
         Post existing = postService.getPostById(id);

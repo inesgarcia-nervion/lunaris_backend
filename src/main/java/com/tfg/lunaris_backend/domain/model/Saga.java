@@ -13,9 +13,14 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidad que representa una saga en la base de datos.
+ * 
+ * Contiene información sobre la saga, incluyendo su nombre y los libros que la componen.
+ */
 @Entity
 @Table(name = "sagas", schema = "public")
-@Data // Lombok genera getters, setters, toString, equals, hashCode, etc.
+@Data 
 public class Saga {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

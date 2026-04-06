@@ -11,6 +11,11 @@ import com.tfg.lunaris_backend.domain.dto.OpenLibrarySearchResponseDto;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Servicio que maneja la lógica de negocio relacionada con la búsqueda de libros en Open Library.
+ * 
+ * Proporciona métodos para buscar libros utilizando la API de Open Library.
+ */
 @Service
 @Slf4j
 public class OpenLibraryService {
@@ -20,29 +25,32 @@ public class OpenLibraryService {
     @Autowired
     private RestTemplate restTemplate;
 
-    // Simple retry configuration for flaky external API calls
     private static final int MAX_RETRIES = 3;
     private static final long INITIAL_BACKOFF_MS = 1000; // 1s
 
-    // Busca libros en Open Library por título, autor o texto libre
+    /**
+     * Busca libros en Open Library utilizando un término de búsqueda general.
+     * @param query término de búsqueda (puede ser título, autor, etc.)
+     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000) 
+     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0)
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
+     */
     public OpenLibrarySearchResponseDto searchBooks(String query, Integer limit, Integer offset) {
         try {
             if (query == null || query.trim().isEmpty()) {
                 throw new IllegalArgumentException("El término de búsqueda no puede estar vacío");
             }
 
-            // Establecer valores por defecto
             if (limit == null) {
                 limit = 10;
             }
             if (limit > 1000) {
-                limit = 1000; // Open Library soporta hasta 1000 resultados por petición
+                limit = 1000; 
             }
             if (offset == null) {
                 offset = 0;
             }
 
-            // Construir la URL con parámetros
             String url = UriComponentsBuilder.fromUri(java.net.URI.create(OPEN_LIBRARY_API_BASE_URL))
                     .queryParam("q", query)
                     .queryParam("limit", limit)
@@ -59,7 +67,6 @@ public class OpenLibraryService {
                 log.info("Se encontraron {} libros", response.getNumFound());
                 return response;
             }
-            // Si la respuesta es null, devolver un DTO vacío en lugar de propagar null
             log.warn("Respuesta nula de OpenLibrary para la consulta: {}", query);
             OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
             empty.setNumFound(0);
@@ -70,7 +77,6 @@ public class OpenLibraryService {
             log.error("Error de validación: {}", e.getMessage());
             throw e;
         } catch (RestClientException e) {
-            // Timeout or HTTP error when calling OpenLibrary: log and return empty result
             log.warn("Error en llamada a OpenLibrary (RestClientException): {}", e.getMessage());
             OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
             empty.setNumFound(0);
@@ -88,8 +94,10 @@ public class OpenLibraryService {
     }
 
     /**
-     * Fetch URL with simple retry and exponential backoff. Returns empty DTO on
-     * persistent failures.
+     * Realiza la llamada a la API de Open Library con reintentos en caso de error o respuesta vacía.
+     * @param url URL completa de la consulta a Open Library 
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda, 
+     * o respuesta vacía si no se obtienen resultados después de los reintentos
      */
     private OpenLibrarySearchResponseDto fetchWithRetries(String url) {
         long backoff = INITIAL_BACKOFF_MS;
@@ -99,7 +107,6 @@ public class OpenLibraryService {
                 if (resp != null && resp.getDocs() != null && !resp.getDocs().isEmpty()) {
                     return resp;
                 }
-                // If empty but HTTP OK, treat as possible transient and retry
                 log.warn("OpenLibrary returned empty result (attempt {}), retrying... url={}", attempt, url);
             } catch (RestClientException e) {
                 log.warn("RestTemplate call failed on attempt {}: {}", attempt, e.getMessage());
@@ -112,7 +119,6 @@ public class OpenLibraryService {
             }
             backoff *= 2;
         }
-        // give up, return empty DTO
         OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
         empty.setNumFound(0);
         empty.setStart(0);
@@ -120,7 +126,13 @@ public class OpenLibraryService {
         return empty;
     }
 
-    // Busca libros por título específicamente
+    /**
+     * Busca libros por título en Open Library.
+     * @param title título a buscar
+     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000) 
+     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0) 
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
+     */
     public OpenLibrarySearchResponseDto searchByTitle(String title, Integer limit, Integer offset) {
         try {
             if (title == null || title.trim().isEmpty()) {
@@ -154,7 +166,13 @@ public class OpenLibraryService {
         }
     }
 
-    // Busca libros por autor específicamente
+    /**
+     * Busca libros por autor en Open Library. 
+     * @param author autor a buscar
+     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000)
+     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0)
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
+     */ 
     public OpenLibrarySearchResponseDto searchByAuthor(String author, Integer limit, Integer offset) {
         try {
             if (author == null || author.trim().isEmpty()) {

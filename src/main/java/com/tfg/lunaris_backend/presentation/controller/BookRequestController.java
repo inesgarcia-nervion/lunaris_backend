@@ -16,21 +16,42 @@ import com.tfg.lunaris_backend.domain.service.BookRequestService;
 
 import java.util.List;
 
+/**
+ * Controlador que maneja las operaciones relacionadas con las solicitudes de libros.
+ * 
+ * Proporciona endpoints para crear, eliminar y obtener solicitudes de libros.
+ */
 @RestController
 public class BookRequestController {
     @Autowired
     private BookRequestService bookRequestService;
 
+    /**
+     * Endpoint para obtener todas las solicitudes de libros.
+     * @return lista de solicitudes de libros
+     */
     @GetMapping("/requests")
     public List<BookRequest> getAll() {
         return bookRequestService.getAll();
     }
 
+    /**
+    * Endpoint para crear una nueva solicitud de libro. Recibe un objeto `BookRequest` con 
+    * los datos necesarios para crear la solicitud, y devuelve la solicitud creada.
+    * @param br objeto con los datos para crear la solicitud de libro
+    * @return solicitud de libro creada
+    */  
     @PostMapping("/requests")
     public BookRequest create(@RequestBody BookRequest br) {
         return bookRequestService.create(br);
     }
 
+    /**
+    * Endpoint para eliminar una solicitud de libro por su ID. Solo los usuarios con rol ADMIN pueden eliminar solicitudes.
+    * @param id identificador de la solicitud de libro a eliminar
+    * @param auth información de autenticación del usuario que realiza la solicitud
+    * @throws ResponseStatusException con estado 403 si el usuario no tiene permisos para eliminar la solicitud
+    */
     @DeleteMapping("/requests/{id}")
     public void delete(@PathVariable Long id, Authentication auth) {
         boolean isAdmin = auth != null && auth.getAuthorities().stream()

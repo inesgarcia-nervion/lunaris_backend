@@ -9,6 +9,11 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
+/**
+ * Servicio que maneja el envío de correos electrónicos.
+ * 
+ * Proporciona métodos para enviar correos electrónicos, como la recuperación de contraseña.
+ */
 @Service
 public class EmailService {
 
@@ -21,6 +26,12 @@ public class EmailService {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
+    /**
+     * Envía un correo electrónico para restablecer la contraseña.
+     * @param toEmail correo electrónico del destinatario
+     * @param token token de restablecimiento de contraseña
+     * @throws MessagingException si ocurre un error al enviar el correo
+     */
     public void sendPasswordResetEmail(String toEmail, String token) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

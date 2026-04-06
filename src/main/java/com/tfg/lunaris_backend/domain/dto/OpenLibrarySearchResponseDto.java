@@ -7,6 +7,12 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * DTO que representa la respuesta de una búsqueda en OpenLibrary.
+ * 
+ * Contiene el número total de resultados encontrados, el índice de inicio de los resultados actuales 
+ * y una lista de libros (OpenLibraryBookDto) que coinciden con la búsqueda realizada.
+ */
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)

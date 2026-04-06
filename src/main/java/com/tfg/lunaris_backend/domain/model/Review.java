@@ -7,22 +7,24 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+/**
+ * Entidad que representa una reseña en la base de datos.
+ * 
+ * Contiene información sobre la reseña, incluyendo el comentario, la puntuación, la fecha, 
+ * el identificador de la API del libro, el título del libro, la URL de la portada y el nombre de usuario del autor.
+ */
 @Entity
 @Table(name = "reviews", schema = "public")
-@Data // Lombok genera getters, setters, toString, equals, hashCode, etc.
+@Data 
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String comment;
-    private Double rating; // allow decimals (one decimal)
+    private Double rating; 
     private String date;
-    // Link review to a book via its api id (OpenLibrary key or custom-... id)
     private String bookApiId;
-    // Optionally store book title so menu can display it without extra API calls
     private String bookTitle;
-    // Store pre-resolved cover URL so menu can display it without extra API calls
     private String coverUrl;
-    // Optionally store reviewer username
     private String username;
 }

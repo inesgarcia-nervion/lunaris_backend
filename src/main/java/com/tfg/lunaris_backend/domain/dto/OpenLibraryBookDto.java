@@ -7,6 +7,13 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * DTO que representa un libro tal y como viene en la respuesta de OpenLibrary.
+ * 
+ * Contiene los campos relevantes para un libro, incluyendo título, autor, año 
+ * de publicación, imagen de portada, descripción, puntuación y otros detalles 
+ * que pueden ser útiles para mostrar información al usuario.
+ */
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)

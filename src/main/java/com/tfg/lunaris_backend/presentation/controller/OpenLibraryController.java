@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tfg.lunaris_backend.domain.dto.OpenLibrarySearchResponseDto;
 import com.tfg.lunaris_backend.domain.service.OpenLibraryService;
 
+/**
+ * Controlador que maneja las operaciones relacionadas con la búsqueda de libros en Open Library.
+ * 
+ * Proporciona endpoints para buscar libros por título, autor o de manera general.
+ */
 @RestController
 @RequestMapping("/api/openlibrary")
 public class OpenLibraryController {
@@ -16,7 +21,15 @@ public class OpenLibraryController {
     @Autowired
     private OpenLibraryService openLibraryService;
 
-    // Búsqueda general de libros en Open Library
+    /**
+     * Endpoint para buscar libros en Open Library. Recibe un parámetro de consulta `q` con el 
+     * texto a buscar, y opcionalmente `limit` y `offset` para paginación. Devuelve una respuesta
+     * con los resultados de la búsqueda.
+     * @param query texto a buscar
+     * @param limit número máximo de resultados a devolver
+     * @param offset desplazamiento para la paginación
+     * @return respuesta con los resultados de la búsqueda
+     */
     @GetMapping("/search")
     public OpenLibrarySearchResponseDto search(
             @RequestParam("q") String query,
@@ -25,7 +38,15 @@ public class OpenLibraryController {
         return openLibraryService.searchBooks(query, limit, offset);
     }
 
-    // Búsqueda de libros por título
+    /**
+     * Endpoint para buscar libros por título en Open Library. Recibe un parámetro de consulta `title` con el
+     * texto a buscar en el título, y opcionalmente `limit` y `offset` para paginación. Devuelve una respuesta
+     * con los resultados de la búsqueda.
+     * @param title texto a buscar en el título
+     * @param limit número máximo de resultados a devolver
+     * @param offset desplazamiento para la paginación
+     * @return respuesta con los resultados de la búsqueda por título
+     */
     @GetMapping("/search/title")
     public OpenLibrarySearchResponseDto searchByTitle(
             @RequestParam("title") String title,
@@ -34,7 +55,15 @@ public class OpenLibraryController {
         return openLibraryService.searchByTitle(title, limit, offset);
     }
 
-    // Búsqueda de libros por autor
+    /**
+     * Endpoint para buscar libros por autor en Open Library. Recibe un parámetro de consulta `author` con el
+     * texto a buscar en el autor, y opcionalmente `limit` y `offset` para paginación. Devuelve una respuesta
+     * con los resultados de la búsqueda.
+     * @param author texto a buscar en el autor
+     * @param limit número máximo de resultados a devolver
+     * @param offset desplazamiento para la paginación
+     * @return respuesta con los resultados de la búsqueda por autor
+     */
     @GetMapping("/search/author")
     public OpenLibrarySearchResponseDto searchByAuthor(
             @RequestParam("author") String author,

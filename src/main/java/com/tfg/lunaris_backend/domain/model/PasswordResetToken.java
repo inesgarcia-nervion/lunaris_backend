@@ -6,6 +6,12 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad que representa un token de restablecimiento de contraseña en la base de datos.
+ * 
+ * Contiene información sobre el token, incluyendo el token en sí, el usuario asociado, 
+ * la fecha de expiración y si el token ha sido utilizado.
+ */
 @Entity
 @Table(name = "password_reset_tokens")
 @Data
@@ -32,7 +38,7 @@ public class PasswordResetToken {
     public PasswordResetToken(String token, User user) {
         this.token = token;
         this.user = user;
-        this.expiryDate = LocalDateTime.now().plusHours(1); // Token válido por 1 hora
+        this.expiryDate = LocalDateTime.now().plusHours(1); 
     }
 
     public boolean isExpired() {

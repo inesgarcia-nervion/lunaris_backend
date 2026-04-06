@@ -7,6 +7,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+/**
+ * Entidad que representa una publicación en la base de datos.
+ * 
+ * Contiene información sobre la publicación, incluyendo su contenido, el nombre de usuario del autor, 
+ * la fecha de publicación y la URL de una imagen asociada.
+ */
 @Entity
 @Table(name = "posts", schema = "public")
 @Data
@@ -15,15 +21,11 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Texto del post
     private String content;
 
-    // Usuario que creó el post
     private String username;
 
-    // Fecha/hora como cadena (puedes cambiar a Instant/LocalDateTime si prefieres)
     private String date;
 
-    // Opcional: url de imagen adjunta
     private String imageUrl;
 }

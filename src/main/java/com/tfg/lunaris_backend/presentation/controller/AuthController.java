@@ -17,6 +17,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * Controlador que maneja las operaciones de autenticación y restablecimiento de contraseña.
+ * 
+ * Proporciona endpoints para iniciar sesión, solicitar restablecimiento de contraseña, 
+ * validar tokens de restablecimiento y actualizar contraseñas.
+ */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -33,6 +39,12 @@ public class AuthController {
     @Autowired
     private PasswordResetService passwordResetService;
 
+    /**
+     * Endpoint para iniciar sesión. Recibe un objeto `AuthRequest` con el nombre de usuario y la contraseña,
+     * y devuelve un token JWT si las credenciales son válidas.
+     * @param request objeto con el nombre de usuario y la contraseña
+     * @return ResponseEntity con el token JWT o un mensaje de error
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         try {
@@ -50,6 +62,12 @@ public class AuthController {
         }
     }
 
+    /**
+     * Endpoint para solicitar el restablecimiento de contraseña. Recibe un objeto `PasswordResetRequest` con el correo electrónico,
+     * y envía un correo con instrucciones para restablecer la contraseña si el correo existe.
+     * @param request objeto con el correo electrónico
+     * @return ResponseEntity con un mensaje de éxito o error
+     */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetRequest request) {
         String result = passwordResetService.requestPasswordReset(request.getEmail());
@@ -64,6 +82,12 @@ public class AuthController {
         };
     }
 
+    /**
+     * Endpoint para validar un token de restablecimiento de contraseña. Recibe un token como parámetro,
+     * y devuelve si el token es válido o no.
+     * @param token token de restablecimiento de contraseña
+     * @return ResponseEntity con el estado de validez del token
+     */
     @GetMapping("/validate-token")
     public ResponseEntity<?> validateToken(@RequestParam String token) {
         boolean valid = passwordResetService.validateToken(token);
@@ -74,6 +98,12 @@ public class AuthController {
                 .body(Map.of("valid", false, "error", "El enlace ha expirado o no es válido."));
     }
 
+    /**
+     * Endpoint para restablecer la contraseña. Recibe un objeto `NewPasswordRequest` con el token y la nueva contraseña,
+     * y actualiza la contraseña si el token es válido.
+     * @param request objeto con el token y la nueva contraseña
+     * @return ResponseEntity con un mensaje de éxito o error
+     */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody NewPasswordRequest request) {
         if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {

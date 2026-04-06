@@ -5,6 +5,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+/**
+ * Entidad que representa una solicitud de libro en la base de datos.
+ * 
+ * Contiene información sobre la solicitud de un libro, incluyendo título y autor.
+ */
 @Entity
 public class BookRequest {
     @Id

@@ -14,6 +14,11 @@ import jakarta.mail.MessagingException;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Servicio que maneja la lógica de negocio relacionada con el restablecimiento de contraseñas.
+ * 
+ * Proporciona métodos para solicitar un restablecimiento de contraseña, validar tokens y restablecer contraseñas.
+ */
 @Service
 public class PasswordResetService {
 
@@ -29,6 +34,11 @@ public class PasswordResetService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    /**
+     * Solicita un restablecimiento de contraseña para el usuario con el correo electrónico proporcionado.
+     * @param email correo electrónico del usuario
+     * @return estado de la solicitud ("SUCCESS", "EMAIL_NOT_FOUND", "EMAIL_ERROR")
+     */
     @Transactional
     public String requestPasswordReset(String email) {
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -39,15 +49,12 @@ public class PasswordResetService {
 
         User user = userOpt.get();
 
-        // Eliminar tokens anteriores del usuario
         tokenRepository.deleteByUser(user);
 
-        // Crear nuevo token
         String token = UUID.randomUUID().toString();
         PasswordResetToken resetToken = new PasswordResetToken(token, user);
         tokenRepository.save(resetToken);
 
-        // Enviar email
         try {
             emailService.sendPasswordResetEmail(email, token);
             return "SUCCESS";
@@ -57,6 +64,11 @@ public class PasswordResetService {
         }
     }
 
+    /**
+     * Valida un token de restablecimiento de contraseña.
+     * @param token token a validar
+     * @return true si el token es válido, false en caso contrario
+     */
     public boolean validateToken(String token) {
         Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
 
@@ -68,6 +80,12 @@ public class PasswordResetService {
         return !resetToken.isExpired() && !resetToken.isUsed();
     }
 
+    /**
+     * Restablece la contraseña del usuario utilizando un token válido.
+     * @param token token de restablecimiento de contraseña
+     * @param newPassword nueva contraseña del usuario
+     * @return true si la contraseña se restablece correctamente, false en caso contrario
+     */
     @Transactional
     public boolean resetPassword(String token, String newPassword) {
         Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
@@ -82,12 +100,10 @@ public class PasswordResetService {
             return false;
         }
 
-        // Actualizar contraseña
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // Marcar token como usado
         resetToken.setUsed(true);
         tokenRepository.save(resetToken);
 

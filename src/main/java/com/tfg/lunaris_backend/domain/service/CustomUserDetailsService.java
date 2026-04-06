@@ -14,12 +14,23 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Servicio que maneja la lógica de negocio relacionada con los detalles de usuario para la autenticación.
+ * 
+ * Implementa UserDetailsService para cargar los detalles de usuario desde la base de datos.
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Carga los detalles de un usuario por su nombre de usuario.
+     * @param username nombre de usuario
+     * @return detalles del usuario
+     * @throws UsernameNotFoundException si no se encuentra el usuario
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)

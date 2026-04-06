@@ -14,6 +14,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+/**
+ * Entidad que representa un libro dentro de una saga en la base de datos.
+ * 
+ * Contiene información sobre el libro, incluyendo su título, autor, número de orden en la saga, 
+ * número de páginas, año de publicación, URL de Goodreads y la saga a la que pertenece.
+ */
 @Entity
 @Table(name = "saga_books", schema = "public")
 @Data

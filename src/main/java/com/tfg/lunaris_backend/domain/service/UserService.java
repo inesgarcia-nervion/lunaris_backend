@@ -10,6 +10,11 @@ import com.tfg.lunaris_backend.presentation.exceptions.UserNotFoundException;
 
 import java.util.List;
 
+/**
+ * Servicio que maneja la lógica de negocio relacionada con los usuarios.
+ * 
+ * Proporciona métodos para crear, actualizar, eliminar y obtener usuarios.
+ */
 @Service
 public class UserService {
 
@@ -19,18 +24,30 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // GET
+    /**
+     * Obtiene todos los usuarios.
+     * @return lista de usuarios
+     */
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // GET BY ID
+    /**
+     * Obtiene un usuario por su ID.
+     * @param id ID del usuario
+     * @return usuario encontrado
+     * @throws UserNotFoundException si no se encuentra el usuario con el id proporcionado
+     */
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con id " + id));
     }
 
-    // CREATE (POST)
+    /**
+     * Crea un nuevo usuario.
+     * @param user usuario a crear
+     * @return usuario creado
+     */
     public User createUser(User user) {
         // encode password before saving
         if (user.getPassword() != null) {
@@ -39,7 +56,13 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // UPDATE
+    /**
+     * Actualiza un usuario existente.
+     * @param id ID del usuario a actualizar
+     * @param userDetails detalles del usuario a actualizar
+     * @return usuario actualizado
+     * @throws UserNotFoundException si no se encuentra el usuario con el id proporcionado
+     */
     public User updateUser(Long id, User userDetails) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con id " + id));
@@ -55,12 +78,21 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // DELETE
+    /**
+     * Elimina un usuario por su ID.
+     * @param id ID del usuario a eliminar
+     */
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
 
-    // UPDATE by username
+    /**
+     * Actualiza un usuario existente por su nombre de usuario.
+     * @param username nombre de usuario del usuario a actualizar
+     * @param userDetails detalles del usuario a actualizar
+     * @return usuario actualizado
+     * @throws UserNotFoundException si no se encuentra el usuario con el nombre de usuario proporcionado
+     */
     public User updateUserByUsername(String username, User userDetails) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con username " + username));

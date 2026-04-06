@@ -12,6 +12,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Inicializador de datos para entornos de desarrollo.
+ * 
+ * Inserta un usuario administrador por defecto y una lista de géneros si la base
+ * de datos está vacía.
+ */
 @Component
 public class DataSeeder implements ApplicationRunner {
 
@@ -24,6 +30,11 @@ public class DataSeeder implements ApplicationRunner {
     @Autowired
     private GenreRepository genreRepository;
 
+    /**
+     * Ejecuta la semilla de datos al arrancar la aplicación.
+     *  
+     * @param args argumentos de la aplicación (no usados)
+     */
     @Override
     public void run(ApplicationArguments args) {
         if (userRepository.findByUsername("admin").isEmpty()) {

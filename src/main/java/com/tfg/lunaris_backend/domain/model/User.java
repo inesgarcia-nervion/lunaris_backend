@@ -7,9 +7,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+/**
+ * Entidad que representa un usuario en la base de datos.
+ * 
+ * Contiene información sobre el usuario, incluyendo su nombre de usuario, correo electrónico, contraseña y rol.
+ */
 @Entity
 @Table(name = "users", schema = "public")
-@Data // Lombok genera getters, setters, toString, equals, hashCode, etc.
+@Data 
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

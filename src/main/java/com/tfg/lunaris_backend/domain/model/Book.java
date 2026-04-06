@@ -14,9 +14,15 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidad que representa un libro en la base de datos.
+ * 
+ * Contiene información sobre el libro, incluyendo título, imagen de portada, descripción, autor, 
+ * identificador de la API, año de publicación, puntuación y géneros asociados.
+ */
 @Entity
 @Table(name = "books", schema = "public")
-@Data // Lombok genera getters, setters, toString, equals, hashCode, etc.
+@Data 
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

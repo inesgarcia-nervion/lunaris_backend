@@ -25,6 +25,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Configuración de seguridad de la aplicación.
+ *
+ * Define las reglas de autorización, la cadena de filtros JWT y los beans necesarios
+ * para la autenticación.
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -35,6 +41,13 @@ public class SecurityConfig {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    /**
+     * Configura la cadena de seguridad HTTP de Spring Security.
+     *
+     * @param http objeto de configuración de HttpSecurity
+     * @return la `SecurityFilterChain` configurada
+     * @throws Exception si ocurre un error durante la configuración
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -49,8 +62,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/genres/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/genres").permitAll()
                         .requestMatchers(HttpMethod.POST, "/reviews").permitAll()
-                        // Allow public access to OpenLibrary proxy endpoints so searches work without
-                        // login
                         .requestMatchers("/api/openlibrary/**").permitAll()
                         .requestMatchers("/api/saga/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/books/search").permitAll()
@@ -67,6 +78,11 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Bean que proporciona la configuración CORS usada por Spring Security.
+     *
+     * @return fuente de configuración CORS
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -79,16 +95,33 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * Provee el `AuthenticationManager` necesario para la autenticación.
+     *
+     * @param config configuración de autenticación proporcionada por Spring
+     * @return `AuthenticationManager` configurado
+     * @throws Exception si falla la obtención del manager
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * Bean de codificador de contraseñas.
+     *
+     * @return `PasswordEncoder` que utiliza BCrypt
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Proveedor de autenticación que usa `UserDetailsService` y el codificador configurado.
+     *
+     * @return `AuthenticationProvider` configurado
+     */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
