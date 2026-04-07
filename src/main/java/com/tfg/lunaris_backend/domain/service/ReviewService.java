@@ -24,7 +24,8 @@ public class ReviewService {
     @Autowired
     private ReviewRepository reviewRepository;
 
-    private final RestTemplate rest = new RestTemplate();
+    @Autowired
+    private RestTemplate rest;
 
     /**
      * Obtiene todas las reseñas ordenadas por ID de forma descendente.

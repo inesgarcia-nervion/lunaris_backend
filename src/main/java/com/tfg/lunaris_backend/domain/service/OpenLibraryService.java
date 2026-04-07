@@ -63,26 +63,11 @@ public class OpenLibraryService {
             log.info("Buscando en Open Library: {}", url);
 
             OpenLibrarySearchResponseDto response = fetchWithRetries(url);
-            if (response != null) {
-                log.info("Se encontraron {} libros", response.getNumFound());
-                return response;
-            }
-            log.warn("Respuesta nula de OpenLibrary para la consulta: {}", query);
-            OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
-            empty.setNumFound(0);
-            empty.setStart(offset);
-            empty.setDocs(Collections.emptyList());
-            return empty;
+            log.info("Se encontraron {} libros", response.getNumFound());
+            return response;
         } catch (IllegalArgumentException e) {
             log.error("Error de validación: {}", e.getMessage());
             throw e;
-        } catch (RestClientException e) {
-            log.warn("Error en llamada a OpenLibrary (RestClientException): {}", e.getMessage());
-            OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
-            empty.setNumFound(0);
-            empty.setStart(offset);
-            empty.setDocs(Collections.emptyList());
-            return empty;
         } catch (Exception e) {
             log.error("Error inesperado al buscar en Open Library: {}", e.getMessage(), e);
             OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();

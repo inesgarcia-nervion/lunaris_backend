@@ -1,0 +1,68 @@
+package com.tfg.lunaris_backend.domain.service;
+
+import com.tfg.lunaris_backend.data.repository.AuthorRepository;
+import com.tfg.lunaris_backend.domain.model.Author;
+import com.tfg.lunaris_backend.presentation.exceptions.AuthorNotFoundException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class AuthorServiceTest {
+
+    @Mock
+    private AuthorRepository repo;
+
+    @InjectMocks
+    private AuthorService svc;
+
+    @Test
+    void getAllAuthorsDelegates() {
+        when(repo.findAll()).thenReturn(List.of(new Author()));
+        assertFalse(svc.getAllAuthors().isEmpty());
+        verify(repo).findAll();
+    }
+
+    @Test
+    void getAuthorByIdFound() {
+        Author a = new Author(); a.setName("X");
+        when(repo.findById(1L)).thenReturn(Optional.of(a));
+        assertEquals("X", svc.getAuthorById(1L).getName());
+    }
+
+    @Test
+    void getAuthorByIdNotFoundThrows() {
+        when(repo.findById(2L)).thenReturn(Optional.empty());
+        assertThrows(AuthorNotFoundException.class, () -> svc.getAuthorById(2L));
+    }
+
+    @Test
+    void createAndUpdateAndDelete() {
+        Author a = new Author(); a.setName("A");
+        when(repo.save(a)).thenReturn(a);
+        assertSame(a, svc.createAuthor(a));
+
+        Author details = new Author(); details.setName("B"); details.setBooks("bks");
+        when(repo.findById(3L)).thenReturn(Optional.of(a));
+        when(repo.save(a)).thenReturn(a);
+        Author updated = svc.updateAuthor(3L, details);
+        assertEquals("B", updated.getName());
+
+        svc.deleteAuthor(4L);
+        verify(repo).deleteById(4L);
+    }
+
+    @Test
+    void updateAuthor_notFoundThrows() {
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(AuthorNotFoundException.class, () -> svc.updateAuthor(99L, new Author()));
+    }
+}
