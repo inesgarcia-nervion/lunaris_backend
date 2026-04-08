@@ -10,6 +10,7 @@ import com.tfg.lunaris_backend.presentation.exceptions.ReviewNotFoundException;
 import java.util.List;
 import java.util.Map;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
@@ -107,11 +108,18 @@ public class ReviewService {
     }
 
     /**
-     * Crea una nueva reseña.
-     * @param review reseña a crear
+     * Crea una nueva reseña. Si la puntuación está presente, se valida que esté entre 0 y 5.
+     * @param review objeto con los datos de la reseña a crear
      * @return reseña creada
+      * @throws ResponseStatusException si la puntuación no está entre 0 y 5
      */
     public Review createReview(Review review) {
+        if (review.getRating() != null) {
+            double r = review.getRating();
+            if (r < 0.0 || r > 5.0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La puntuación debe estar entre 0 y 5");
+            }
+        }
         return reviewRepository.save(review);
     }
 
@@ -121,12 +129,22 @@ public class ReviewService {
     * @param reviewDetails detalles de la reseña a actualizar
     * @return reseña actualizada
     * @throws ReviewNotFoundException si la reseña no existe
+    * @throws ResponseStatusException si la puntuación no está entre 0 y 5
     */
     public Review updateReview(Long id, Review reviewDetails) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ReviewNotFoundException("Reseña no encontrada con id " + id));
         review.setComment(reviewDetails.getComment());
-        review.setRating(reviewDetails.getRating());
+        // validate rating
+        if (reviewDetails.getRating() != null) {
+            double r = reviewDetails.getRating();
+            if (r < 0.0 || r > 5.0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La puntuación debe estar entre 0 y 5");
+            }
+            review.setRating(reviewDetails.getRating());
+        } else {
+            review.setRating(reviewDetails.getRating());
+        }
         review.setDate(reviewDetails.getDate());
         if (reviewDetails.getBookTitle() != null)
             review.setBookTitle(reviewDetails.getBookTitle());

@@ -3,6 +3,8 @@ package com.tfg.lunaris_backend.domain.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.tfg.lunaris_backend.data.repository.UserRepository;
 import com.tfg.lunaris_backend.domain.model.User;
@@ -45,11 +47,16 @@ public class UserService {
 
     /**
      * Crea un nuevo usuario.
-     * @param user usuario a crear
+     * @param user objeto con los datos del usuario a crear
      * @return usuario creado
      */
     public User createUser(User user) {
-        // encode password before saving
+        if (user.getUsername() != null && userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
+        }
+        if (user.getEmail() != null && userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+        }
         if (user.getPassword() != null) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
