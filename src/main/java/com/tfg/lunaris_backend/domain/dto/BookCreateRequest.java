@@ -25,4 +25,6 @@ public class BookCreateRequest {
     private String source;
     private Long userId;
     private List<Long> genreIds;
+    private Long sagaId;
+    private String sagaName;
 }
