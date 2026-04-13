@@ -44,4 +44,13 @@ public interface BookRepository extends JpaRepository<Book, Long> {
      */
     Optional<Book> findByApiId(String apiId);
 
+    /**
+     * Busca un libro por título y autor (sin distinguir mayúsculas/minúsculas).
+     *
+     * @param title  título del libro
+     * @param author autor del libro
+     * @return optional con el libro si existe
+     */
+    Optional<Book> findByTitleIgnoreCaseAndAuthorIgnoreCase(String title, String author);
+
 }

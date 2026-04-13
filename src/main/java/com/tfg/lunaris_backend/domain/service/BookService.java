@@ -10,6 +10,7 @@ import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
 import com.tfg.lunaris_backend.domain.model.Book;
 import com.tfg.lunaris_backend.domain.model.Genre;
 import com.tfg.lunaris_backend.presentation.exceptions.BookNotFoundException;
+import com.tfg.lunaris_backend.presentation.exceptions.DuplicateBookException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +67,12 @@ public class BookService {
      * @return libro creado
      */
     public Book createBook(BookCreateRequest request) {
+        if (bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(
+                request.getTitle(), request.getAuthor()).isPresent()) {
+            throw new DuplicateBookException(
+                "Ya existe un libro con el título '" + request.getTitle() +
+                "' y el autor '" + request.getAuthor() + "'");
+        }
         Book book = new Book();
         book.setTitle(request.getTitle());
         book.setAuthor(request.getAuthor());
