@@ -21,6 +21,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para la clase BookService.
+ */
 @ExtendWith(MockitoExtension.class)
 class BookServiceTest {
 
@@ -33,6 +36,9 @@ class BookServiceTest {
     @InjectMocks
     private BookService svc;
 
+    /**
+     * Verifica los flujos básicos y la búsqueda por ID de API.
+     */
     @Test
     void basicFlowsAndFindByApiId() {
         Book b = new Book(); b.setTitle("T"); b.setApiId("A1");
@@ -49,12 +55,18 @@ class BookServiceTest {
         assertTrue(svc.findByApiId("A1").isPresent());
     }
 
+    /**
+     * Verifica que se lanza una excepción cuando se intenta obtener un libro por un ID que no existe.
+     */
     @Test
     void getBookByIdNotFoundThrows() {
         when(bookRepo.findById(2L)).thenReturn(Optional.empty());
         assertThrows(BookNotFoundException.class, () -> svc.getBookById(2L));
     }
 
+    /**
+     * Verifica que se pueden crear libros con géneros y importar desde OpenLibrary correctamente.
+     */
     @Test
     void createBookWithGenresAndImport() {
         BookCreateRequest req = new BookCreateRequest();
@@ -68,7 +80,6 @@ class BookServiceTest {
         Book created = svc.createBook(req);
         assertEquals("New", created.getTitle());
 
-        // importFromOpenLibrary when existing present
         OpenLibraryBookDto dto = new OpenLibraryBookDto();
         dto.setKey("K1"); dto.setTitle("T1"); dto.setAuthorNames(List.of("A1"));
         Book existing = new Book(); existing.setApiId("K1");
@@ -77,6 +88,9 @@ class BookServiceTest {
         assertEquals(existing, imp);
     }
 
+    /**
+     * Verifica que se pueden actualizar y eliminar libros correctamente.
+     */
     @Test
     void updateAndDelete() {
         Book b = new Book(); b.setTitle("Old");
@@ -90,6 +104,9 @@ class BookServiceTest {
         verify(bookRepo).deleteById(4L);
     }
 
+    /**
+     * Verifica que la búsqueda de libros se delega correctamente al repositorio.
+     */
     @Test
     void searchBooksDelegates() {
         when(bookRepo.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase("q","q"))
@@ -97,6 +114,9 @@ class BookServiceTest {
         assertFalse(svc.searchBooks("q").isEmpty());
     }
 
+    /**
+     * Verifica que la búsqueda de libros con paginación se delega correctamente al repositorio.
+     */
     @Test
     void searchBooksWithPageable() {
         when(bookRepo.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(eq("q"), eq("q"),
@@ -105,6 +125,9 @@ class BookServiceTest {
         assertFalse(svc.searchBooks("q", Pageable.unpaged()).isEmpty());
     }
 
+    /**
+     * Verifica que se pueden importar libros desde OpenLibrary correctamente.
+     */
     @Test
     void importFromOpenLibrary_newBook_creates() {
         OpenLibraryBookDto dto = new OpenLibraryBookDto();
@@ -120,6 +143,9 @@ class BookServiceTest {
         assertEquals(4.5, created.getScore());
     }
 
+    /**
+     * Verifica que se pueden importar libros desde OpenLibrary correctamente cuando la descripción y la puntuación son nulas.
+     */
     @Test
     void importFromOpenLibrary_newBook_nullDescriptionAndScore() {
         OpenLibraryBookDto dto = new OpenLibraryBookDto();
@@ -134,6 +160,9 @@ class BookServiceTest {
         assertEquals(0.0, b.getScore());
     }
 
+    /**
+     * Verifica que se pueden crear libros con un ID de API explícito.
+     */
     @Test
     void createBook_withExplicitApiId() {
         BookCreateRequest req = new BookCreateRequest();
@@ -144,9 +173,11 @@ class BookServiceTest {
         assertEquals("myApiId", created.getApiId());
     }
 
+    /**
+     * Verifica que se generan IDs de API personalizados cuando el ID proporcionado está en blanco.
+     */
     @Test
     void createBook_withBlankApiId_generatesCustomApiId() {
-        // apiId is not null but isBlank() → "custom-..." generated
         BookCreateRequest req = new BookCreateRequest();
         req.setTitle("T"); req.setApiId("   ");
         when(bookRepo.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -155,6 +186,9 @@ class BookServiceTest {
         assertTrue(created.getApiId().startsWith("custom-"));
     }
 
+    /**
+     * Verifica que se lanza una excepción cuando se intenta actualizar un libro que no existe.
+     */
     @Test
     void updateBookNotFoundThrows() {
         when(bookRepo.findById(99L)).thenReturn(Optional.empty());

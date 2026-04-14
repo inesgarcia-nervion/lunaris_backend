@@ -18,6 +18,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para {@link UserListService}.
+ */
 @ExtendWith(MockitoExtension.class)
 class UserListServiceTest {
 
@@ -27,6 +30,9 @@ class UserListServiceTest {
     @InjectMocks
     private UserListService svc;
 
+    /**
+     * Verifica los flujos principales de {@link UserListService}.
+     */
     @Test
     void listFlows() {
         UserList ul = new UserList(); ul.setName("L");
@@ -52,12 +58,20 @@ class UserListServiceTest {
         verify(repo).deleteById(3L);
     }
 
+    /**
+     * Verifica que se lanza una excepción cuando no se encuentra una lista de usuarios por ID.
+     * @throws Exception si ocurre un error durante el test
+     */
     @Test
     void getUserListByIdNotFoundThrows() {
         when(repo.findById(9L)).thenReturn(Optional.empty());
         assertThrows(UserListNotFoundException.class, () -> svc.getUserListById(9L));
     }
 
+    /**
+     * Verifica que se lanza una excepción cuando se intenta actualizar una lista de usuarios que no existe.
+     * @throws Exception si ocurre un error durante el test
+     */
     @Test
     void updateUserList_notFoundThrows() {
         when(repo.findById(99L)).thenReturn(Optional.empty());

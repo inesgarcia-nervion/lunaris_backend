@@ -5,8 +5,14 @@ import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ExceptionsTest {
+/**
+ * Test para {@link GlobalExceptionHandler}.
+ */
+class ExceptionsTest {
 
+    /**
+     * Verifica que los mensajes de las excepciones y el manejador global funcionan correctamente.
+     */
     @Test
     void exceptionMessagesAndHandler() {
         BookNotFoundException be = new BookNotFoundException("b not found");

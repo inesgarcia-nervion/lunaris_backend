@@ -4,8 +4,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.time.LocalDateTime;
 
+/**
+ * Test para la clase PasswordResetToken.
+ */
 class PasswordResetTokenTest {
 
+    /**
+     * Verifica que el constructor establece correctamente la fecha de expiración y el usuario.
+     */
     @Test
     void constructorSetsExpiryAndUser() {
         User u = new User();
@@ -18,6 +24,9 @@ class PasswordResetTokenTest {
         assertFalse(t.isExpired());
     }
 
+    /**
+     * Verifica que el método isExpired devuelve true cuando la fecha de expiración está en el pasado.
+     */
     @Test
     void expiredWhenDateInPast() {
         User u = new User();

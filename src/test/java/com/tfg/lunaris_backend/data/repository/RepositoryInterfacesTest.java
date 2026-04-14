@@ -5,6 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+/**
+ * Test para las interfaces de repositorio.
+ */
 class RepositoryInterfacesTest {
 
     private static final String[] REPOS = new String[]{
@@ -20,6 +29,9 @@ class RepositoryInterfacesTest {
             "com.tfg.lunaris_backend.data.repository.AuthorRepository"
     };
 
+    /**
+     * Verifica que las interfaces de repositorio extienden JpaRepository.
+     */
     @Test
     void repositoryInterfaces_extendJpaRepository() throws Exception {
         for (String name : REPOS) {
@@ -29,52 +41,55 @@ class RepositoryInterfacesTest {
         }
     }
 
+    /**
+     * Verifica que las interfaces de repositorio declaran los métodos esperados.
+     * @throws Exception si ocurre un error al cargar las clases o acceder a los métodos
+     */
     @Test
     void repositoryInterfaces_declareExpectedMethods() throws Exception {
-        // map of repository to expected method name -> parameter counts
-        java.util.Map<String, java.util.Map<String, java.util.List<Integer>>> expectations = new java.util.HashMap<>();
+        Map<String, Map<String, List<Integer>>> expectations = new HashMap<>();
 
-        expectations.put("com.tfg.lunaris_backend.data.repository.UserRepository", java.util.Map.of(
-            "findByUsername", java.util.List.of(1),
-            "findByEmail", java.util.List.of(1)
+        expectations.put("com.tfg.lunaris_backend.data.repository.UserRepository", Map.of(
+            "findByUsername", List.of(1),
+            "findByEmail", List.of(1)
         ));
 
-        expectations.put("com.tfg.lunaris_backend.data.repository.SagaRepository", java.util.Map.of(
-            "findByName", java.util.List.of(1),
-            "findByBookTitleIgnoreCase", java.util.List.of(1)
+        expectations.put("com.tfg.lunaris_backend.data.repository.SagaRepository", Map.of(
+            "findByName", List.of(1),
+            "findByBookTitleIgnoreCase", List.of(1)
         ));
 
-        expectations.put("com.tfg.lunaris_backend.data.repository.ReviewRepository", java.util.Map.of(
-            "findByBookApiId", java.util.List.of(1),
-            "findAllByOrderByIdDesc", java.util.List.of(0)
+        expectations.put("com.tfg.lunaris_backend.data.repository.ReviewRepository", Map.of(
+            "findByBookApiId", List.of(1),
+            "findAllByOrderByIdDesc", List.of(0)
         ));
 
-        expectations.put("com.tfg.lunaris_backend.data.repository.PostRepository", java.util.Map.of(
-            "findAllByOrderByIdDesc", java.util.List.of(0)
+        expectations.put("com.tfg.lunaris_backend.data.repository.PostRepository", Map.of(
+            "findAllByOrderByIdDesc", List.of(0)
         ));
 
-        expectations.put("com.tfg.lunaris_backend.data.repository.PasswordResetTokenRepository", java.util.Map.of(
-            "findByToken", java.util.List.of(1),
-            "deleteByUser", java.util.List.of(1)
+        expectations.put("com.tfg.lunaris_backend.data.repository.PasswordResetTokenRepository", Map.of(
+            "findByToken", List.of(1),
+            "deleteByUser", List.of(1)
         ));
 
-        expectations.put("com.tfg.lunaris_backend.data.repository.GenreRepository", java.util.Map.of(
-            "findByNameIgnoreCase", java.util.List.of(1)
+        expectations.put("com.tfg.lunaris_backend.data.repository.GenreRepository", Map.of(
+            "findByNameIgnoreCase", List.of(1)
         ));
 
-        expectations.put("com.tfg.lunaris_backend.data.repository.BookRepository", java.util.Map.of(
-            "findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase", java.util.List.of(2, 3),
-            "findByApiId", java.util.List.of(1)
+        expectations.put("com.tfg.lunaris_backend.data.repository.BookRepository", Map.of(
+            "findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase", List.of(2, 3),
+            "findByApiId", List.of(1)
         ));
 
         expectations.forEach((repo, methods) -> {
             try {
                 Class<?> cls = Class.forName(repo);
-                for (java.util.Map.Entry<String, java.util.List<Integer>> e : methods.entrySet()) {
+                for (Entry<String, List<Integer>> e : methods.entrySet()) {
                     String methodName = e.getKey();
-                    java.util.List<Integer> expectedParamsList = e.getValue();
+                    List<Integer> expectedParamsList = e.getValue();
                     boolean foundAny = false;
-                    for (java.lang.reflect.Method m : cls.getDeclaredMethods()) {
+                    for (Method m : cls.getDeclaredMethods()) {
                         if (!m.getName().equals(methodName)) continue;
                         int p = m.getParameterCount();
                         if (expectedParamsList.contains(p)) {

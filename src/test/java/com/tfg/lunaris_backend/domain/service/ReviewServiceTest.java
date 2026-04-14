@@ -8,13 +8,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para la clase ReviewService.
+ */
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
 
@@ -22,11 +30,14 @@ class ReviewServiceTest {
     private ReviewRepository repo;
 
     @Mock
-    private org.springframework.web.client.RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
     @InjectMocks
     private ReviewService svc;
 
+    /**
+     * Verifica que se retornan todas las reseñas y las reseñas por ID de libro sin enriquecimiento.
+     */
     @Test
     void getAllAndByBookId_withoutEnrichment() {
         Review r = new Review(); r.setBookApiId(null); r.setBookTitle("T"); r.setCoverUrl("C");
@@ -37,6 +48,9 @@ class ReviewServiceTest {
         assertTrue(svc.getReviewsByBookApiId("X").isEmpty());
     }
 
+    /**
+     * Verifica que se retorna la reseña por ID cuando existe y lanza una excepción cuando no existe.
+     */
     @Test
     void getReviewByIdFoundAndNotFound() {
         Review r = new Review(); r.setComment("c");
@@ -47,6 +61,9 @@ class ReviewServiceTest {
         assertThrows(ReviewNotFoundException.class, () -> svc.getReviewById(2L));
     }
 
+    /**
+     * Verifica la creación, actualización y eliminación de reseñas.
+     */
     @Test
     void createUpdateDelete() {
         Review r = new Review(); r.setComment("x");
@@ -63,6 +80,9 @@ class ReviewServiceTest {
         verify(repo).deleteById(4L);
     }
 
+    /**
+     * Verifica que se llama a OpenLibrary para enriquecer los datos del libro y se guarda la reseña actualizada.
+     */
     @Test
     void enrichMissingBookData_callsOpenLibraryAndSaves() {
         Review r = new Review();
@@ -72,13 +92,13 @@ class ReviewServiceTest {
 
         when(repo.findAllByOrderByIdDesc()).thenReturn(List.of(r));
 
-        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("title", "BookTitle");
-        body.put("covers", java.util.List.of(111));
+        body.put("covers", List.of(111));
 
-        org.springframework.http.ResponseEntity<java.util.Map> resp = org.springframework.http.ResponseEntity.ok(body);
+        ResponseEntity<Map> resp = ResponseEntity.ok(body);
 
-        when(restTemplate.getForEntity(contains("OL123W"), eq(java.util.Map.class))).thenReturn(resp);
+        when(restTemplate.getForEntity(contains("OL123W"), eq(Map.class))).thenReturn(resp);
 
         when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -89,9 +109,11 @@ class ReviewServiceTest {
         verify(repo).save(any());
     }
 
+    /**
+     * Verifica que se omite el enriquecimiento de datos cuando el workKey no es válido.
+     */
     @Test
     void enrichMissingBookData_nonValidWorkKey_skipped() {
-        // workKey that doesn't start with OL or doesn't end with W → skip
         Review r = new Review();
         r.setBookApiId("invalid-id");
         r.setBookTitle(null);
@@ -104,6 +126,9 @@ class ReviewServiceTest {
         verify(restTemplate, never()).getForEntity(anyString(), any());
     }
 
+    /**
+     * Verifica que se utiliza una URL de respaldo cuando la lista de portadas está vacía.
+     */
     @Test
     void enrichMissingBookData_coversEmptyList_usesFallbackUrl() {
         Review r = new Review();
@@ -113,12 +138,12 @@ class ReviewServiceTest {
 
         when(repo.findAllByOrderByIdDesc()).thenReturn(List.of(r));
 
-        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("title", "TitleX");
-        body.put("covers", java.util.List.of()); // empty covers
+        body.put("covers", List.of()); 
 
-        org.springframework.http.ResponseEntity<java.util.Map> resp = org.springframework.http.ResponseEntity.ok(body);
-        when(restTemplate.getForEntity(contains("OL456W"), eq(java.util.Map.class))).thenReturn(resp);
+        ResponseEntity<Map> resp = ResponseEntity.ok(body);
+        when(restTemplate.getForEntity(contains("OL456W"), eq(Map.class))).thenReturn(resp);
         when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
 
         var res = svc.getAllReviews();
@@ -126,6 +151,9 @@ class ReviewServiceTest {
         assertTrue(res.get(0).getCoverUrl().contains("OL456W"));
     }
 
+    /**
+     * Verifica que se omite el enriquecimiento de datos cuando la respuesta de OpenLibrary no es OK.
+     */
     @Test
     void enrichMissingBookData_nonOkResponse_skipped() {
         Review r = new Review();
@@ -135,23 +163,28 @@ class ReviewServiceTest {
 
         when(repo.findAllByOrderByIdDesc()).thenReturn(List.of(r));
 
-        org.springframework.http.ResponseEntity<java.util.Map> resp =
-                org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
+        ResponseEntity<Map> resp =
+                ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .build();
-        when(restTemplate.getForEntity(contains("OL789W"), eq(java.util.Map.class))).thenReturn(resp);
+        when(restTemplate.getForEntity(contains("OL789W"), eq(Map.class))).thenReturn(resp);
 
         svc.getAllReviews();
 
         verify(repo, never()).save(any());
     }
 
+    /**
+     * Verifica que se omite el enriquecimiento de datos cuando la lista de reseñas es nula.
+     */
     @Test
     void enrichMissingBookData_nullReviewsList_returnsEarly() {
-        // passing null/empty list should return early without error
         when(repo.findAllByOrderByIdDesc()).thenReturn(List.of());
         assertTrue(svc.getAllReviews().isEmpty());
     }
 
+    /**
+     * Verifica que se omite la actualización del título y la portada cuando son nulos.
+     */
     @Test
     void updateReview_nullBookTitleAndCoverUrl_notUpdated() {
         Review r = new Review();
@@ -165,8 +198,8 @@ class ReviewServiceTest {
         Review details = new Review();
         details.setComment("new-comment");
         details.setRating(3.0);
-        details.setBookTitle(null); // should NOT overwrite
-        details.setCoverUrl(null);  // should NOT overwrite
+        details.setBookTitle(null); 
+        details.setCoverUrl(null); 
 
         Review updated = svc.updateReview(10L, details);
         assertEquals("original-title", updated.getBookTitle());
@@ -174,12 +207,18 @@ class ReviewServiceTest {
         assertEquals("new-comment", updated.getComment());
     }
 
+    /**
+     * Verifica que se lanza una excepción cuando la reseña no se encuentra.
+     */
     @Test
     void updateReviewNotFoundThrows() {
         when(repo.findById(99L)).thenReturn(Optional.empty());
         assertThrows(ReviewNotFoundException.class, () -> svc.updateReview(99L, new Review()));
     }
 
+    /**
+     * Verifica que se omite el enriquecimiento de datos cuando ocurre una excepción en la llamada REST.
+     */
     @Test
     void enrichMissingBookData_restThrowsException_isIgnored() {
         Review r = new Review();
@@ -188,15 +227,17 @@ class ReviewServiceTest {
         r.setCoverUrl(null);
 
         when(repo.findAllByOrderByIdDesc()).thenReturn(List.of(r));
-        when(restTemplate.getForEntity(anyString(), eq(java.util.Map.class)))
+        when(restTemplate.getForEntity(anyString(), eq(Map.class)))
                 .thenThrow(new RuntimeException("connection refused"));
 
-        // Should not throw - exception is swallowed
         var result = svc.getAllReviews();
         assertFalse(result.isEmpty());
         verify(repo, never()).save(any());
     }
 
+    /**
+     * Verifica que se omite el enriquecimiento de datos cuando el cuerpo de la respuesta es nulo.
+     */
     @Test
     void enrichMissingBookData_nullBody_skipped() {
         Review r = new Review();
@@ -205,14 +246,17 @@ class ReviewServiceTest {
         r.setCoverUrl(null);
 
         when(repo.findAllByOrderByIdDesc()).thenReturn(List.of(r));
-        org.springframework.http.ResponseEntity<java.util.Map> resp =
-                org.springframework.http.ResponseEntity.ok(null); // null body
-        when(restTemplate.getForEntity(anyString(), eq(java.util.Map.class))).thenReturn(resp);
+        ResponseEntity<Map> resp =
+                ResponseEntity.ok(null); 
+        when(restTemplate.getForEntity(anyString(), eq(Map.class))).thenReturn(resp);
 
         svc.getAllReviews();
         verify(repo, never()).save(any());
     }
 
+    /**
+     * Verifica que se actualiza el título y la portada cuando no son nulos.
+     */
     @Test
     void updateReview_withNonNullBookTitleAndCoverUrl_overwritesExisting() {
         Review r = new Review();
@@ -226,8 +270,8 @@ class ReviewServiceTest {
         Review details = new Review();
         details.setComment("new");
         details.setRating(5.0);
-        details.setBookTitle("new-title");   // not null → covers line 132
-        details.setCoverUrl("new-cover");    // not null → covers line 134
+        details.setBookTitle("new-title");  
+        details.setCoverUrl("new-cover");  
 
         Review updated = svc.updateReview(20L, details);
         assertEquals("new-title", updated.getBookTitle());

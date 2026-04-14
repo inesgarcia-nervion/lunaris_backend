@@ -3,8 +3,13 @@ package com.tfg.lunaris_backend.domain.model;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test para la clase Book.
+ */
 class BookTest {
-
+    /**
+    * Verifica que se pueden establecer y obtener las propiedades de la clase, incluyendo los géneros.
+    */
     @Test
     void gettersAndSettersAndGenres() {
         Book b = new Book();

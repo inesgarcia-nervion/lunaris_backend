@@ -4,8 +4,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
+/**
+ * Test para la clase OpenLibraryBookDto.
+ */
 class OpenLibraryBookDtoTest {
 
+    /**
+     * Verifica que se obtiene el primer autor y la URL de la portada correctamente.
+     */
     @Test
     void firstAuthorAndCoverUrl() {
         OpenLibraryBookDto d = new OpenLibraryBookDto();
@@ -22,6 +28,9 @@ class OpenLibraryBookDtoTest {
         assertNull(d.getCoverUrl());
     }
 
+    /**
+     * Verifica que se obtiene null cuando la lista de autores es null.
+     */
     @Test
     void nullAuthorNames_returnsNull() {
         OpenLibraryBookDto d = new OpenLibraryBookDto();

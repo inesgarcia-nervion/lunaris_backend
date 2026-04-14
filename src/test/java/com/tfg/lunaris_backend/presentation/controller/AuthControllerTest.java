@@ -16,15 +16,23 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class AuthControllerTest {
 
+/**
+ * Test para {@link AuthController}.
+ */
+class AuthControllerTest {
+
+    /**
+     * Verifica los flujos principales de login, incluyendo el caso exitoso y el caso de autenticación fallida.
+     * También verifica que si el usuario no se encuentra en el repositorio, se le asigna el rol "USER" por defecto.
+     * @throws Exception si ocurre un error durante el test
+     */
     @Test
     void loginSuccessAndFailure() {
         AuthenticationManager am = mock(AuthenticationManager.class);
@@ -53,12 +61,16 @@ public class AuthControllerTest {
         assertEquals(200, r.getStatusCode().value());
         assertEquals("tok", ((AuthResponse) r.getBody()).getToken());
 
-        // failure
         when(am.authenticate(Mockito.any())).thenThrow(new AuthenticationException("bad"){});
         ResponseEntity<?> rf = c.login(req);
         assertEquals(401, rf.getStatusCode().value());
     }
 
+    /**
+     * Verifica los flujos principales de solicitud de restablecimiento de contraseña, incluyendo los casos de éxito,
+     * correo no encontrado y otros errores.
+     * @throws Exception si ocurre un error durante el test
+     */
     @Test
     void forgotPasswordBranches() {
         AuthenticationManager am = mock(AuthenticationManager.class);
@@ -88,6 +100,11 @@ public class AuthControllerTest {
         assertEquals(500, r3.getStatusCode().value());
     }
 
+    /**
+     * Verifica los flujos principales de validación de token y restablecimiento de contraseña, incluyendo los casos de éxito,
+     * token inválido y contraseña demasiado corta.
+     * @throws Exception si ocurre un error durante el test
+     */
     @Test
     void validateTokenAndResetPassword() {
         AuthenticationManager am = mock(AuthenticationManager.class);
@@ -110,7 +127,6 @@ public class AuthControllerTest {
         NewPasswordRequest nr = new NewPasswordRequest();
         nr.setToken("t");
         nr.setNewPassword("123");
-        // too short
         assertEquals(400, c.resetPassword(nr).getStatusCode().value());
 
         nr.setNewPassword("123456");
@@ -121,6 +137,11 @@ public class AuthControllerTest {
         assertEquals(400, c.resetPassword(nr).getStatusCode().value());
     }
 
+
+    /**
+     * Verifica que si el usuario no se encuentra en el repositorio, se le asigna el rol "USER" por defecto.
+     * @throws Exception si ocurre un error durante el test
+     */
     @Test
     void login_userNotInRepo_defaultsRoleUser() {
         AuthenticationManager am = mock(AuthenticationManager.class);
@@ -139,7 +160,7 @@ public class AuthControllerTest {
         req.setPassword("p");
 
         when(am.authenticate(Mockito.any())).thenReturn(null);
-        when(ur.findByUsername("ghost")).thenReturn(Optional.empty()); // not found → role "USER"
+        when(ur.findByUsername("ghost")).thenReturn(Optional.empty());
         when(ju.generateToken("ghost", "USER")).thenReturn("tok-user");
 
         ResponseEntity<?> r = c.login(req);
@@ -147,6 +168,11 @@ public class AuthControllerTest {
         assertEquals("tok-user", ((AuthResponse) r.getBody()).getToken());
     }
 
+
+    /**
+     * Verifica que si el usuario tiene un rol nulo, se le asigna el rol "USER" por defecto.
+     * @throws Exception si ocurre un error durante el test
+     */
     @Test
     void login_userWithNullRole_defaultsRoleUser() {
         AuthenticationManager am = mock(AuthenticationManager.class);
@@ -164,7 +190,7 @@ public class AuthControllerTest {
         req.setUsername("norole");
         req.setPassword("p");
 
-        User u = new User(); u.setUsername("norole"); u.setRole(null); // null role
+        User u = new User(); u.setUsername("norole"); u.setRole(null); 
         when(am.authenticate(Mockito.any())).thenReturn(null);
         when(ur.findByUsername("norole")).thenReturn(Optional.of(u));
         when(ju.generateToken("norole", "USER")).thenReturn("tok-default");

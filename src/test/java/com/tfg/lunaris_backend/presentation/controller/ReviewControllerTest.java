@@ -7,14 +7,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ReviewControllerTest {
 
+/**
+ * Test para {@link ReviewController}.
+ */
+class ReviewControllerTest {
+
+    /**
+     * Verifica que los métodos del controlador delegan correctamente en el servicio y que la eliminación funciona.
+     */
     @Test
     void delegatesAndDelete() {
         ReviewService svc = mock(ReviewService.class);
@@ -43,13 +52,16 @@ public class ReviewControllerTest {
 
         Authentication auth = mock(Authentication.class);
         when(auth.getName()).thenReturn("revuser");
-        when(auth.getAuthorities()).thenReturn(java.util.Collections.emptyList());
+        when(auth.getAuthorities()).thenReturn(Collections.emptyList());
         when(svc.getReviewById(6L)).thenReturn(r);
 
         c.deleteReview(6L, auth);
         verify(svc).deleteReview(6L);
     }
 
+    /**
+     * Verifica que un administrador puede eliminar una reseña.
+     */
     @Test
     void deleteReview_asAdmin_succeeds() {
         ReviewService svc = mock(ReviewService.class);
@@ -68,6 +80,9 @@ public class ReviewControllerTest {
         verify(svc).deleteReview(7L);
     }
 
+    /**
+     * Verifica que un usuario diferente no puede eliminar una reseña.
+     */
     @Test
     void deleteReview_differentUser_throwsForbidden() {
         ReviewService svc = mock(ReviewService.class);
@@ -79,13 +94,16 @@ public class ReviewControllerTest {
 
         Authentication auth = mock(Authentication.class);
         when(auth.getName()).thenReturn("notowner");
-        when(auth.getAuthorities()).thenReturn(java.util.Collections.emptyList());
+        when(auth.getAuthorities()).thenReturn(Collections.emptyList());
 
-        var ex = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+        var ex = assertThrows(ResponseStatusException.class,
                 () -> c.deleteReview(8L, auth));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
+    /**
+     * Verifica que la eliminación de una reseña falla si la autenticación es nula.
+     */
     @Test
     void deleteReview_authNull_throwsForbidden() {
         ReviewService svc = mock(ReviewService.class);
@@ -95,7 +113,7 @@ public class ReviewControllerTest {
         Review r = new Review(); r.setId(9L); r.setUsername("owner");
         when(svc.getReviewById(9L)).thenReturn(r);
 
-        var ex = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+        var ex = assertThrows(ResponseStatusException.class,
                 () -> c.deleteReview(9L, null));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }

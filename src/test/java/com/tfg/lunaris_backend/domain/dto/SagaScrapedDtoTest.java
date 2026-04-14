@@ -4,8 +4,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
+/**
+ * Test para la clase SagaScrapedDto.
+ */
 class SagaScrapedDtoTest {
 
+    /**
+     * Verifica que se pueden establecer y obtener las propiedades de la clase.
+     */
     @Test
     void innerEntryAndContainer() {
         SagaScrapedDto.SagaBookEntry e = new SagaScrapedDto.SagaBookEntry("T","A","1",100,200,"url");
@@ -21,6 +27,9 @@ class SagaScrapedDtoTest {
         assertEquals(1, dto.getBooks().size());
     }
 
+    /**
+     * Verifica que los constructores sin argumentos funcionan correctamente.
+     */
     @Test
     void noArgsConstructors() {
         SagaScrapedDto dto = new SagaScrapedDto();

@@ -14,6 +14,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para la clase CustomUserDetailsService.
+ */
 @ExtendWith(MockitoExtension.class)
 class CustomUserDetailsServiceTest {
 
@@ -23,6 +26,9 @@ class CustomUserDetailsServiceTest {
     @InjectMocks
     private CustomUserDetailsService svc;
 
+    /**
+     * Verifica que se puede cargar un usuario por nombre de usuario correctamente y que se lanza una excepción cuando no se encuentra.
+     */
     @Test
     void loadUserByUsername_successAndNotFound() {
         User u = new User(); u.setUsername("u"); u.setPassword("p"); u.setRole("admin");
@@ -35,6 +41,9 @@ class CustomUserDetailsServiceTest {
         assertThrows(UsernameNotFoundException.class, () -> svc.loadUserByUsername("x"));
     }
 
+    /**
+     * Verifica que se asigna el rol por defecto "USER" cuando el rol del usuario es nulo.
+     */
     @Test
     void loadUserByUsername_nullRole_defaultsToUser() {
         User u = new User(); u.setUsername("u2"); u.setPassword("p2"); u.setRole(null);
@@ -43,6 +52,9 @@ class CustomUserDetailsServiceTest {
         assertTrue(ud.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
     }
 
+    /**
+     * Verifica que se asigna el rol por defecto "USER" cuando el rol del usuario está en blanco.
+     */
     @Test
     void loadUserByUsername_blankRole_defaultsToUser() {
         User u = new User(); u.setUsername("u3"); u.setPassword("p3"); u.setRole("   ");

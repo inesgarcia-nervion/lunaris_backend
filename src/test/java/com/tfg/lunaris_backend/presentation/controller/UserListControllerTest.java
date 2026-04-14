@@ -13,7 +13,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class UserListControllerTest {
+/**
+ * Test para {@link UserListController}.
+ */
+class UserListControllerTest {
+
+    /**
+     * Verifica que los métodos del controlador delegan correctamente en el servicio.
+     */
     @Test
     void delegates() {
         UserListService svc = mock(UserListService.class);

@@ -6,8 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -18,13 +18,21 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class JwtAuthenticationFilterTest {
+/**
+ * Test para {@link JwtAuthenticationFilter}.
+ */
+class JwtAuthenticationFilterTest {
 
     @AfterEach
     void cleanup() {
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        SecurityContextHolder.clearContext();
     }
 
+    /**
+     * Verifica que un token válido establece la autenticación en el contexto de seguridad.
+     * @throws ServletException si ocurre un error de servlet
+     * @throws IOException si ocurre un error de E/S
+     */
     @Test
     void validTokenSetsAuthentication() throws ServletException, IOException {
         JwtUtils ju = new JwtUtils();
@@ -50,10 +58,15 @@ public class JwtAuthenticationFilterTest {
 
         filter.doFilterInternal(req, res, chain);
 
-        assertNotNull(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         verify(chain).doFilter(req, res);
     }
 
+    /**
+     * Verifica que si no hay encabezado de autorización, no se establece la autenticación y se continúa con la cadena de filtros.
+     * @throws ServletException si ocurre un error de servlet
+     * @throws IOException si ocurre un error de E/S
+     */
     @Test
     void noAuthorizationHeader_doesNotSetAuthentication() throws ServletException, IOException {
         JwtAuthenticationFilter filter = new JwtAuthenticationFilter();
@@ -70,10 +83,16 @@ public class JwtAuthenticationFilterTest {
 
         filter.doFilterInternal(req, res, chain);
 
-        assertNull(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
         verify(chain).doFilter(req, res);
     }
 
+    /**
+     * Verifica que si el encabezado de autorización no comienza con "Bearer ", no se establece la autenticación y 
+     * se continúa con la cadena de filtros.
+     * @throws ServletException si ocurre un error de servlet
+     * @throws IOException si ocurre un error de E/S
+     */
     @Test
     void headerNotBearer_doesNotSetAuthentication() throws ServletException, IOException {
         JwtAuthenticationFilter filter = new JwtAuthenticationFilter();
@@ -90,10 +109,16 @@ public class JwtAuthenticationFilterTest {
 
         filter.doFilterInternal(req, res, chain);
 
-        assertNull(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
         verify(chain).doFilter(req, res);
     }
 
+    /**
+     * Verifica que si el token es inválido y lanza una excepción, no se establece la autenticación y se 
+     * continúa con la cadena de filtros.
+     * @throws ServletException si ocurre un error de servlet
+     * @throws IOException si ocurre un error de E/S
+     */
     @Test
     void validateTokenThrowsException_doesNotSetAuthentication() throws ServletException, IOException {
         JwtAuthenticationFilter filter = new JwtAuthenticationFilter();
@@ -111,7 +136,7 @@ public class JwtAuthenticationFilterTest {
 
         filter.doFilterInternal(req, res, chain);
 
-        assertNull(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
         verify(chain).doFilter(req, res);
     }
 }
