@@ -5,6 +5,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.RestClientException;
 import java.util.Collections;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ArrayList;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.tfg.lunaris_backend.domain.dto.OpenLibrarySearchResponseDto;
@@ -63,6 +67,39 @@ public class OpenLibraryService {
             log.info("Buscando en Open Library: {}", url);
 
             OpenLibrarySearchResponseDto response = fetchWithRetries(url);
+
+            // Si la búsqueda general no devuelve resultados, intentar búsquedas por título y autor
+            if (response != null && (response.getDocs() == null || response.getDocs().isEmpty())) {
+                log.info("Búsqueda general en OpenLibrary sin resultados, intentando fallback por título y autor para: {}", query);
+                try {
+                    OpenLibrarySearchResponseDto titleResp = searchByTitle(query, limit, offset);
+                    OpenLibrarySearchResponseDto authorResp = searchByAuthor(query, limit, offset);
+
+                    Map<String, com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto> mergedMap = new LinkedHashMap<>();
+                    if (titleResp != null && titleResp.getDocs() != null) {
+                        for (com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto d : titleResp.getDocs()) {
+                            if (d != null && d.getKey() != null) mergedMap.putIfAbsent(d.getKey(), d);
+                        }
+                    }
+                    if (authorResp != null && authorResp.getDocs() != null) {
+                        for (com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto d : authorResp.getDocs()) {
+                            if (d != null && d.getKey() != null) mergedMap.putIfAbsent(d.getKey(), d);
+                        }
+                    }
+
+                    OpenLibrarySearchResponseDto merged = new OpenLibrarySearchResponseDto();
+                    List<com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto> docs = new ArrayList<>(mergedMap.values());
+                    merged.setDocs(docs);
+                    merged.setNumFound(docs.size());
+                    merged.setStart(offset);
+                    log.info("Fallback encontró {} libros para query={}", docs.size(), query);
+                    return merged;
+                } catch (Exception e) {
+                    log.warn("Error en fallback de búsqueda por título/autor: {}", e.getMessage());
+                    // Si falla el fallback, devolver la respuesta original (vacía)
+                }
+            }
+
             log.info("Se encontraron {} libros", response.getNumFound());
             return response;
         } catch (IllegalArgumentException e) {
@@ -79,9 +116,10 @@ public class OpenLibraryService {
     }
 
     /**
-     * Realiza la llamada a la API de Open Library con reintentos en caso de error o respuesta vacía.
-     * @param url URL completa de la consulta a Open Library 
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda, 
+     * Realiza la llamada a la API de Open Library con reintentos solo en caso de error de red.
+     * No reintenta si Open Library devuelve una respuesta válida (aunque sea vacía).
+     * @param url URL completa de la consulta a Open Library
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda,
      * o respuesta vacía si no se obtienen resultados después de los reintentos
      */
     private OpenLibrarySearchResponseDto fetchWithRetries(String url) {
@@ -89,20 +127,25 @@ public class OpenLibraryService {
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
                 OpenLibrarySearchResponseDto resp = restTemplate.getForObject(url, OpenLibrarySearchResponseDto.class);
-                if (resp != null && resp.getDocs() != null && !resp.getDocs().isEmpty()) {
+                if (resp != null) {
+                    if (resp.getDocs() == null) {
+                        resp.setDocs(Collections.emptyList());
+                    }
                     return resp;
                 }
-                log.warn("OpenLibrary returned empty result (attempt {}), retrying... url={}", attempt, url);
+                log.warn("OpenLibrary returned null response (attempt {}), retrying... url={}", attempt, url);
             } catch (RestClientException e) {
                 log.warn("RestTemplate call failed on attempt {}: {}", attempt, e.getMessage());
             }
-            try {
-                Thread.sleep(backoff);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                break;
+            if (attempt < MAX_RETRIES) {
+                try {
+                    Thread.sleep(backoff);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                backoff *= 2;
             }
-            backoff *= 2;
         }
         OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
         empty.setNumFound(0);
