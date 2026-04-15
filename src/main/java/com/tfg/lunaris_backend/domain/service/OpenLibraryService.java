@@ -8,9 +8,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.net.URI;
 import java.util.ArrayList;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
 import com.tfg.lunaris_backend.domain.dto.OpenLibrarySearchResponseDto;
 
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +57,7 @@ public class OpenLibraryService {
                 offset = 0;
             }
 
-            String url = UriComponentsBuilder.fromUri(java.net.URI.create(OPEN_LIBRARY_API_BASE_URL))
+            String url = UriComponentsBuilder.fromUri(URI.create(OPEN_LIBRARY_API_BASE_URL))
                     .queryParam("q", query)
                     .queryParam("limit", limit)
                     .queryParam("offset", offset)
@@ -68,27 +70,26 @@ public class OpenLibraryService {
 
             OpenLibrarySearchResponseDto response = fetchWithRetries(url);
 
-            // Si la búsqueda general no devuelve resultados, intentar búsquedas por título y autor
             if (response != null && (response.getDocs() == null || response.getDocs().isEmpty())) {
                 log.info("Búsqueda general en OpenLibrary sin resultados, intentando fallback por título y autor para: {}", query);
                 try {
                     OpenLibrarySearchResponseDto titleResp = searchByTitle(query, limit, offset);
                     OpenLibrarySearchResponseDto authorResp = searchByAuthor(query, limit, offset);
 
-                    Map<String, com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto> mergedMap = new LinkedHashMap<>();
+                    Map<String, OpenLibraryBookDto> mergedMap = new LinkedHashMap<>();
                     if (titleResp != null && titleResp.getDocs() != null) {
-                        for (com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto d : titleResp.getDocs()) {
+                        for (OpenLibraryBookDto d : titleResp.getDocs()) {
                             if (d != null && d.getKey() != null) mergedMap.putIfAbsent(d.getKey(), d);
                         }
                     }
                     if (authorResp != null && authorResp.getDocs() != null) {
-                        for (com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto d : authorResp.getDocs()) {
+                        for (OpenLibraryBookDto d : authorResp.getDocs()) {
                             if (d != null && d.getKey() != null) mergedMap.putIfAbsent(d.getKey(), d);
                         }
                     }
 
                     OpenLibrarySearchResponseDto merged = new OpenLibrarySearchResponseDto();
-                    List<com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto> docs = new ArrayList<>(mergedMap.values());
+                    List<OpenLibraryBookDto> docs = new ArrayList<>(mergedMap.values());
                     merged.setDocs(docs);
                     merged.setNumFound(docs.size());
                     merged.setStart(offset);
@@ -96,7 +97,6 @@ public class OpenLibraryService {
                     return merged;
                 } catch (Exception e) {
                     log.warn("Error en fallback de búsqueda por título/autor: {}", e.getMessage());
-                    // Si falla el fallback, devolver la respuesta original (vacía)
                 }
             }
 
