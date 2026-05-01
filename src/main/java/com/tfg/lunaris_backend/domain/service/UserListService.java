@@ -12,9 +12,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 /**
- * Servicio que maneja la lógica de negocio relacionada con las listas de usuarios.
+ * Servicio que maneja la lógica de negocio relacionada con las listas de
+ * usuarios.
  * 
- * Proporciona métodos para crear, actualizar, eliminar y obtener listas de usuarios.
+ * Proporciona métodos para crear, actualizar, eliminar y obtener listas de
+ * usuarios.
  */
 @Service
 public class UserListService {
@@ -24,6 +26,7 @@ public class UserListService {
 
     /**
      * Obtiene todas las listas de usuarios.
+     * 
      * @return lista de listas de usuarios
      */
     public List<UserList> getAllUserLists() {
@@ -32,6 +35,7 @@ public class UserListService {
 
     /**
      * Obtiene todas las listas de usuarios de manera paginada.
+     * 
      * @param pageable información de paginación
      * @return página de listas de usuarios
      */
@@ -41,6 +45,7 @@ public class UserListService {
 
     /**
      * Obtiene una lista de usuarios por su ID.
+     * 
      * @param id ID de la lista de usuarios
      * @return lista de usuarios encontrada
      * @throws UserListNotFoundException si la lista de usuarios no existe
@@ -52,6 +57,7 @@ public class UserListService {
 
     /**
      * Crea una nueva lista de usuarios.
+     * 
      * @param userList lista de usuarios a crear
      * @return lista de usuarios creada
      */
@@ -61,7 +67,8 @@ public class UserListService {
 
     /**
      * Actualiza una lista de usuarios existente.
-     * @param id ID de la lista de usuarios a actualizar
+     * 
+     * @param id              ID de la lista de usuarios a actualizar
      * @param userListDetails detalles de la lista de usuarios a actualizar
      * @return lista de usuarios actualizada
      * @throws UserListNotFoundException si la lista de usuarios no existe
@@ -70,14 +77,25 @@ public class UserListService {
         UserList userList = userListRepository.findById(id)
                 .orElseThrow(() -> new UserListNotFoundException("Lista no encontrada con id " + id));
         userList.setName(userListDetails.getName());
+        if (userListDetails.getOwner() != null)
+            userList.setOwner(userListDetails.getOwner());
+        if (userListDetails.getIsPrivate() != null)
+            userList.setIsPrivate(userListDetails.getIsPrivate());
+        if (userListDetails.getBooksJson() != null)
+            userList.setBooksJson(userListDetails.getBooksJson());
         return userListRepository.save(userList);
     }
 
     /**
      * Elimina una lista de usuarios por su ID.
+     * 
      * @param id ID de la lista de usuarios a eliminar
      */
     public void deleteUserList(Long id) {
         userListRepository.deleteById(id);
+    }
+
+    public java.util.List<UserList> getListsByOwner(String owner) {
+        return userListRepository.findByOwner(owner);
     }
 }

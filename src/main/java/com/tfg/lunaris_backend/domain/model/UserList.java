@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
+import jakarta.persistence.Column;
 
 /**
  * Entidad que representa una lista de usuario en la base de datos.
@@ -14,10 +15,14 @@ import lombok.Data;
  */
 @Entity
 @Table(name = "user_list", schema = "public")
-@Data 
+@Data
 public class UserList {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    private String owner;
+    private Boolean isPrivate = false;
+    @Column(columnDefinition = "text")
+    private String booksJson;
 }

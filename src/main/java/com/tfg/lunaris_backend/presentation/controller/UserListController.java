@@ -15,9 +15,11 @@ import com.tfg.lunaris_backend.domain.model.UserList;
 import com.tfg.lunaris_backend.domain.service.UserListService;
 
 /**
- * Controlador que maneja las operaciones relacionadas con las listas de usuarios.
+ * Controlador que maneja las operaciones relacionadas con las listas de
+ * usuarios.
  * 
- * Proporciona endpoints para crear, obtener, actualizar y eliminar listas de usuarios.
+ * Proporciona endpoints para crear, obtener, actualizar y eliminar listas de
+ * usuarios.
  */
 @RestController
 public class UserListController {
@@ -25,8 +27,9 @@ public class UserListController {
     private UserListService userListService;
 
     /**
-     * Endpoint para obtener todas las listas de usuarios. Devuelve una página de 
+     * Endpoint para obtener todas las listas de usuarios. Devuelve una página de
      * listas de usuarios disponibles.
+     * 
      * @param pageable información de paginación
      * @return página de listas de usuarios
      */
@@ -35,20 +38,28 @@ public class UserListController {
         return userListService.getAllUserLists(pageable);
     }
 
+    @GetMapping("/user_list/owner/{owner}")
+    public java.util.List<UserList> getListsByOwner(@PathVariable String owner) {
+        return userListService.getListsByOwner(owner);
+    }
+
     /**
-    * Endpoint para obtener una lista de usuarios por su ID. Devuelve la lista de 
-    * usuarios correspondiente si existe.
-    * @param id identificador de la lista de usuarios
-    * @return lista de usuarios encontrada
-    */
+     * Endpoint para obtener una lista de usuarios por su ID. Devuelve la lista de
+     * usuarios correspondiente si existe.
+     * 
+     * @param id identificador de la lista de usuarios
+     * @return lista de usuarios encontrada
+     */
     @GetMapping("/user_list/{id}")
     public UserList getUserListById(@PathVariable Long id) {
         return userListService.getUserListById(id);
     }
 
     /**
-     * Endpoint para crear una nueva lista de usuarios. Recibe un objeto con los datos 
+     * Endpoint para crear una nueva lista de usuarios. Recibe un objeto con los
+     * datos
      * de la lista de usuarios a crear y devuelve la lista de usuarios creada.
+     * 
      * @param userList objeto con los datos de la lista de usuarios a crear
      * @return lista de usuarios creada
      */
@@ -58,10 +69,14 @@ public class UserListController {
     }
 
     /**
-     * Endpoint para actualizar una lista de usuarios existente. Recibe el ID de la lista de usuarios a actualizar 
-     * y un objeto con los datos a actualizar, y devuelve la lista de usuarios actualizada.
-     * @param id identificador de la lista de usuarios a actualizar
-     * @param userListDetails objeto con los datos de la lista de usuarios a actualizar
+     * Endpoint para actualizar una lista de usuarios existente. Recibe el ID de la
+     * lista de usuarios a actualizar
+     * y un objeto con los datos a actualizar, y devuelve la lista de usuarios
+     * actualizada.
+     * 
+     * @param id              identificador de la lista de usuarios a actualizar
+     * @param userListDetails objeto con los datos de la lista de usuarios a
+     *                        actualizar
      * @return lista de usuarios actualizada
      */
     @PutMapping("/user_list/{id}")
@@ -70,8 +85,10 @@ public class UserListController {
     }
 
     /**
-     * Endpoint para eliminar una lista de usuarios por su ID. Recibe el ID de la lista de usuarios a eliminar 
+     * Endpoint para eliminar una lista de usuarios por su ID. Recibe el ID de la
+     * lista de usuarios a eliminar
      * y elimina la lista de usuarios correspondiente.
+     * 
      * @param id identificador de la lista de usuarios a eliminar
      */
     @DeleteMapping("/user_list/{id}")
