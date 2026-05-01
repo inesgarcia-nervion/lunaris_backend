@@ -28,6 +28,7 @@ public class UserService {
 
     /**
      * Obtiene todos los usuarios.
+     * 
      * @return lista de usuarios
      */
     public List<User> getAllUsers() {
@@ -36,9 +37,11 @@ public class UserService {
 
     /**
      * Obtiene un usuario por su ID.
+     * 
      * @param id ID del usuario
      * @return usuario encontrado
-     * @throws UserNotFoundException si no se encuentra el usuario con el id proporcionado
+     * @throws UserNotFoundException si no se encuentra el usuario con el id
+     *                               proporcionado
      */
     public User getUserById(Long id) {
         return userRepository.findById(id)
@@ -47,6 +50,7 @@ public class UserService {
 
     /**
      * Crea un nuevo usuario.
+     * 
      * @param user objeto con los datos del usuario a crear
      * @return usuario creado
      */
@@ -65,10 +69,12 @@ public class UserService {
 
     /**
      * Actualiza un usuario existente.
-     * @param id ID del usuario a actualizar
+     * 
+     * @param id          ID del usuario a actualizar
      * @param userDetails detalles del usuario a actualizar
      * @return usuario actualizado
-     * @throws UserNotFoundException si no se encuentra el usuario con el id proporcionado
+     * @throws UserNotFoundException si no se encuentra el usuario con el id
+     *                               proporcionado
      */
     public User updateUser(Long id, User userDetails) {
         User user = userRepository.findById(id)
@@ -87,6 +93,7 @@ public class UserService {
 
     /**
      * Elimina un usuario por su ID.
+     * 
      * @param id ID del usuario a eliminar
      */
     public void deleteUser(Long id) {
@@ -95,10 +102,12 @@ public class UserService {
 
     /**
      * Actualiza un usuario existente por su nombre de usuario.
-     * @param username nombre de usuario del usuario a actualizar
+     * 
+     * @param username    nombre de usuario del usuario a actualizar
      * @param userDetails detalles del usuario a actualizar
      * @return usuario actualizado
-     * @throws UserNotFoundException si no se encuentra el usuario con el nombre de usuario proporcionado
+     * @throws UserNotFoundException si no se encuentra el usuario con el nombre de
+     *                               usuario proporcionado
      */
     public User updateUserByUsername(String username, User userDetails) {
         User user = userRepository.findByUsername(username)
@@ -112,6 +121,14 @@ public class UserService {
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         }
+        if (userDetails.getAvatarUrl() != null) {
+            user.setAvatarUrl(userDetails.getAvatarUrl());
+        }
         return userRepository.save(user);
+    }
+
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con username " + username));
     }
 }

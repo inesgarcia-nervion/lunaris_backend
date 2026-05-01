@@ -25,7 +25,9 @@ public class UserController {
     private UserService userService;
 
     /**
-     * Endpoint para obtener todas las usuarios. Devuelve una lista de todas las usuarios disponibles.
+     * Endpoint para obtener todas las usuarios. Devuelve una lista de todas las
+     * usuarios disponibles.
+     * 
      * @return lista de usuarios
      */
     @GetMapping("/")
@@ -34,7 +36,9 @@ public class UserController {
     }
 
     /**
-     * Endpoint para obtener todas las usuarios. Devuelve una lista de todas las usuarios disponibles.
+     * Endpoint para obtener todas las usuarios. Devuelve una lista de todas las
+     * usuarios disponibles.
+     * 
      * @return lista de usuarios
      */
     @GetMapping("/users")
@@ -43,7 +47,9 @@ public class UserController {
     }
 
     /**
-     * Endpoint para obtener un usuario por su ID. Devuelve el usuario correspondiente si existe.
+     * Endpoint para obtener un usuario por su ID. Devuelve el usuario
+     * correspondiente si existe.
+     * 
      * @param id identificador del usuario
      * @return usuario encontrado
      */
@@ -53,8 +59,10 @@ public class UserController {
     }
 
     /**
-     * Endpoint para crear un nuevo usuario. Recibe un objeto con los datos del usuario a crear y 
+     * Endpoint para crear un nuevo usuario. Recibe un objeto con los datos del
+     * usuario a crear y
      * devuelve el usuario creado.
+     * 
      * @param user objeto con los datos del usuario a crear
      * @return usuario creado
      */
@@ -64,22 +72,27 @@ public class UserController {
     }
 
     /**
-    * Endpoint para actualizar un usuario existente. Recibe el ID del usuario a actualizar 
-    * y un objeto con los datos a actualizar, y devuelve el usuario actualizado.
-    * @param id identificador del usuario a actualizar
-    * @param userDetails objeto con los datos del usuario a actualizar
-    * @return usuario actualizado
-    */
+     * Endpoint para actualizar un usuario existente. Recibe el ID del usuario a
+     * actualizar
+     * y un objeto con los datos a actualizar, y devuelve el usuario actualizado.
+     * 
+     * @param id          identificador del usuario a actualizar
+     * @param userDetails objeto con los datos del usuario a actualizar
+     * @return usuario actualizado
+     */
     @PutMapping("/users/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         return userService.updateUser(id, userDetails);
     }
 
     /**
-     * Endpoint para actualizar un usuario existente por su nombre de usuario. Recibe 
-     * el nombre de usuario del usuario a actualizar y un objeto con los datos a actualizar, 
+     * Endpoint para actualizar un usuario existente por su nombre de usuario.
+     * Recibe
+     * el nombre de usuario del usuario a actualizar y un objeto con los datos a
+     * actualizar,
      * y devuelve el usuario actualizado.
-     * @param username nombre de usuario del usuario a actualizar
+     * 
+     * @param username    nombre de usuario del usuario a actualizar
      * @param userDetails objeto con los datos del usuario a actualizar
      * @return usuario actualizado
      */
@@ -88,9 +101,28 @@ public class UserController {
         return userService.updateUserByUsername(username, userDetails);
     }
 
+    @GetMapping("/users/username/{username}")
+    public User getUserByUsername(@PathVariable String username) {
+        return userService.getUserByUsername(username);
+    }
+
     /**
-     * Endpoint para eliminar un usuario por su ID. Recibe el ID del usuario a eliminar 
+     * Endpoint para actualizar únicamente el avatar de un usuario.
+     * Acepta el contenido del avatar como text/plain en el body (por ejemplo
+     * una data URL) para evitar problemas de mapeo con objetos grandes.
+     */
+    @PostMapping(path = "/users/username/{username}/avatar", consumes = "text/plain")
+    public User updateAvatarByUsername(@PathVariable String username, @RequestBody String avatarData) {
+        User u = new User();
+        u.setAvatarUrl(avatarData);
+        return userService.updateUserByUsername(username, u);
+    }
+
+    /**
+     * Endpoint para eliminar un usuario por su ID. Recibe el ID del usuario a
+     * eliminar
      * y elimina el usuario correspondiente.
+     * 
      * @param id identificador del usuario a eliminar
      */
     @DeleteMapping("/users/{id}")
