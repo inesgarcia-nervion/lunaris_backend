@@ -7,14 +7,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class PostControllerTest {
+/**
+ * Test para {@link PostController}.
+ */
+class PostControllerTest {
 
+    /**
+     * Verifica que los métodos del controlador delegan correctamente en el servicio.
+     */
     @Test
     void createAndDeleteAndGet() {
         PostService svc = mock(PostService.class);
@@ -37,13 +45,15 @@ public class PostControllerTest {
         when(svc.createPost(p)).thenReturn(p);
         assertEquals(p, c.createPost(p, auth));
 
-        // delete as owner
         when(svc.getPostById(4L)).thenReturn(p);
-        when(auth.getAuthorities()).thenReturn(java.util.Collections.emptyList());
+        when(auth.getAuthorities()).thenReturn(Collections.emptyList());
         c.deletePost(4L, auth);
         verify(svc).deletePost(4L);
     }
 
+    /**
+     * Verifica que el nombre de usuario no se sobrescribe si la autenticación es nula.
+     */
     @Test
     void createPost_authNull_doesNotSetUsername() {
         PostService svc = mock(PostService.class);
@@ -54,10 +64,13 @@ public class PostControllerTest {
         p.setUsername("existing");
         when(svc.createPost(p)).thenReturn(p);
 
-        c.createPost(p, null); // auth is null → username not overwritten
+        c.createPost(p, null); 
         assertEquals("existing", p.getUsername());
     }
 
+    /**
+     * Verifica que el nombre de usuario no se sobrescribe si el post ya tiene un nombre de usuario.
+     */
     @Test
     void createPost_postAlreadyHasUsername_notOverwritten() {
         PostService svc = mock(PostService.class);
@@ -65,7 +78,7 @@ public class PostControllerTest {
         ReflectionTestUtils.setField(c, "postService", svc);
 
         Post p = new Post();
-        p.setUsername("myuser"); // already set → not overwritten by auth
+        p.setUsername("myuser");
 
         Authentication auth = mock(Authentication.class);
         when(auth.getName()).thenReturn("other");
@@ -75,6 +88,9 @@ public class PostControllerTest {
         assertEquals("myuser", p.getUsername());
     }
 
+    /**
+     * Verifica que un administrador puede eliminar un post.
+     */
     @Test
     void deletePost_asAdmin_succeeds() {
         PostService svc = mock(PostService.class);
@@ -93,6 +109,9 @@ public class PostControllerTest {
         verify(svc).deletePost(5L);
     }
 
+    /**
+     * Verifica que un usuario diferente no puede eliminar un post.
+     */
     @Test
     void deletePost_differentUser_throwsForbidden() {
         PostService svc = mock(PostService.class);
@@ -104,13 +123,16 @@ public class PostControllerTest {
 
         Authentication auth = mock(Authentication.class);
         when(auth.getName()).thenReturn("notowner");
-        when(auth.getAuthorities()).thenReturn(java.util.Collections.emptyList());
+        when(auth.getAuthorities()).thenReturn(Collections.emptyList());
 
-        var ex = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+        var ex = assertThrows(ResponseStatusException.class,
                 () -> c.deletePost(6L, auth));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
+    /**
+     * Verifica que la eliminación de un post falla si la autenticación es nula.
+     */
     @Test
     void deletePost_authNull_throwsForbidden() {
         PostService svc = mock(PostService.class);
@@ -120,11 +142,15 @@ public class PostControllerTest {
         Post p = new Post(); p.setId(7L); p.setUsername("owner");
         when(svc.getPostById(7L)).thenReturn(p);
 
-        var ex = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+        var ex = assertThrows(ResponseStatusException.class,
                 () -> c.deletePost(7L, null));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
+
+    /**
+     * Verifica que la eliminación de un post falla si el post no existe.
+     */
     @Test
     void deletePost_existingNull_throwsNotFound() {
         PostService svc = mock(PostService.class);
@@ -134,11 +160,14 @@ public class PostControllerTest {
         when(svc.getPostById(8L)).thenReturn(null);
 
         Authentication auth = mock(Authentication.class);
-        var ex = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+        var ex = assertThrows(ResponseStatusException.class,
                 () -> c.deletePost(8L, auth));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
+    /**
+     * Verifica que la creación de un post asigna el nombre de usuario desde la autenticación si es nulo.
+     */
     @Test
     void createPost_nullUsername_authSetsIt() {
         PostService svc = mock(PostService.class);
@@ -146,13 +175,13 @@ public class PostControllerTest {
         ReflectionTestUtils.setField(c, "postService", svc);
 
         Post p = new Post();
-        p.setUsername(null); // null username → auth.getName() should be used
+        p.setUsername(null); 
 
         Authentication auth = mock(Authentication.class);
         when(auth.getName()).thenReturn("authuser");
         when(svc.createPost(p)).thenReturn(p);
 
         c.createPost(p, auth);
-        assertEquals("authuser", p.getUsername()); // covers line 56
+        assertEquals("authuser", p.getUsername());
     }
 }

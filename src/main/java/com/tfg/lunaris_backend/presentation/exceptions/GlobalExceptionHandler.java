@@ -90,4 +90,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleSagaNotFoundException(SagaNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
+
+    /**
+     * Manejador de la excepción `DuplicateBookException`. Devuelve una respuesta con
+     * el mensaje de error y el estado HTTP 409 (Conflict).
+     * @param ex excepción lanzada cuando ya existe un libro con el mismo título y autor
+     * @return respuesta con el mensaje de error y el estado HTTP 409 (Conflict)
+     */
+    @ExceptionHandler(DuplicateBookException.class)
+    public ResponseEntity<String> handleDuplicateBookException(DuplicateBookException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
 }

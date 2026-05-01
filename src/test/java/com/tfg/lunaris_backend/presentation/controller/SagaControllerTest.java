@@ -14,8 +14,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class SagaControllerTest {
+/**
+ * Test para {@link SagaController}.
+ */
+class SagaControllerTest {
 
+    /**
+     * Verifica que los métodos del controlador delegan correctamente en el servicio y que el scraping funciona.
+     */
     @Test
     void delegatesAndScrape() {
         SagaService svc = mock(SagaService.class);
@@ -46,6 +52,9 @@ public class SagaControllerTest {
         assertTrue(res.getStatusCode().is2xxSuccessful());
     }
 
+    /**
+     * Verifica que el scraping de una saga devuelve no content si el resultado es nulo.
+     */
     @Test
     void scrapeSaga_nullResult_returnsNoContent() {
         SagaService svc = mock(SagaService.class);

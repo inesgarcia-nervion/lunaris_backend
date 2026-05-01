@@ -14,6 +14,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para la clase PostService.
+ */
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
 
@@ -23,6 +26,9 @@ class PostServiceTest {
     @InjectMocks
     private PostService svc;
 
+    /**
+     * Verifica los flujos principales de la clase PostService, incluyendo la obtención, creación y eliminación de publicaciones.
+     */
     @Test
     void flows() {
         Post p = new Post(); p.setContent("c");

@@ -3,8 +3,14 @@ package com.tfg.lunaris_backend.domain.model;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test para la clase SagaBook.
+ */
 class SagaBookTest {
 
+    /**
+     * Verifica que se pueden establecer y obtener las propiedades de la clase, incluyendo la referencia a la saga.
+     */
     @Test
     void propertiesAndSagaReference() {
         Saga s = new Saga();

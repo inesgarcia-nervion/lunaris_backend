@@ -8,8 +8,11 @@ import com.tfg.lunaris_backend.data.repository.GenreRepository;
 import com.tfg.lunaris_backend.domain.dto.BookCreateRequest;
 import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
 import com.tfg.lunaris_backend.domain.model.Book;
+import com.tfg.lunaris_backend.domain.model.Saga;
+import com.tfg.lunaris_backend.domain.model.SagaBook;
 import com.tfg.lunaris_backend.domain.model.Genre;
 import com.tfg.lunaris_backend.presentation.exceptions.BookNotFoundException;
+import com.tfg.lunaris_backend.presentation.exceptions.DuplicateBookException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +31,9 @@ public class BookService {
 
     @Autowired
     private BookRepository bookRepository;
+
+    @Autowired
+    private com.tfg.lunaris_backend.data.repository.SagaRepository sagaRepository;
 
     @Autowired
     private GenreRepository genreRepository;
@@ -66,6 +72,12 @@ public class BookService {
      * @return libro creado
      */
     public Book createBook(BookCreateRequest request) {
+        if (bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(
+                request.getTitle(), request.getAuthor()).isPresent()) {
+            throw new DuplicateBookException(
+                "Ya existe un libro con el título '" + request.getTitle() +
+                "' y el autor '" + request.getAuthor() + "'");
+        }
         Book book = new Book();
         book.setTitle(request.getTitle());
         book.setAuthor(request.getAuthor());
@@ -85,7 +97,36 @@ public class BookService {
             book.setGenres(genres);
         }
 
-        return bookRepository.save(book);
+        Book saved = bookRepository.save(book);
+
+        // Si viene sagaId enlazar al libro creando una entrada SagaBook en la saga existente
+        if (request.getSagaId() != null) {
+            sagaRepository.findById(request.getSagaId()).ifPresent(saga -> {
+                SagaBook sb = new SagaBook();
+                sb.setTitle(saved.getTitle() != null ? saved.getTitle().trim() : null);
+                sb.setAuthor(saved.getAuthor() != null ? saved.getAuthor().trim() : null);
+                sb.setYear(saved.getReleaseYear());
+                sb.setSaga(saga);
+                saga.getBooks().add(sb);
+                sagaRepository.save(saga);
+            });
+        } else if (request.getSagaName() != null && !request.getSagaName().isBlank()) {
+            String name = request.getSagaName().trim();
+            Saga saga = sagaRepository.findByName(name).orElseGet(() -> {
+                Saga s = new Saga();
+                s.setName(name);
+                return s;
+            });
+            SagaBook sb = new SagaBook();
+            sb.setTitle(saved.getTitle() != null ? saved.getTitle().trim() : null);
+            sb.setAuthor(saved.getAuthor() != null ? saved.getAuthor().trim() : null);
+            sb.setYear(saved.getReleaseYear());
+            sb.setSaga(saga);
+            saga.getBooks().add(sb);
+            sagaRepository.save(saga);
+        }
+
+        return saved;
     }
 
     /**

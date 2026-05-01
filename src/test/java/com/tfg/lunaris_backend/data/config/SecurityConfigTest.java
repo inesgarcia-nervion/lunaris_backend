@@ -19,15 +19,23 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.tfg.lunaris_backend.presentation.security.JwtAuthenticationFilter;
 
-
+/**
+ * Test para {@link SecurityConfig}.
+ */
 class SecurityConfigTest {
 
+    /**
+     * Verifica que el passwordEncoder es una instancia de BCryptPasswordEncoder.
+     */
     @Test
     void passwordEncoder_isBCrypt() {
         SecurityConfig cfg = new SecurityConfig();
         assertTrue(cfg.passwordEncoder() instanceof BCryptPasswordEncoder);
     }
 
+    /**
+     * Verifica que el CorsConfigurationSource registra la configuración de CORS correctamente.
+     */
     @Test
     void corsConfigurationSource_registersMapping() {
         SecurityConfig cfg = new SecurityConfig();
@@ -38,6 +46,10 @@ class SecurityConfigTest {
         assertTrue(urlSrc.getCorsConfigurations().containsKey("/**"));
     }
 
+    /**
+     * Verifica que el AuthenticationProvider utiliza el UserDetailsService y PasswordEncoder configurados.
+     * @throws Exception si ocurre un error al acceder a los campos privados
+     */
     @Test
     void authenticationProvider_usesUserDetailsServiceAndPasswordEncoder() throws Exception {
         SecurityConfig cfg = new SecurityConfig();
@@ -52,16 +64,19 @@ class SecurityConfigTest {
         assertEquals(provider.getClass().getSimpleName(), "DaoAuthenticationProvider");
     }
 
+    /**
+     * Verifica que la SecurityFilterChain se construye correctamente y que el filtro JWT se registra en la cadena.
+     * @throws Exception si ocurre un error al acceder a los campos privados
+     */
     @Test
     void securityFilterChain_buildsAndRegistersFilter() throws Exception {
         SecurityConfig cfg = new SecurityConfig();
-        // inject mock jwt filter and userDetailsService
-        java.lang.reflect.Field jwtField = SecurityConfig.class.getDeclaredField("jwtAuthenticationFilter");
+        Field jwtField = SecurityConfig.class.getDeclaredField("jwtAuthenticationFilter");
         jwtField.setAccessible(true);
         JwtAuthenticationFilter jwtMock = mock(JwtAuthenticationFilter.class);
         jwtField.set(cfg, jwtMock);
 
-        java.lang.reflect.Field udsField = SecurityConfig.class.getDeclaredField("userDetailsService");
+        Field udsField = SecurityConfig.class.getDeclaredField("userDetailsService");
         udsField.setAccessible(true);
         udsField.set(cfg, mock(UserDetailsService.class));
 
@@ -83,15 +98,19 @@ class SecurityConfigTest {
         verify(http, times(1)).build();
     }
 
+    /**
+     * Verifica que la SecurityFilterChain ejecuta correctamente el lambda de autorización.
+     * @throws Exception si ocurre un error al acceder a los campos privados
+     */
     @Test
     void securityFilterChain_executesAuthorizeLambda() throws Exception {
         SecurityConfig cfg = new SecurityConfig();
 
-        java.lang.reflect.Field jwtField = SecurityConfig.class.getDeclaredField("jwtAuthenticationFilter");
+        Field jwtField = SecurityConfig.class.getDeclaredField("jwtAuthenticationFilter");
         jwtField.setAccessible(true);
         jwtField.set(cfg, mock(JwtAuthenticationFilter.class));
 
-        java.lang.reflect.Field udsField = SecurityConfig.class.getDeclaredField("userDetailsService");
+        Field udsField = SecurityConfig.class.getDeclaredField("userDetailsService");
         udsField.setAccessible(true);
         udsField.set(cfg, mock(UserDetailsService.class));
 

@@ -14,6 +14,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para {@link DataSeeder}.
+ */
 class DataSeederTest {
 
     private DataSeeder seeder;
@@ -21,6 +24,10 @@ class DataSeederTest {
     private GenreRepository genreRepo;
     private PasswordEncoder passwordEncoder;
 
+    /**
+     * Configura el entorno de pruebas, creando mocks y asignándolos al seeder mediante reflexión.
+     * @throws Exception si ocurre un error al acceder a los campos privados
+     */
     @BeforeEach
     void setUp() throws Exception {
         seeder = new DataSeeder();
@@ -28,7 +35,6 @@ class DataSeederTest {
         genreRepo = mock(GenreRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
 
-        // inject mocks into private fields
         Field ur = DataSeeder.class.getDeclaredField("userRepository");
         ur.setAccessible(true);
         ur.set(seeder, userRepo);
@@ -42,6 +48,9 @@ class DataSeederTest {
         pe.set(seeder, passwordEncoder);
     }
 
+    /**
+     * Verifica que el método run guarda el usuario admin y los géneros cuando no existen.
+     */
     @Test
     void run_savesAdminAndGenres_whenMissing() {
         when(userRepo.findByUsername("admin")).thenReturn(Optional.empty());
@@ -57,10 +66,12 @@ class DataSeederTest {
         assertEquals("admin@lunaris.com", saved.getEmail());
         assertEquals("encoded", saved.getPassword());
 
-        // genres should be added
         verify(genreRepo, atLeastOnce()).save(any());
     }
 
+    /**
+     * Verifica que el método run no realiza ninguna acción cuando el usuario admin ya existe y los géneros están presentes.
+     */
     @Test
     void run_doesNothing_whenAdminExistsAndGenresPresent() {
         User existing = new User();

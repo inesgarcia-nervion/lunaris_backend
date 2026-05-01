@@ -7,8 +7,14 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para {@link WebConfig}.
+ */
 class WebConfigTest {
 
+    /**
+     * Verifica que el método addCorsMappings llama a addMapping con el patrón correcto.
+     */
     @Test
     void addCorsMappings_callsAddMapping() {
         WebConfig cfg = new WebConfig();

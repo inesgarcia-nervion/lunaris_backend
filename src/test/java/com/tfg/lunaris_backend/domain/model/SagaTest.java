@@ -3,8 +3,14 @@ package com.tfg.lunaris_backend.domain.model;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test para la clase Saga.
+ */
 class SagaTest {
 
+    /**
+     * Verifica que se pueden manipular correctamente la lista de libros de la saga.
+     */
     @Test
     void booksListManipulation() {
         Saga s = new Saga();
@@ -14,7 +20,6 @@ class SagaTest {
         sb.setTitle("Part 1");
         sb.setAuthor("Author");
 
-        // associate
         sb.setSaga(s);
         s.getBooks().add(sb);
 

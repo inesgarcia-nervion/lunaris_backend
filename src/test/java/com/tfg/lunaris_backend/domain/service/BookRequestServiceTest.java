@@ -14,6 +14,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para la clase BookRequestService.
+ */
 @ExtendWith(MockitoExtension.class)
 class BookRequestServiceTest {
 
@@ -23,6 +26,9 @@ class BookRequestServiceTest {
     @InjectMocks
     private BookRequestService svc;
 
+    /**
+     * Verifica que se pueden obtener, crear y eliminar solicitudes de libros correctamente.
+     */
     @Test
     void getAllAndGetByIdAndCreateAndDelete() {
         BookRequest br = new BookRequest("T","A");

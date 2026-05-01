@@ -25,4 +25,6 @@ public class BookCreateRequest {
     private Integer releaseYear;
     private Double score;
     private List<Long> genreIds;
+    private Long sagaId;
+    private String sagaName;
 }

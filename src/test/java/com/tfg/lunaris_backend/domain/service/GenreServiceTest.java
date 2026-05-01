@@ -15,6 +15,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Test para la clase GenreService.
+ */
 @ExtendWith(MockitoExtension.class)
 class GenreServiceTest {
 
@@ -24,6 +27,9 @@ class GenreServiceTest {
     @InjectMocks
     private GenreService svc;
 
+    /**
+     * Verifica los flujos básicos de la clase GenreService.
+     */
     @Test
     void basicFlows() {
         Genre g = new Genre(); g.setName("F");
@@ -46,12 +52,18 @@ class GenreServiceTest {
         verify(repo).deleteById(3L);
     }
 
+    /**
+     * Verifica que se lanza una excepción cuando no se encuentra un género por ID.
+     */
     @Test
     void getGenreByIdNotFoundThrows() {
         when(repo.findById(5L)).thenReturn(Optional.empty());
         assertThrows(GenreNotFoundException.class, () -> svc.getGenreById(5L));
     }
 
+    /**
+     * Verifica que se guarda un nuevo género cuando no existe previamente.
+     */
     @Test
     void createGenre_notExisting_saves() {
         Genre g = new Genre(); g.setName("New");
@@ -61,6 +73,9 @@ class GenreServiceTest {
         verify(repo).save(g);
     }
 
+    /**
+     * Verifica que se lanza una excepción cuando se intenta actualizar un género que no existe.
+     */
     @Test
     void updateGenre_notFoundThrows() {
         when(repo.findById(99L)).thenReturn(Optional.empty());

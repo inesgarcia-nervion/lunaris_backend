@@ -6,8 +6,14 @@ import org.springframework.web.client.RestTemplate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test para {@link RestTemplateConfig}.
+ */
 class RestTemplateConfigTest {
 
+    /**
+     * Verifica que el RestTemplate tiene los timeouts configurados correctamente.
+     */
     @Test
     void restTemplate_hasConfiguredTimeouts() {
         RestTemplateConfig cfg = new RestTemplateConfig();

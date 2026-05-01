@@ -16,8 +16,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class BookControllerTest {
+/**
+ * Test para {@link BookController}.
+ */
+class BookControllerTest {
 
+    /**
+     * Verifica que los métodos del controlador delegan correctamente en el servicio.
+     */
     @Test
     void basicDelegations() {
         BookService svc = mock(BookService.class);
@@ -41,7 +47,6 @@ public class BookControllerTest {
         when(svc.updateBook(1L, b)).thenReturn(b);
         assertEquals(b, c.updateBook(1L, b));
 
-        // void delete
         c.deleteBook(1L);
 
         when(svc.searchBooks("x")).thenReturn(List.of(b));

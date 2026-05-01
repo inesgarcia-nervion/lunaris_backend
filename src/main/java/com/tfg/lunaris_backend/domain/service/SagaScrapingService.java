@@ -54,6 +54,12 @@ public class SagaScrapingService {
         Optional<Saga> cachedSaga = sagaRepository.findByBookTitleIgnoreCase(bookTitle);
         if (cachedSaga.isPresent()) {
             Saga saga = cachedSaga.get();
+            boolean hasGoodreadsUrls = saga.getBooks().stream().anyMatch(sb -> sb.getGoodreadsUrl() != null && !sb.getGoodreadsUrl().isBlank());
+            if (!hasGoodreadsUrls) {
+                log.info("Saga local encontrada para '{}' (manual)", bookTitle);
+                return convertToDto(saga);
+            }
+
             boolean hasUnfiltered = saga.getBooks().stream().anyMatch(sb -> sb.getOrderNumber() == null
                     || sb.getOrderNumber().isBlank() || sb.getOrderNumber().contains("-"));
             if (!hasUnfiltered && saga.getBooks().size() > 2) {
@@ -67,7 +73,8 @@ public class SagaScrapingService {
         try {
             List<String> bookUrls = findBookUrls(bookTitle);
             if (bookUrls.isEmpty() && author != null && !author.isBlank()) {
-                bookUrls = findBookUrls(bookTitle);
+                String query = (bookTitle + " " + author).trim();
+                bookUrls = findBookUrls(query);
             }
             if (bookUrls.isEmpty()) {
                 log.info("No se encontró el libro '{}' en Goodreads", bookTitle);
