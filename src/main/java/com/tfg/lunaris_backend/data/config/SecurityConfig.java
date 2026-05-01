@@ -28,7 +28,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 /**
  * Configuración de seguridad de la aplicación.
  *
- * Define las reglas de autorización, la cadena de filtros JWT y los beans necesarios
+ * Define las reglas de autorización, la cadena de filtros JWT y los beans
+ * necesarios
  * para la autenticación.
  */
 @Configuration
@@ -68,6 +69,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/reviews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/reviews/book").permitAll()
                         .requestMatchers(HttpMethod.GET, "/books/by-api-id").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(basic -> basic.disable());
@@ -118,7 +121,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Proveedor de autenticación que usa `UserDetailsService` y el codificador configurado.
+     * Proveedor de autenticación que usa `UserDetailsService` y el codificador
+     * configurado.
      *
      * @return `AuthenticationProvider` configurado
      */

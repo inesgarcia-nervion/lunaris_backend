@@ -1,5 +1,6 @@
 package com.tfg.lunaris_backend.domain.service;
 
+import com.tfg.lunaris_backend.data.repository.CommentRepository;
 import com.tfg.lunaris_backend.data.repository.PostRepository;
 import com.tfg.lunaris_backend.domain.model.Post;
 import org.junit.jupiter.api.Test;
@@ -23,15 +24,20 @@ class PostServiceTest {
     @Mock
     private PostRepository repo;
 
+    @Mock
+    private CommentRepository commentRepo;
+
     @InjectMocks
     private PostService svc;
 
     /**
-     * Verifica los flujos principales de la clase PostService, incluyendo la obtención, creación y eliminación de publicaciones.
+     * Verifica los flujos principales de la clase PostService, incluyendo la
+     * obtención, creación y eliminación de publicaciones.
      */
     @Test
     void flows() {
-        Post p = new Post(); p.setContent("c");
+        Post p = new Post();
+        p.setContent("c");
         when(repo.findAllByOrderByIdDesc()).thenReturn(List.of(p));
         assertFalse(svc.getAllPosts().isEmpty());
 

@@ -17,11 +17,11 @@ class PostTest {
         p.setContent("c");
         p.setUsername("u");
         p.setDate("d");
-        p.setImageUrl("i");
+        p.setUserAvatarUrl("avatar");
 
         assertEquals("c", p.getContent());
         assertEquals("u", p.getUsername());
         assertEquals("d", p.getDate());
-        assertEquals("i", p.getImageUrl());
+        assertEquals("avatar", p.getUserAvatarUrl());
     }
 }

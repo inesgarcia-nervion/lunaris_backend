@@ -2,6 +2,8 @@ package com.tfg.lunaris_backend.presentation.controller;
 
 import com.tfg.lunaris_backend.domain.model.Post;
 import com.tfg.lunaris_backend.domain.service.PostService;
+import com.tfg.lunaris_backend.presentation.dto.PostRequestDto;
+import com.tfg.lunaris_backend.presentation.dto.PostResponseDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -20,72 +22,110 @@ import static org.mockito.Mockito.*;
  */
 class PostControllerTest {
 
-    /**
-     * Verifica que los métodos del controlador delegan correctamente en el servicio.
-     */
-    @Test
-    void createAndDeleteAndGet() {
-        PostService svc = mock(PostService.class);
+    private PostController buildController(PostService svc) {
         PostController c = new PostController();
         ReflectionTestUtils.setField(c, "postService", svc);
+        return c;
+    }
+
+    /**
+     * Verifica que getAllPosts delega en el servicio y devuelve DTOs.
+     */
+    @Test
+    void getAllPosts_returnsDtos() {
+        PostService svc = mock(PostService.class);
+        PostController c = buildController(svc);
 
         Post p = new Post();
         p.setId(4L);
         p.setUsername("owner");
+        p.setContent("hello");
 
         when(svc.getAllPosts()).thenReturn(List.of(p));
-        assertEquals(1, c.getAllPosts().size());
-
-        when(svc.getPostById(4L)).thenReturn(p);
-        assertEquals(p, c.getPostById(4L));
 
         Authentication auth = mock(Authentication.class);
         when(auth.getName()).thenReturn("owner");
 
-        when(svc.createPost(p)).thenReturn(p);
-        assertEquals(p, c.createPost(p, auth));
+        List<PostResponseDto> result = c.getAllPosts(auth);
+        assertEquals(1, result.size());
+        assertEquals(4L, result.get(0).getId());
+        assertEquals("hello", result.get(0).getText());
+    }
+
+    /**
+     * Verifica que getPostById devuelve el DTO correctamente.
+     */
+    @Test
+    void getPostById_returnsDto() {
+        PostService svc = mock(PostService.class);
+        PostController c = buildController(svc);
+
+        Post p = new Post();
+        p.setId(4L);
+        p.setUsername("owner");
+        p.setContent("hello");
 
         when(svc.getPostById(4L)).thenReturn(p);
-        when(auth.getAuthorities()).thenReturn(Collections.emptyList());
-        c.deletePost(4L, auth);
-        verify(svc).deletePost(4L);
-    }
-
-    /**
-     * Verifica que el nombre de usuario no se sobrescribe si la autenticación es nula.
-     */
-    @Test
-    void createPost_authNull_doesNotSetUsername() {
-        PostService svc = mock(PostService.class);
-        PostController c = new PostController();
-        ReflectionTestUtils.setField(c, "postService", svc);
-
-        Post p = new Post();
-        p.setUsername("existing");
-        when(svc.createPost(p)).thenReturn(p);
-
-        c.createPost(p, null); 
-        assertEquals("existing", p.getUsername());
-    }
-
-    /**
-     * Verifica que el nombre de usuario no se sobrescribe si el post ya tiene un nombre de usuario.
-     */
-    @Test
-    void createPost_postAlreadyHasUsername_notOverwritten() {
-        PostService svc = mock(PostService.class);
-        PostController c = new PostController();
-        ReflectionTestUtils.setField(c, "postService", svc);
-
-        Post p = new Post();
-        p.setUsername("myuser");
 
         Authentication auth = mock(Authentication.class);
-        when(auth.getName()).thenReturn("other");
-        when(svc.createPost(p)).thenReturn(p);
+        when(auth.getName()).thenReturn("owner");
 
-        c.createPost(p, auth);
-        assertEquals("myuser", p.getUsername());
+        PostResponseDto dto = c.getPostById(4L, auth);
+        assertEquals(4L, dto.getId());
+    }
+
+    /**
+     * Verifica que getPostById lanza NOT_FOUND cuando no existe el post.
+     */
+    @Test
+    void getPostById_notFound_throwsNotFound() {
+        PostService svc = mock(PostService.class);
+        PostController c = buildController(svc);
+
+        when(svc.getPostById(99L)).thenReturn(null);
+
+        Authentication auth = mock(Authentication.class);
+        var ex = assertThrows(ResponseStatusException.class, () -> c.getPostById(99L, auth));
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    /**
+     * Verifica que createPost crea el post con el username de la autenticación.
+     */
+    @Test
+    void createPost_setsUsernameFromAuth() {
+        PostService svc = mock(PostService.class);
+        PostController c = buildController(svc);
+
+        PostRequestDto dto = new PostRequestDto();
+        dto.setText("hello");
+        dto.setImageUrls(List.of());
+
+        Post saved = new Post();
+        saved.setId(1L);
+        saved.setContent("hello");
+        saved.setUsername("authuser");
+
+        when(svc.createPost(any())).thenReturn(saved);
+
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn("authuser");
+
+        PostResponseDto result = c.createPost(dto, auth);
+        assertEquals("authuser", result.getUser().getName());
+    }
+
+    /**
+     * Verifica que createPost lanza UNAUTHORIZED si auth es nulo.
+     */
+    @Test
+    void createPost_authNull_throwsUnauthorized() {
+        PostService svc = mock(PostService.class);
+        PostController c = buildController(svc);
+        PostRequestDto dto = new PostRequestDto();
+
+        var ex = assertThrows(ResponseStatusException.class, () -> c.createPost(dto, null));
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
     }
 
     /**
@@ -94,15 +134,15 @@ class PostControllerTest {
     @Test
     void deletePost_asAdmin_succeeds() {
         PostService svc = mock(PostService.class);
-        PostController c = new PostController();
-        ReflectionTestUtils.setField(c, "postService", svc);
+        PostController c = buildController(svc);
 
-        Post p = new Post(); p.setId(5L); p.setUsername("someone");
+        Post p = new Post();
+        p.setId(5L);
+        p.setUsername("someone");
         when(svc.getPostById(5L)).thenReturn(p);
 
         Authentication auth = mock(Authentication.class);
-        doReturn(List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))
-                .when(auth).getAuthorities();
+        doReturn(List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))).when(auth).getAuthorities();
         when(auth.getName()).thenReturn("admin");
 
         c.deletePost(5L, auth);
@@ -115,18 +155,18 @@ class PostControllerTest {
     @Test
     void deletePost_differentUser_throwsForbidden() {
         PostService svc = mock(PostService.class);
-        PostController c = new PostController();
-        ReflectionTestUtils.setField(c, "postService", svc);
+        PostController c = buildController(svc);
 
-        Post p = new Post(); p.setId(6L); p.setUsername("owner");
+        Post p = new Post();
+        p.setId(6L);
+        p.setUsername("owner");
         when(svc.getPostById(6L)).thenReturn(p);
 
         Authentication auth = mock(Authentication.class);
         when(auth.getName()).thenReturn("notowner");
         when(auth.getAuthorities()).thenReturn(Collections.emptyList());
 
-        var ex = assertThrows(ResponseStatusException.class,
-                () -> c.deletePost(6L, auth));
+        var ex = assertThrows(ResponseStatusException.class, () -> c.deletePost(6L, auth));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
@@ -136,17 +176,16 @@ class PostControllerTest {
     @Test
     void deletePost_authNull_throwsForbidden() {
         PostService svc = mock(PostService.class);
-        PostController c = new PostController();
-        ReflectionTestUtils.setField(c, "postService", svc);
+        PostController c = buildController(svc);
 
-        Post p = new Post(); p.setId(7L); p.setUsername("owner");
+        Post p = new Post();
+        p.setId(7L);
+        p.setUsername("owner");
         when(svc.getPostById(7L)).thenReturn(p);
 
-        var ex = assertThrows(ResponseStatusException.class,
-                () -> c.deletePost(7L, null));
+        var ex = assertThrows(ResponseStatusException.class, () -> c.deletePost(7L, null));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
-
 
     /**
      * Verifica que la eliminación de un post falla si el post no existe.
@@ -154,34 +193,12 @@ class PostControllerTest {
     @Test
     void deletePost_existingNull_throwsNotFound() {
         PostService svc = mock(PostService.class);
-        PostController c = new PostController();
-        ReflectionTestUtils.setField(c, "postService", svc);
+        PostController c = buildController(svc);
 
         when(svc.getPostById(8L)).thenReturn(null);
 
         Authentication auth = mock(Authentication.class);
-        var ex = assertThrows(ResponseStatusException.class,
-                () -> c.deletePost(8L, auth));
+        var ex = assertThrows(ResponseStatusException.class, () -> c.deletePost(8L, auth));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-    }
-
-    /**
-     * Verifica que la creación de un post asigna el nombre de usuario desde la autenticación si es nulo.
-     */
-    @Test
-    void createPost_nullUsername_authSetsIt() {
-        PostService svc = mock(PostService.class);
-        PostController c = new PostController();
-        ReflectionTestUtils.setField(c, "postService", svc);
-
-        Post p = new Post();
-        p.setUsername(null); 
-
-        Authentication auth = mock(Authentication.class);
-        when(auth.getName()).thenReturn("authuser");
-        when(svc.createPost(p)).thenReturn(p);
-
-        c.createPost(p, auth);
-        assertEquals("authuser", p.getUsername());
     }
 }

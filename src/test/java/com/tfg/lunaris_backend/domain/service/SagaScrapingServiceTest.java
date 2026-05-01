@@ -35,7 +35,6 @@ class SagaScrapingServiceTest {
     @InjectMocks
     private SagaScrapingService svc;
 
-
     /**
      * Verifica que se devuelve la saga en caché cuando es válida.
      */
@@ -43,10 +42,21 @@ class SagaScrapingServiceTest {
     void returnsCachedSagaWhenValid() {
         Saga saga = new Saga();
         saga.setName("SagaX");
-        SagaBook b1 = new SagaBook(); b1.setOrderNumber("1"); b1.setTitle("T1"); b1.setSaga(saga);
-        SagaBook b2 = new SagaBook(); b2.setOrderNumber("2"); b2.setTitle("T2"); b2.setSaga(saga);
-        SagaBook b3 = new SagaBook(); b3.setOrderNumber("3"); b3.setTitle("T3"); b3.setSaga(saga);
-        saga.getBooks().add(b1); saga.getBooks().add(b2); saga.getBooks().add(b3);
+        SagaBook b1 = new SagaBook();
+        b1.setOrderNumber("1");
+        b1.setTitle("T1");
+        b1.setSaga(saga);
+        SagaBook b2 = new SagaBook();
+        b2.setOrderNumber("2");
+        b2.setTitle("T2");
+        b2.setSaga(saga);
+        SagaBook b3 = new SagaBook();
+        b3.setOrderNumber("3");
+        b3.setTitle("T3");
+        b3.setSaga(saga);
+        saga.getBooks().add(b1);
+        saga.getBooks().add(b2);
+        saga.getBooks().add(b3);
 
         when(repo.findByBookTitleIgnoreCase("T1")).thenReturn(Optional.of(saga));
 
@@ -57,14 +67,16 @@ class SagaScrapingServiceTest {
     }
 
     /**
-     * Verifica que se devuelve null cuando la caché está obsoleta y ocurre una IOException durante la recuperación.
+     * Verifica que se devuelve null cuando la caché está obsoleta y ocurre una
+     * IOException durante la recuperación.
      */
     @Test
     void scrapeSaga_staleCacheUnfiltered_ioException_returnsNull() throws Exception {
         Saga saga = new Saga();
         saga.setName("SagaY");
         SagaBook b = new SagaBook();
-        b.setOrderNumber(null);  
+        b.setOrderNumber(null);
+        b.setGoodreadsUrl("https://www.goodreads.com/book/show/1");
         b.setSaga(saga);
         saga.getBooks().add(b);
         when(repo.findByBookTitleIgnoreCase("T2")).thenReturn(Optional.of(saga));
@@ -82,18 +94,26 @@ class SagaScrapingServiceTest {
         }
     }
 
-
     /**
-     * Verifica que se devuelve null cuando la caché está obsoleta, tiene tamaño 2 y ocurre una IOException durante la recuperación.
+     * Verifica que se devuelve null cuando la caché está obsoleta, tiene tamaño 2 y
+     * ocurre una IOException durante la recuperación.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
     void scrapeSaga_staleCache_sizeTwo_ioException_returnsNull() throws Exception {
         Saga saga = new Saga();
         saga.setName("SagaZ");
-        SagaBook b1 = new SagaBook(); b1.setOrderNumber("1"); b1.setSaga(saga);
-        SagaBook b2 = new SagaBook(); b2.setOrderNumber("2"); b2.setSaga(saga);
-        saga.getBooks().add(b1); saga.getBooks().add(b2);
+        SagaBook b1 = new SagaBook();
+        b1.setOrderNumber("1");
+        b1.setGoodreadsUrl("https://www.goodreads.com/book/show/1");
+        b1.setSaga(saga);
+        SagaBook b2 = new SagaBook();
+        b2.setOrderNumber("2");
+        b2.setGoodreadsUrl("https://www.goodreads.com/book/show/2");
+        b2.setSaga(saga);
+        saga.getBooks().add(b1);
+        saga.getBooks().add(b2);
         when(repo.findByBookTitleIgnoreCase("T3")).thenReturn(Optional.of(saga));
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
@@ -109,9 +129,10 @@ class SagaScrapingServiceTest {
         }
     }
 
-
     /**
-     * Verifica que se devuelve null cuando no hay caché y ocurre una IOException durante la recuperación.
+     * Verifica que se devuelve null cuando no hay caché y ocurre una IOException
+     * durante la recuperación.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -130,9 +151,10 @@ class SagaScrapingServiceTest {
         }
     }
 
-
     /**
-     * Verifica que se devuelve null cuando no hay caché y los resultados de búsqueda están vacíos, incluso con autor especificado.
+     * Verifica que se devuelve null cuando no hay caché y los resultados de
+     * búsqueda están vacíos, incluso con autor especificado.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -154,7 +176,9 @@ class SagaScrapingServiceTest {
     }
 
     /**
-     * Verifica que se devuelve null cuando no hay caché, se encuentra la URL del libro pero no hay enlace a la serie.
+     * Verifica que se devuelve null cuando no hay caché, se encuentra la URL del
+     * libro pero no hay enlace a la serie.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -181,9 +205,10 @@ class SagaScrapingServiceTest {
         }
     }
 
-
     /**
-     * Verifica que se crea y devuelve la saga correctamente cuando se sigue el camino completo de scraping.
+     * Verifica que se crea y devuelve la saga correctamente cuando se sigue el
+     * camino completo de scraping.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -224,9 +249,10 @@ class SagaScrapingServiceTest {
         }
     }
 
-
     /**
-     * Verifica que se devuelve null cuando la página de la serie no contiene un nombre de saga reconocible.
+     * Verifica que se devuelve null cuando la página de la serie no contiene un
+     * nombre de saga reconocible.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -255,9 +281,10 @@ class SagaScrapingServiceTest {
         }
     }
 
-    
     /**
-     * Verifica que no se actualiza la saga existente si ya tiene el mismo o mayor número de libros que la información scrapeada.
+     * Verifica que no se actualiza la saga existente si ya tiene el mismo o mayor
+     * número de libros que la información scrapeada.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -265,7 +292,8 @@ class SagaScrapingServiceTest {
         SagaScrapedDto dto = new SagaScrapedDto("S1", List.of());
         Saga existing = new Saga();
         existing.setName("S1");
-        SagaBook b = new SagaBook(); b.setSaga(existing);
+        SagaBook b = new SagaBook();
+        b.setSaga(existing);
         existing.getBooks().add(b);
         when(repo.findByName("S1")).thenReturn(Optional.of(existing));
 
@@ -276,9 +304,10 @@ class SagaScrapingServiceTest {
         verify(repo, never()).save(any());
     }
 
-
     /**
-     * Verifica que se actualiza la saga existente si tiene menos libros que la información scrapeada.
+     * Verifica que se actualiza la saga existente si tiene menos libros que la
+     * información scrapeada.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -287,8 +316,9 @@ class SagaScrapingServiceTest {
         SagaScrapedDto dto = new SagaScrapedDto("S2", List.of(entry, entry));
         Saga existing = new Saga();
         existing.setName("S2");
-        SagaBook b = new SagaBook(); b.setSaga(existing);
-        existing.getBooks().add(b); 
+        SagaBook b = new SagaBook();
+        b.setSaga(existing);
+        existing.getBooks().add(b);
         when(repo.findByName("S2")).thenReturn(Optional.of(existing));
         when(repo.save(existing)).thenReturn(existing);
 
@@ -299,9 +329,9 @@ class SagaScrapingServiceTest {
         verify(repo).save(existing);
     }
 
-    
     /**
      * Verifica que se crea y devuelve una nueva saga cuando no existe previamente.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -318,9 +348,10 @@ class SagaScrapingServiceTest {
         verify(repo).save(any(Saga.class));
     }
 
-
     /**
-     * Verifica que se filtran los libros de la saga eliminando los inválidos y duplicados.
+     * Verifica que se filtran los libros de la saga eliminando los inválidos y
+     * duplicados.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -331,25 +362,35 @@ class SagaScrapingServiceTest {
 
         List<SagaScrapedDto.SagaBookEntry> books = new ArrayList<>();
 
-        SagaScrapedDto.SagaBookEntry nullOrder  = new SagaScrapedDto.SagaBookEntry(); nullOrder.setOrderNumber(null);
-        SagaScrapedDto.SagaBookEntry blankOrder = new SagaScrapedDto.SagaBookEntry(); blankOrder.setOrderNumber("  ");
-        SagaScrapedDto.SagaBookEntry rangeOrder = new SagaScrapedDto.SagaBookEntry(); rangeOrder.setOrderNumber("1-2");
-        SagaScrapedDto.SagaBookEntry valid1     = new SagaScrapedDto.SagaBookEntry(); valid1.setOrderNumber("1");
-        SagaScrapedDto.SagaBookEntry dup1       = new SagaScrapedDto.SagaBookEntry(); dup1.setOrderNumber("1");
-        SagaScrapedDto.SagaBookEntry valid2     = new SagaScrapedDto.SagaBookEntry(); valid2.setOrderNumber("2");
+        SagaScrapedDto.SagaBookEntry nullOrder = new SagaScrapedDto.SagaBookEntry();
+        nullOrder.setOrderNumber(null);
+        SagaScrapedDto.SagaBookEntry blankOrder = new SagaScrapedDto.SagaBookEntry();
+        blankOrder.setOrderNumber("  ");
+        SagaScrapedDto.SagaBookEntry rangeOrder = new SagaScrapedDto.SagaBookEntry();
+        rangeOrder.setOrderNumber("1-2");
+        SagaScrapedDto.SagaBookEntry valid1 = new SagaScrapedDto.SagaBookEntry();
+        valid1.setOrderNumber("1");
+        SagaScrapedDto.SagaBookEntry dup1 = new SagaScrapedDto.SagaBookEntry();
+        dup1.setOrderNumber("1");
+        SagaScrapedDto.SagaBookEntry valid2 = new SagaScrapedDto.SagaBookEntry();
+        valid2.setOrderNumber("2");
 
-        books.add(nullOrder); books.add(blankOrder); books.add(rangeOrder);
-        books.add(valid1); books.add(dup1); books.add(valid2);
+        books.add(nullOrder);
+        books.add(blankOrder);
+        books.add(rangeOrder);
+        books.add(valid1);
+        books.add(dup1);
+        books.add(valid2);
 
-        List<SagaScrapedDto.SagaBookEntry> filtered =
-                (List<SagaScrapedDto.SagaBookEntry>) m.invoke(svc, books);
+        List<SagaScrapedDto.SagaBookEntry> filtered = (List<SagaScrapedDto.SagaBookEntry>) m.invoke(svc, books);
 
         assertEquals(2, filtered.size());
     }
 
-
     /**
-     * Verifica que se extrae correctamente el nombre de la saga desde el encabezado, eliminando el sufijo " Series" si está presente.
+     * Verifica que se extrae correctamente el nombre de la saga desde el
+     * encabezado, eliminando el sufijo " Series" si está presente.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -368,8 +409,10 @@ class SagaScrapingServiceTest {
     }
 
     /**
-     * Verifica que se extrae correctamente el nombre de la saga desde el título de la página cuando no hay encabezado, 
+     * Verifica que se extrae correctamente el nombre de la saga desde el título de
+     * la página cuando no hay encabezado,
      * y que se devuelve null si el título no contiene "Series".
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -387,10 +430,11 @@ class SagaScrapingServiceTest {
         assertNull(m.invoke(svc, docNoMatch));
     }
 
-
     /**
-     * Verifica que se extrae correctamente el número de orden del título del libro, y que se devuelve null si no se 
+     * Verifica que se extrae correctamente el número de orden del título del libro,
+     * y que se devuelve null si no se
      * encuentra un patrón válido.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -404,9 +448,10 @@ class SagaScrapingServiceTest {
         assertNull(m.invoke(svc, "No pattern here"));
     }
 
-
     /**
-     * Verifica que se limpian correctamente las entidades HTML comunes en los títulos de los libros.
+     * Verifica que se limpian correctamente las entidades HTML comunes en los
+     * títulos de los libros.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -419,10 +464,11 @@ class SagaScrapingServiceTest {
         assertEquals("it's & \"quoted\" <tag>", cleaned);
     }
 
-
     /**
-     * Verifica que se extrae correctamente el texto de un nodo JSON dado un nombre de campo, y que se devuelve 
+     * Verifica que se extrae correctamente el texto de un nodo JSON dado un nombre
+     * de campo, y que se devuelve
      * null si el campo no existe o es null.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -439,9 +485,10 @@ class SagaScrapingServiceTest {
         assertNull(m.invoke(svc, node, "missing"));
     }
 
-
     /**
-     * Verifica que se devuelve una lista vacía cuando no hay elementos react en el documento.
+     * Verifica que se devuelve una lista vacía cuando no hay elementos react en el
+     * documento.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -456,10 +503,11 @@ class SagaScrapingServiceTest {
         assertTrue(result.isEmpty());
     }
 
-
     /**
-     * Verifica que se extraen correctamente los libros de un nodo react con JSON válido, y que se 
+     * Verifica que se extraen correctamente los libros de un nodo react con JSON
+     * válido, y que se
      * manejan correctamente los campos del libro.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -481,8 +529,7 @@ class SagaScrapingServiceTest {
                 + jsonProps + "'></div></body></html>";
 
         Document doc = Jsoup.parse(html);
-        List<SagaScrapedDto.SagaBookEntry> books =
-                (List<SagaScrapedDto.SagaBookEntry>) m.invoke(svc, doc);
+        List<SagaScrapedDto.SagaBookEntry> books = (List<SagaScrapedDto.SagaBookEntry>) m.invoke(svc, doc);
 
         assertFalse(books.isEmpty());
         assertEquals("My Title", books.get(0).getTitle());
@@ -492,10 +539,11 @@ class SagaScrapingServiceTest {
         assertEquals(2021, books.get(0).getYear());
     }
 
-
     /**
-     * Verifica que se devuelve una lista vacía cuando el nodo react tiene un campo data-react-props 
+     * Verifica que se devuelve una lista vacía cuando el nodo react tiene un campo
+     * data-react-props
      * vacío, lo que simula un JSON vacío o mal formado.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -513,10 +561,11 @@ class SagaScrapingServiceTest {
         assertTrue(result.isEmpty());
     }
 
-
     /**
-     * Verifica que se devuelve una lista vacía cuando el nodo react tiene un campo data-react-props 
+     * Verifica que se devuelve una lista vacía cuando el nodo react tiene un campo
+     * data-react-props
      * con un JSON que no contiene el array "series",
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -534,10 +583,11 @@ class SagaScrapingServiceTest {
         assertTrue(result.isEmpty());
     }
 
-
     /**
-     * Verifica que se devuelve una lista vacía cuando el nodo react tiene un campo data-react-props 
+     * Verifica que se devuelve una lista vacía cuando el nodo react tiene un campo
+     * data-react-props
      * con un JSON que contiene el array "series" pero sin nodos "book",
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -547,7 +597,7 @@ class SagaScrapingServiceTest {
                 org.jsoup.nodes.Document.class);
         m.setAccessible(true);
 
-        String jsonProps = "{\"series\":[{}]}"; 
+        String jsonProps = "{\"series\":[{}]}";
         String html = "<html><body>"
                 + "<div data-react-class=\"ReactComponents.SeriesList\" data-react-props='"
                 + jsonProps + "'></div></body></html>";
@@ -556,10 +606,11 @@ class SagaScrapingServiceTest {
         assertTrue(result.isEmpty());
     }
 
-
     /**
-     * Verifica que se extraen correctamente los libros de la página de la serie, y que se manejan 
+     * Verifica que se extraen correctamente los libros de la página de la serie, y
+     * que se manejan
      * correctamente los casos en los que no se encuentra un número de orden válido.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -575,11 +626,10 @@ class SagaScrapingServiceTest {
                 + "<span itemprop='author'><span itemprop='name'>An Author</span></span>"
                 + "<a itemprop='url' href='/book/1'></a></div>"
                 + "<div class='listWithDividers__item'><h3>No number here !</h3>"
-                + "</div>" 
+                + "</div>"
                 + "</body></html>";
         Document doc = Jsoup.parse(html);
-        List<SagaScrapedDto.SagaBookEntry> books =
-                (List<SagaScrapedDto.SagaBookEntry>) m.invoke(svc, doc);
+        List<SagaScrapedDto.SagaBookEntry> books = (List<SagaScrapedDto.SagaBookEntry>) m.invoke(svc, doc);
 
         assertEquals(1, books.size());
         assertEquals("First Book", books.get(0).getTitle());
@@ -587,10 +637,12 @@ class SagaScrapingServiceTest {
         assertEquals("1", books.get(0).getOrderNumber());
     }
 
-
     /**
-     * Verifica que se devuelve null cuando no hay caché, se encuentra la URL del libro pero todos los 
-     * enlaces son filtrados por contener "summary" en el href, y la página de la serie no tiene un nombre reconocible.
+     * Verifica que se devuelve null cuando no hay caché, se encuentra la URL del
+     * libro pero todos los
+     * enlaces son filtrados por contener "summary" en el href, y la página de la
+     * serie no tiene un nombre reconocible.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -617,9 +669,10 @@ class SagaScrapingServiceTest {
         }
     }
 
-
     /**
-     * Verifica que se devuelve null cuando no hay caché, se encuentra la URL del libro pero es una URL absoluta que no es filtrada,
+     * Verifica que se devuelve null cuando no hay caché, se encuentra la URL del
+     * libro pero es una URL absoluta que no es filtrada,
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -646,11 +699,13 @@ class SagaScrapingServiceTest {
         }
     }
 
-
     /**
-     * Verifica que se devuelve null cuando no hay caché, se encuentra la URL del libro pero no 
-     * hay enlaces a la serie o los libros de la serie, incluso si la página de la serie tiene 
+     * Verifica que se devuelve null cuando no hay caché, se encuentra la URL del
+     * libro pero no
+     * hay enlaces a la serie o los libros de la serie, incluso si la página de la
+     * serie tiene
      * un nombre reconocible, lo que simula el caso de una saga sin libros listados.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -677,14 +732,16 @@ class SagaScrapingServiceTest {
             when(conn.get()).thenReturn(searchDoc).thenReturn(bookDoc).thenReturn(seriesDoc);
 
             SagaScrapedDto result = svc.scrapeSaga("TB", null);
-            assertNull(result); 
+            assertNull(result);
         }
     }
 
-
     /**
-     * Verifica que se devuelve un libro con el título correcto incluso si la fecha de publicación no es un 
-     * año válido, lo que simula el caso de un libro con datos inconsistentes en el JSON.
+     * Verifica que se devuelve un libro con el título correcto incluso si la fecha
+     * de publicación no es un
+     * año válido, lo que simula el caso de un libro con datos inconsistentes en el
+     * JSON.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -704,17 +761,17 @@ class SagaScrapingServiceTest {
                 + jsonProps + "'></div></body></html>";
 
         Document doc = Jsoup.parse(html);
-        List<SagaScrapedDto.SagaBookEntry> books =
-                (List<SagaScrapedDto.SagaBookEntry>) m.invoke(svc, doc);
+        List<SagaScrapedDto.SagaBookEntry> books = (List<SagaScrapedDto.SagaBookEntry>) m.invoke(svc, doc);
 
         assertFalse(books.isEmpty());
         assertEquals("My Title", books.get(0).getTitle());
     }
 
-
     /**
-     * Verifica que se devuelve una lista vacía cuando el JSON en data-react-props es inválido y causa una excepción al parsear,
+     * Verifica que se devuelve una lista vacía cuando el JSON en data-react-props
+     * es inválido y causa una excepción al parsear,
      * lo que simula el caso de datos inconsistentes en el JSON.
+     * 
      * @throws Exception si ocurre un error durante el test
      */
     @Test
@@ -731,6 +788,6 @@ class SagaScrapingServiceTest {
 
         Document doc = Jsoup.parse(html);
         List<?> result = (List<?>) m.invoke(svc, doc);
-        assertTrue(result.isEmpty()); 
+        assertTrue(result.isEmpty());
     }
 }
