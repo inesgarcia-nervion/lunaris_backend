@@ -20,9 +20,6 @@ public class PostService {
     @Autowired
     private PostRepository postRepository;
 
-    @Autowired
-    private CommentRepository commentRepository;
-
     /**
      * Obtiene todos los posts ordenados por ID de forma descendente.
      * 
