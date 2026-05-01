@@ -2,12 +2,14 @@ package com.tfg.lunaris_backend.presentation.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import com.tfg.lunaris_backend.domain.dto.CommentRequestDto;
+import com.tfg.lunaris_backend.domain.dto.PostRequestDto;
+import com.tfg.lunaris_backend.domain.dto.PostResponseDto;
 import com.tfg.lunaris_backend.domain.model.Comment;
 import com.tfg.lunaris_backend.domain.model.Post;
 import com.tfg.lunaris_backend.domain.service.PostService;
-import com.tfg.lunaris_backend.presentation.dto.CommentRequestDto;
-import com.tfg.lunaris_backend.presentation.dto.PostRequestDto;
-import com.tfg.lunaris_backend.presentation.dto.PostResponseDto;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;

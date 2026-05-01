@@ -1,4 +1,4 @@
-package com.tfg.lunaris_backend.presentation.dto;
+package com.tfg.lunaris_backend.domain.dto;
 
 /**
  * DTO para crear un comentario en un post.

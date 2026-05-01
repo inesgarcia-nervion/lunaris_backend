@@ -1,9 +1,10 @@
 package com.tfg.lunaris_backend.presentation.controller;
 
+import com.tfg.lunaris_backend.domain.dto.PostRequestDto;
+import com.tfg.lunaris_backend.domain.dto.PostResponseDto;
 import com.tfg.lunaris_backend.domain.model.Post;
 import com.tfg.lunaris_backend.domain.service.PostService;
-import com.tfg.lunaris_backend.presentation.dto.PostRequestDto;
-import com.tfg.lunaris_backend.presentation.dto.PostResponseDto;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
