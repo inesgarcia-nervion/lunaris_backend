@@ -9,10 +9,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tfg.lunaris_backend.domain.dto.BookStatusRequest;
 import com.tfg.lunaris_backend.domain.model.User;
 import com.tfg.lunaris_backend.domain.service.UserService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador que maneja las operaciones relacionadas con los usuarios.
@@ -128,5 +130,33 @@ public class UserController {
     @DeleteMapping("/users/{id}")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
+    }
+
+    /**
+     * Endpoint para obtener las listas de estado de lectura de un usuario.
+     * Devuelve un mapa con tres entradas: "planParaLeer", "leyendo" y "leido",
+     * cada una con la lista de libros en ese estado.
+     *
+     * @param username nombre del usuario
+     * @return mapa con las tres listas de estado
+     */
+    @GetMapping("/users/username/{username}/book-status")
+    public Map<String, List<Object>> getBookStatusLists(@PathVariable String username) {
+        return userService.getBookStatusLists(username);
+    }
+
+    /**
+     * Endpoint para establecer el estado de lectura de un libro para un usuario.
+     * El libro se mueve al estado indicado y se elimina de cualquier otro estado.
+     * Si status es null o vacío, el libro se elimina de todos los estados.
+     *
+     * @param username nombre del usuario
+     * @param request  cuerpo con bookId, status y bookData
+     * @return mapa actualizado con las tres listas de estado
+     */
+    @PutMapping("/users/username/{username}/book-status")
+    public Map<String, List<Object>> setBookStatus(@PathVariable String username,
+            @RequestBody BookStatusRequest request) {
+        return userService.setBookStatus(username, request);
     }
 }

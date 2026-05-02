@@ -27,4 +27,13 @@ public class User {
     private String role;
     @Column(columnDefinition = "text")
     private String avatarUrl;
+
+    @Column(name = "plan_para_leer", columnDefinition = "text")
+    private String planParaLeerJson;
+
+    @Column(name = "leyendo", columnDefinition = "text")
+    private String leyendoJson;
+
+    @Column(name = "leido", columnDefinition = "text")
+    private String leidoJson;
 }

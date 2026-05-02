@@ -6,11 +6,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.tfg.lunaris_backend.data.repository.UserRepository;
+import com.tfg.lunaris_backend.domain.dto.BookStatusRequest;
 import com.tfg.lunaris_backend.domain.model.User;
 import com.tfg.lunaris_backend.presentation.exceptions.UserNotFoundException;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Servicio que maneja la lógica de negocio relacionada con los usuarios.
@@ -25,6 +31,8 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Obtiene todos los usuarios.
@@ -130,5 +138,107 @@ public class UserService {
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con username " + username));
+    }
+
+    /**
+     * Devuelve las tres listas de estado de lectura del usuario como un mapa
+     * con claves "planParaLeer", "leyendo" y "leido", cada una con un array de
+     * objetos libro.
+     *
+     * @param username nombre del usuario
+     * @return mapa con las tres listas de estado
+     */
+    public Map<String, List<Object>> getBookStatusLists(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con username " + username));
+        Map<String, List<Object>> result = new LinkedHashMap<>();
+        result.put("planParaLeer", parseBookList(user.getPlanParaLeerJson()));
+        result.put("leyendo", parseBookList(user.getLeyendoJson()));
+        result.put("leido", parseBookList(user.getLeidoJson()));
+        return result;
+    }
+
+    /**
+     * Establece el estado de lectura de un libro para el usuario dado.
+     * El libro se elimina de cualquier otro estado antes de ser añadido al nuevo.
+     * Si status es null o vacío, el libro se elimina de todos los estados.
+     *
+     * @param username nombre del usuario
+     * @param request  solicitud con bookId, status y bookData
+     * @return mapa actualizado con las tres listas de estado
+     */
+    public Map<String, List<Object>> setBookStatus(String username, BookStatusRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con username " + username));
+
+        String bookId = request.getBookId();
+        String status = request.getStatus();
+        Object bookData = request.getBookData();
+
+        List<Object> planList = parseBookList(user.getPlanParaLeerJson());
+        List<Object> leyendoList = parseBookList(user.getLeyendoJson());
+        List<Object> leidoList = parseBookList(user.getLeidoJson());
+
+        planList.removeIf(b -> bookIdMatches(b, bookId));
+        leyendoList.removeIf(b -> bookIdMatches(b, bookId));
+        leidoList.removeIf(b -> bookIdMatches(b, bookId));
+
+        if (status != null && !status.isBlank()) {
+            switch (status) {
+                case "Plan para leer" -> planList.add(bookData);
+                case "Leyendo" -> leyendoList.add(bookData);
+                case "Leído" -> leidoList.add(bookData);
+                default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Estado no válido: " + status + ". Use 'Plan para leer', 'Leyendo' o 'Leído'");
+            }
+        }
+
+        user.setPlanParaLeerJson(serializeBookList(planList));
+        user.setLeyendoJson(serializeBookList(leyendoList));
+        user.setLeidoJson(serializeBookList(leidoList));
+        userRepository.save(user);
+
+        Map<String, List<Object>> result = new LinkedHashMap<>();
+        result.put("planParaLeer", planList);
+        result.put("leyendo", leyendoList);
+        result.put("leido", leidoList);
+        return result;
+    }
+
+    private List<Object> parseBookList(String json) {
+        if (json == null || json.isBlank())
+            return new ArrayList<>();
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<Object>>() {
+            });
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private String serializeBookList(List<Object> list) {
+        try {
+            return objectMapper.writeValueAsString(list);
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean bookIdMatches(Object book, String bookId) {
+        if (book == null || bookId == null)
+            return false;
+        try {
+            Map<String, Object> map = (Map<String, Object>) book;
+            Object key = map.get("key");
+            if (key != null && bookId.equals(key.toString()))
+                return true;
+            Object apiId = map.get("apiId");
+            if (apiId != null && bookId.equals(apiId.toString()))
+                return true;
+        } catch (Exception e) {
+            // ignore
+        }
+        return false;
     }
 }
