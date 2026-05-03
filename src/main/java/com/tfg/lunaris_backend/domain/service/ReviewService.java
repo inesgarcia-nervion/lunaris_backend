@@ -30,7 +30,9 @@ public class ReviewService {
 
     /**
      * Obtiene todas las reseñas ordenadas por ID de forma descendente.
-     * Si alguna reseña tiene datos de libro faltantes, intenta enriquecerlos consultando la API de Open Library.
+     * Si alguna reseña tiene datos de libro faltantes, intenta enriquecerlos
+     * consultando la API de Open Library.
+     * 
      * @return lista de reseñas
      */
     public List<Review> getAllReviews() {
@@ -41,7 +43,9 @@ public class ReviewService {
 
     /**
      * Obtiene todas las reseñas asociadas a un identificador de libro externo.
-     * Si alguna reseña tiene datos de libro faltantes, intenta enriquecerlos consultando la API de Open Library.
+     * Si alguna reseña tiene datos de libro faltantes, intenta enriquecerlos
+     * consultando la API de Open Library.
+     * 
      * @param bookApiId identificador externo del libro
      * @return lista de reseñas para el libro
      */
@@ -52,29 +56,39 @@ public class ReviewService {
     }
 
     /**
-     * Enriquecer los datos faltantes de los libros en las reseñas consultando la API de Open Library.
+     * Enriquecer los datos faltantes de los libros en las reseñas consultando la
+     * API de Open Library.
+     * 
      * @param reviews lista de reseñas a enriquecer
      */
     private void enrichMissingBookData(List<Review> reviews) {
-        if (reviews == null || reviews.isEmpty()) return;
+        if (reviews == null || reviews.isEmpty())
+            return;
         for (Review r : reviews) {
             try {
-                if (r.getBookApiId() == null) continue;
+                if (r.getBookApiId() == null)
+                    continue;
                 boolean missingTitle = r.getBookTitle() == null || r.getBookTitle().isBlank();
                 boolean missingCover = r.getCoverUrl() == null || r.getCoverUrl().isBlank();
-                if (!missingTitle && !missingCover) continue;
+                if (!missingTitle && !missingCover)
+                    continue;
                 String apiId = r.getBookApiId();
                 String workKey = apiId;
-                if (workKey.startsWith("/")) workKey = workKey.substring(1);
-                if (workKey.startsWith("works/")) workKey = workKey.substring("works/".length());
-                if (!workKey.startsWith("OL") || !workKey.endsWith("W")) continue;
+                if (workKey.startsWith("/"))
+                    workKey = workKey.substring(1);
+                if (workKey.startsWith("works/"))
+                    workKey = workKey.substring("works/".length());
+                if (!workKey.startsWith("OL") || !workKey.endsWith("W"))
+                    continue;
                 String url = "https://openlibrary.org/works/" + workKey + ".json";
                 ResponseEntity<Map> resp = rest.getForEntity(url, Map.class);
-                if (resp.getStatusCode() != HttpStatus.OK || resp.getBody() == null) continue;
+                if (resp.getStatusCode() != HttpStatus.OK || resp.getBody() == null)
+                    continue;
                 Map body = resp.getBody();
                 if (missingTitle) {
                     Object title = body.get("title");
-                    if (title instanceof String) r.setBookTitle((String) title);
+                    if (title instanceof String)
+                        r.setBookTitle((String) title);
                 }
                 if (missingCover) {
                     Object covers = body.get("covers");
@@ -84,20 +98,22 @@ public class ReviewService {
                         if (first != null) {
                             coverUrl = "https://covers.openlibrary.org/b/id/" + first.toString() + "-M.jpg";
                         }
-                        if (coverUrl != null) r.setCoverUrl(coverUrl);
+                        if (coverUrl != null)
+                            r.setCoverUrl(coverUrl);
                     } else {
                         r.setCoverUrl("https://covers.openlibrary.org/b/works/" + workKey + "-M.jpg");
                     }
                 }
                 reviewRepository.save(r);
             } catch (Exception e) {
-                // Ignorar errores al enriquecer datos de libros
+                // Ignorar errores
             }
         }
     }
 
     /**
      * Obtiene una reseña por su ID.
+     * 
      * @param id ID de la reseña
      * @return reseña encontrada
      * @throws ReviewNotFoundException si la reseña no existe
@@ -108,10 +124,12 @@ public class ReviewService {
     }
 
     /**
-     * Crea una nueva reseña. Si la puntuación está presente, se valida que esté entre 0 y 5.
+     * Crea una nueva reseña. Si la puntuación está presente, se valida que esté
+     * entre 0 y 5.
+     * 
      * @param review objeto con los datos de la reseña a crear
      * @return reseña creada
-      * @throws ResponseStatusException si la puntuación no está entre 0 y 5
+     * @throws ResponseStatusException si la puntuación no está entre 0 y 5
      */
     public Review createReview(Review review) {
         if (review.getRating() != null) {
@@ -124,13 +142,14 @@ public class ReviewService {
     }
 
     /**
-    * Actualiza una reseña existente.
-    * @param id ID de la reseña a actualizar
-    * @param reviewDetails detalles de la reseña a actualizar
-    * @return reseña actualizada
-    * @throws ReviewNotFoundException si la reseña no existe
-    * @throws ResponseStatusException si la puntuación no está entre 0 y 5
-    */
+     * Actualiza una reseña existente.
+     * 
+     * @param id            ID de la reseña a actualizar
+     * @param reviewDetails detalles de la reseña a actualizar
+     * @return reseña actualizada
+     * @throws ReviewNotFoundException si la reseña no existe
+     * @throws ResponseStatusException si la puntuación no está entre 0 y 5
+     */
     public Review updateReview(Long id, Review reviewDetails) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ReviewNotFoundException("Reseña no encontrada con id " + id));
@@ -155,6 +174,7 @@ public class ReviewService {
 
     /**
      * Elimina una reseña por su ID.
+     * 
      * @param id ID de la reseña a eliminar
      */
     public void deleteReview(Long id) {

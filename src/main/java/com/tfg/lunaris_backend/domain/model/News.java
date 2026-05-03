@@ -5,6 +5,9 @@ import lombok.Data;
 
 /**
  * Entidad que representa una noticia en la base de datos.
+ * 
+ * Cada noticia tiene un título, texto, cuerpo, imagen y fecha.
+ * El campo 'id' es la clave primaria y se genera automáticamente.
  */
 @Entity
 @Table(name = "news", schema = "public")

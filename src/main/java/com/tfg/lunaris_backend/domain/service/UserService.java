@@ -205,6 +205,15 @@ public class UserService {
         return result;
     }
 
+    /**
+     * Es un método auxiliar para convertir una cadena JSON que representa una lista
+     * de
+     * objetos en una lista de objetos Java. Si la cadena es nula o vacía, devuelve
+     * una lista vacía.
+     *
+     * @param json cadena JSON que representa una lista de objetos
+     * @return lista de objetos Java
+     */
     private List<Object> parseBookList(String json) {
         if (json == null || json.isBlank())
             return new ArrayList<>();
@@ -216,6 +225,15 @@ public class UserService {
         }
     }
 
+    /**
+     * Es un método auxiliar para convertir una lista de objetos Java en una cadena
+     * JSON
+     * que representa esa lista. Si ocurre un error durante la conversión, devuelve
+     * una cadena JSON vacía "[]".
+     * 
+     * @param list lista de objetos Java a convertir
+     * @return cadena JSON que representa la lista de objetos
+     */
     private String serializeBookList(List<Object> list) {
         try {
             return objectMapper.writeValueAsString(list);
@@ -224,6 +242,21 @@ public class UserService {
         }
     }
 
+    /**
+     * Es un método auxiliar para verificar si un objeto libro coincide con un
+     * bookId dado.
+     * El método intenta extraer los campos "key" y "apiId" del objeto libro
+     * (asumiendo que es un mapa) y compara su valor con el bookId proporcionado. Si
+     * alguno de los campos coincide, devuelve true. Si el objeto libro no tiene
+     * esos campos o si ocurre cualquier error durante la verificación, devuelve
+     * false.
+     * 
+     * @param book   objeto libro a verificar, se espera que sea un mapa con campos
+     *               "key" y/o "api
+     * @param bookId ID del libro a comparar con los campos del objeto libro
+     * @return true si el objeto libro coincide con el bookId, false en caso
+     *         contrario
+     */
     @SuppressWarnings("unchecked")
     private boolean bookIdMatches(Object book, String bookId) {
         if (book == null || bookId == null)

@@ -16,7 +16,7 @@ import java.util.Map.Entry;
  */
 class RepositoryInterfacesTest {
 
-    private static final String[] REPOS = new String[]{
+    private static final String[] REPOS = new String[] {
             "com.tfg.lunaris_backend.data.repository.UserRepository",
             "com.tfg.lunaris_backend.data.repository.UserListRepository",
             "com.tfg.lunaris_backend.data.repository.SagaRepository",
@@ -26,7 +26,8 @@ class RepositoryInterfacesTest {
             "com.tfg.lunaris_backend.data.repository.GenreRepository",
             "com.tfg.lunaris_backend.data.repository.BookRequestRepository",
             "com.tfg.lunaris_backend.data.repository.BookRepository",
-            "com.tfg.lunaris_backend.data.repository.AuthorRepository"
+            "com.tfg.lunaris_backend.data.repository.AuthorRepository",
+            "com.tfg.lunaris_backend.data.repository.NewsRepository"
     };
 
     /**
@@ -43,44 +44,42 @@ class RepositoryInterfacesTest {
 
     /**
      * Verifica que las interfaces de repositorio declaran los métodos esperados.
-     * @throws Exception si ocurre un error al cargar las clases o acceder a los métodos
+     * 
+     * @throws Exception si ocurre un error al cargar las clases o acceder a los
+     *                   métodos
      */
     @Test
     void repositoryInterfaces_declareExpectedMethods() throws Exception {
         Map<String, Map<String, List<Integer>>> expectations = new HashMap<>();
 
         expectations.put("com.tfg.lunaris_backend.data.repository.UserRepository", Map.of(
-            "findByUsername", List.of(1),
-            "findByEmail", List.of(1)
-        ));
+                "findByUsername", List.of(1),
+                "findByEmail", List.of(1)));
 
         expectations.put("com.tfg.lunaris_backend.data.repository.SagaRepository", Map.of(
-            "findByName", List.of(1),
-            "findByBookTitleIgnoreCase", List.of(1)
-        ));
+                "findByName", List.of(1),
+                "findByBookTitleIgnoreCase", List.of(1)));
 
         expectations.put("com.tfg.lunaris_backend.data.repository.ReviewRepository", Map.of(
-            "findByBookApiId", List.of(1),
-            "findAllByOrderByIdDesc", List.of(0)
-        ));
+                "findByBookApiId", List.of(1),
+                "findAllByOrderByIdDesc", List.of(0)));
 
         expectations.put("com.tfg.lunaris_backend.data.repository.PostRepository", Map.of(
-            "findAllByOrderByIdDesc", List.of(0)
-        ));
+                "findAllByOrderByIdDesc", List.of(0)));
 
         expectations.put("com.tfg.lunaris_backend.data.repository.PasswordResetTokenRepository", Map.of(
-            "findByToken", List.of(1),
-            "deleteByUser", List.of(1)
-        ));
+                "findByToken", List.of(1),
+                "deleteByUser", List.of(1)));
 
         expectations.put("com.tfg.lunaris_backend.data.repository.GenreRepository", Map.of(
-            "findByNameIgnoreCase", List.of(1)
-        ));
+                "findByNameIgnoreCase", List.of(1)));
 
         expectations.put("com.tfg.lunaris_backend.data.repository.BookRepository", Map.of(
-            "findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase", List.of(2, 3),
-            "findByApiId", List.of(1)
-        ));
+                "findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase", List.of(2, 3),
+                "findByApiId", List.of(1)));
+
+        expectations.put("com.tfg.lunaris_backend.data.repository.NewsRepository", Map.of(
+                "findAllByOrderByIdDesc", List.of(0)));
 
         expectations.forEach((repo, methods) -> {
             try {
@@ -90,14 +89,16 @@ class RepositoryInterfacesTest {
                     List<Integer> expectedParamsList = e.getValue();
                     boolean foundAny = false;
                     for (Method m : cls.getDeclaredMethods()) {
-                        if (!m.getName().equals(methodName)) continue;
+                        if (!m.getName().equals(methodName))
+                            continue;
                         int p = m.getParameterCount();
                         if (expectedParamsList.contains(p)) {
                             foundAny = true;
                             break;
                         }
                     }
-                    assertTrue(foundAny, repo + " should declare method " + methodName + " with one of param counts " + expectedParamsList);
+                    assertTrue(foundAny, repo + " should declare method " + methodName + " with one of param counts "
+                            + expectedParamsList);
                 }
             } catch (ClassNotFoundException ex) {
                 fail("Repository class not found: " + repo);

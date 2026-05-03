@@ -24,9 +24,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Servicio que maneja la lógica de negocio relacionada con el scraping de sagas en Goodreads.
+ * Servicio que maneja la lógica de negocio relacionada con el scraping de sagas
+ * en Goodreads.
  * 
- * Proporciona métodos para buscar sagas y obtener información detallada de los libros que las componen.
+ * Proporciona métodos para buscar sagas y obtener información detallada de los
+ * libros que las componen.
  */
 @Service
 @Slf4j
@@ -40,21 +42,23 @@ public class SagaScrapingService {
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     private static final int TIMEOUT_MS = 10000;
     private static final Pattern SERIES_NUMBER_PATTERN = Pattern.compile("#([\\d.]+(?:-[\\d.]+)?)\\)");
-    private static final Pattern SERIES_URL_PATTERN = Pattern.compile("/series/(\\d+)");
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Busca la saga/serie de un libro a partir de su título y autor.
      * Scrapea Goodreads para obtener la lista completa de libros de la saga.
+     * 
      * @param bookTitle título del libro
      * @param author    autor del libro (puede ser null)
-     * @return DTO con el nombre de la saga y sus libros, o null si no pertenece a una saga
+     * @return DTO con el nombre de la saga y sus libros, o null si no pertenece a
+     *         una saga
      */
     public SagaScrapedDto scrapeSaga(String bookTitle, String author) {
         Optional<Saga> cachedSaga = sagaRepository.findByBookTitleIgnoreCase(bookTitle);
         if (cachedSaga.isPresent()) {
             Saga saga = cachedSaga.get();
-            boolean hasGoodreadsUrls = saga.getBooks().stream().anyMatch(sb -> sb.getGoodreadsUrl() != null && !sb.getGoodreadsUrl().isBlank());
+            boolean hasGoodreadsUrls = saga.getBooks().stream()
+                    .anyMatch(sb -> sb.getGoodreadsUrl() != null && !sb.getGoodreadsUrl().isBlank());
             if (!hasGoodreadsUrls) {
                 log.info("Saga local encontrada para '{}' (manual)", bookTitle);
                 return convertToDto(saga);
@@ -102,9 +106,12 @@ public class SagaScrapingService {
     }
 
     /**
-     * Convierte la entidad Saga a un DTO para la respuesta, extrayendo sólo los campos necesarios.
+     * Convierte la entidad Saga a un DTO para la respuesta, extrayendo sólo los
+     * campos necesarios.
+     * 
      * @param saga entidad de la saga con sus libros
-     * @return DTO con el nombre de la saga y una lista de libros con sus datos relevantes
+     * @return DTO con el nombre de la saga y una lista de libros con sus datos
+     *         relevantes
      */
     private SagaScrapedDto convertToDto(Saga saga) {
         List<SagaBookEntry> entries = new ArrayList<>();
@@ -122,8 +129,10 @@ public class SagaScrapingService {
     }
 
     /**
-     * Guarda la saga scrapeada en la base de datos. Si ya existe una saga con el mismo nombre, 
+     * Guarda la saga scrapeada en la base de datos. Si ya existe una saga con el
+     * mismo nombre,
      * se actualiza sólo si la nueva tiene más libros o datos más completos.
+     * 
      * @param dto DTO con el nombre de la saga y sus libros obtenidos del scraping
      */
     private void saveSagaToDb(SagaScrapedDto dto) {
@@ -131,7 +140,7 @@ public class SagaScrapingService {
         if (existing.isPresent()) {
             Saga saga = existing.get();
             if (saga.getBooks().size() >= dto.getBooks().size()) {
-                return; 
+                return;
             }
             saga.getBooks().clear();
             for (SagaBookEntry entry : dto.getBooks()) {
@@ -170,10 +179,14 @@ public class SagaScrapingService {
     }
 
     /**
-     * Busca en Goodreads la URL de la serie a la que pertenece un libro, a partir de su título.
+     * Busca en Goodreads la URL de la serie a la que pertenece un libro, a partir
+     * de su título.
+     * 
      * @param bookTitle título del libro a buscar
-     * @return URL de la serie en Goodreads, o null si no se encuentra o no pertenece a ninguna serie
-     * @throws IOException si hay un error al conectar o parsear la página de Goodreads
+     * @return URL de la serie en Goodreads, o null si no se encuentra o no
+     *         pertenece a ninguna serie
+     * @throws IOException si hay un error al conectar o parsear la página de
+     *                     Goodreads
      */
     private List<String> findBookUrls(String bookTitle) throws IOException {
         String searchUrl = GOODREADS_SEARCH_URL + URLEncoder.encode(bookTitle, StandardCharsets.UTF_8);
@@ -187,7 +200,7 @@ public class SagaScrapingService {
 
         Elements results = doc.select("table.tableList tr[itemscope] a.bookTitle");
         List<String> urls = new ArrayList<>();
-        int limit = Math.min(results.size(), 5); 
+        int limit = Math.min(results.size(), 5);
 
         for (int i = 0; i < limit; i++) {
             String href = results.get(i).attr("href");
@@ -213,10 +226,14 @@ public class SagaScrapingService {
     }
 
     /**
-     * Dada la URL de un libro en Goodreads, obtiene la URL de la serie a la que pertenece, si existe.
+     * Dada la URL de un libro en Goodreads, obtiene la URL de la serie a la que
+     * pertenece, si existe.
+     * 
      * @param bookUrl URL del libro en Goodreads
-     * @return URL de la serie en Goodreads, o null si no se encuentra o el libro no pertenece a ninguna serie
-     * @throws IOException si hay un error al conectar o parsear la página del libro en Goodreads
+     * @return URL de la serie en Goodreads, o null si no se encuentra o el libro no
+     *         pertenece a ninguna serie
+     * @throws IOException si hay un error al conectar o parsear la página del libro
+     *                     en Goodreads
      */
     private String findSeriesUrl(String bookUrl) throws IOException {
         log.debug("Obteniendo página del libro: {}", bookUrl);
@@ -242,10 +259,14 @@ public class SagaScrapingService {
     }
 
     /**
-     * Scrapea la página de la serie en Goodreads para extraer el nombre de la saga y la lista de libros con sus datos.
+     * Scrapea la página de la serie en Goodreads para extraer el nombre de la saga
+     * y la lista de libros con sus datos.
+     * 
      * @param seriesUrl URL de la serie en Goodreads
-     * @return DTO con el nombre de la saga y una lista de libros con sus datos relevantes, o null si no se pudo extraer la información
-     * @throws IOException si hay un error al conectar o parsear la página de la serie en Goodreads
+     * @return DTO con el nombre de la saga y una lista de libros con sus datos
+     *         relevantes, o null si no se pudo extraer la información
+     * @throws IOException si hay un error al conectar o parsear la página de la
+     *                     serie en Goodreads
      */
     private SagaScrapedDto scrapeSeriesPage(String seriesUrl) throws IOException {
         log.debug("Scrapeando serie: {}", seriesUrl);
@@ -278,9 +299,12 @@ public class SagaScrapingService {
     }
 
     /**
-     * Filtra la lista de libros de la saga para eliminar entradas sin número de orden o con números de orden no válidos (rangos, duplicados).
+     * Filtra la lista de libros de la saga para eliminar entradas sin número de
+     * orden o con números de orden no válidos (rangos, duplicados).
+     * 
      * @param books lista original de libros extraídos del scraping
-     * @return lista filtrada de libros que tienen un número de orden válido y único dentro de la saga
+     * @return lista filtrada de libros que tienen un número de orden válido y único
+     *         dentro de la saga
      */
     private List<SagaBookEntry> filterSagaBooks(List<SagaBookEntry> books) {
         java.util.LinkedHashSet<String> seenNumbers = new java.util.LinkedHashSet<>();
@@ -303,10 +327,13 @@ public class SagaScrapingService {
     }
 
     /**
-     * Extrae el nombre de la saga de la página de la serie en Goodreads, intentando primero el 
+     * Extrae el nombre de la saga de la página de la serie en Goodreads, intentando
+     * primero el
      * encabezado específico y luego el título de la página como fallback.
+     * 
      * @param doc documento HTML de la página de la serie en Goodreads
-     * @return nombre de la saga, o null si no se pudo extraer el nombre de la saga de la página
+     * @return nombre de la saga, o null si no se pudo extraer el nombre de la saga
+     *         de la página
      */
     private String extractSeriesName(Document doc) {
         Element header = doc.selectFirst("div.responsiveSeriesHeader__title h1");
@@ -325,10 +352,13 @@ public class SagaScrapingService {
     }
 
     /**
-     * Extrae la lista de libros de la saga a partir del JSON embebido en la página de la serie 
+     * Extrae la lista de libros de la saga a partir del JSON embebido en la página
+     * de la serie
      * en Goodreads, que suele ser más estructurado y completo que el HTML.
+     * 
      * @param doc documento HTML de la página de la serie en Goodreads
-     * @return lista de libros extraída del JSON, o una lista vacía si no se pudo extraer o el JSON no estaba presente en la página
+     * @return lista de libros extraída del JSON, o una lista vacía si no se pudo
+     *         extraer o el JSON no estaba presente en la página
      */
     private List<SagaBookEntry> extractBooksFromJson(Document doc) {
         List<SagaBookEntry> books = new ArrayList<>();
@@ -397,11 +427,15 @@ public class SagaScrapingService {
     }
 
     /**
-     * Extrae la lista de libros de la saga a partir del HTML de la página de la serie en Goodreads, 
+     * Extrae la lista de libros de la saga a partir del HTML de la página de la
+     * serie en Goodreads,
      * como fallback si el JSON no estaba presente o no se pudo parsear.
+     * 
      * @param doc documento HTML de la página de la serie en Goodreads
-     * @return lista de libros extraída del HTML, o una lista vacía si no se pudo extraer la 
-     * información de los libros del HTML de la página de la serie en Goodreads
+     * @return lista de libros extraída del HTML, o una lista vacía si no se pudo
+     *         extraer la
+     *         información de los libros del HTML de la página de la serie en
+     *         Goodreads
      */
     private List<SagaBookEntry> extractBooksFromHtml(Document doc) {
         List<SagaBookEntry> books = new ArrayList<>();
@@ -446,10 +480,11 @@ public class SagaScrapingService {
     /**
      * Extrae el número de orden del libro dentro de la saga a partir del título
      * completo, buscando patrones como "#1", "#2.5", "#1-3", etc.
-     * @param fullTitle título completo del libro que puede contener el número 
-     * de orden dentro de la saga
-     * @return número de orden extraído del título, o null si no se pudo encontrar 
-     * un número de orden válido en el título del libro dentro de la saga   
+     * 
+     * @param fullTitle título completo del libro que puede contener el número
+     *                  de orden dentro de la saga
+     * @return número de orden extraído del título, o null si no se pudo encontrar
+     *         un número de orden válido en el título del libro dentro de la saga
      */
     private String extractOrderNumber(String fullTitle) {
         if (fullTitle == null)
@@ -462,10 +497,13 @@ public class SagaScrapingService {
     }
 
     /**
-     * Extrae el texto de un nodo JSON, devolviendo null si el nodo no existe o es nulo, y limpiando entidades HTML comunes.
-     * @param node nodo JSON del que extraer el texto
+     * Extrae el texto de un nodo JSON, devolviendo null si el nodo no existe o es
+     * nulo, y limpiando entidades HTML comunes.
+     * 
+     * @param node  nodo JSON del que extraer el texto
      * @param field nombre del campo a extraer del nodo JSON
-     * @return texto del campo extraído y limpiado de entidades HTML, o null si el campo no existe o es nulo en el nodo JSON
+     * @return texto del campo extraído y limpiado de entidades HTML, o null si el
+     *         campo no existe o es nulo en el nodo JSON
      */
     private String getTextNode(JsonNode node, String field) {
         JsonNode value = node.get(field);
@@ -475,9 +513,12 @@ public class SagaScrapingService {
     }
 
     /**
-     * Limpia entidades HTML comunes de un texto, como &#39; &amp; &quot; &lt; &gt;, para obtener un texto legible.
+     * Limpia entidades HTML comunes de un texto, como &#39; &amp; &quot; &lt; &gt;,
+     * para obtener un texto legible.
+     * 
      * @param text texto que puede contener entidades HTML
-     * @return texto con las entidades HTML comunes reemplazadas por sus caracteres correspondientes, o null si el texto de entrada es null
+     * @return texto con las entidades HTML comunes reemplazadas por sus caracteres
+     *         correspondientes, o null si el texto de entrada es null
      */
     private String cleanHtmlEntities(String text) {
         if (text == null)

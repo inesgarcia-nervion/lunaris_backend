@@ -23,11 +23,20 @@ public class NewsController {
     @Autowired
     private NewsService newsService;
 
+    /**
+     * Obtiene todas las noticias.
+     * @return Lista de noticias.
+     */
     @GetMapping("/news")
     public List<News> getAll() {
         return newsService.getAll();
     }
 
+    /**
+     * Obtiene una noticia por su ID.
+     * @param id ID de la noticia.
+     * @return Noticia encontrada.
+     */
     @GetMapping("/news/{id}")
     public News getById(@PathVariable Long id) {
         News news = newsService.getById(id);
@@ -36,6 +45,12 @@ public class NewsController {
         return news;
     }
 
+    /**
+     * Crea una nueva noticia. Solo los administradores pueden realizar esta operación.
+     * @param dto Datos de la noticia a crear.
+     * @param auth Información de autenticación del usuario.
+     * @return Noticia creada.
+     */
     @PostMapping("/news")
     public News create(@RequestBody NewsRequestDto dto, Authentication auth) {
         if (auth == null)
@@ -54,6 +69,11 @@ public class NewsController {
         return newsService.create(news);
     }
 
+    /**
+     * Elimina una noticia por su ID. Solo los administradores pueden realizar esta operación.
+     * @param id ID de la noticia a eliminar.
+     * @param auth Información de autenticación del usuario.
+     */
     @DeleteMapping("/news/{id}")
     public void delete(@PathVariable Long id, Authentication auth) {
         if (auth == null)
