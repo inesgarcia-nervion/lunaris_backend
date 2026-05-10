@@ -36,4 +36,7 @@ public class User {
 
     @Column(name = "leido", columnDefinition = "text")
     private String leidoJson;
+
+    @Column(name = "favorite_list_ids", columnDefinition = "text")
+    private String favoriteListIdsJson;
 }

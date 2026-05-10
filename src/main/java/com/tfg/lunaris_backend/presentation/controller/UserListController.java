@@ -38,6 +38,11 @@ public class UserListController {
         return userListService.getAllUserLists(pageable);
     }
 
+    @GetMapping("/user_list/all")
+    public java.util.List<UserList> getAllUserListsNoPage() {
+        return userListService.getAllUserLists();
+    }
+
     @GetMapping("/user_list/owner/{owner}")
     public java.util.List<UserList> getListsByOwner(@PathVariable String owner) {
         return userListService.getListsByOwner(owner);

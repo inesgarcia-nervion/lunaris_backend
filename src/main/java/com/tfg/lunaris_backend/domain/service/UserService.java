@@ -243,6 +243,62 @@ public class UserService {
     }
 
     /**
+     * Devuelve los IDs de las listas marcadas como favoritas por el usuario.
+     *
+     * @param username nombre del usuario
+     * @return lista de IDs de listas favoritas
+     */
+    public List<String> getFavoriteListIds(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con username " + username));
+        if (user.getFavoriteListIdsJson() == null || user.getFavoriteListIdsJson().isBlank()) {
+            return new ArrayList<>();
+        }
+        try {
+            return objectMapper.readValue(user.getFavoriteListIdsJson(), new TypeReference<List<String>>() {
+            });
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Alterna el estado de favorito de una lista para el usuario dado.
+     * Si la lista ya es favorita se elimina; si no, se añade.
+     *
+     * @param username nombre del usuario
+     * @param listId   ID de la lista a alternar
+     * @return lista actualizada de IDs de listas favoritas
+     */
+    public List<String> toggleFavoriteList(String username, String listId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con username " + username));
+        List<String> ids;
+        if (user.getFavoriteListIdsJson() == null || user.getFavoriteListIdsJson().isBlank()) {
+            ids = new ArrayList<>();
+        } else {
+            try {
+                ids = objectMapper.readValue(user.getFavoriteListIdsJson(), new TypeReference<List<String>>() {
+                });
+            } catch (Exception e) {
+                ids = new ArrayList<>();
+            }
+        }
+        if (ids.contains(listId)) {
+            ids.remove(listId);
+        } else {
+            ids.add(listId);
+        }
+        try {
+            user.setFavoriteListIdsJson(objectMapper.writeValueAsString(ids));
+        } catch (Exception e) {
+            user.setFavoriteListIdsJson("[]");
+        }
+        userRepository.save(user);
+        return ids;
+    }
+
+    /**
      * Es un método auxiliar para verificar si un objeto libro coincide con un
      * bookId dado.
      * El método intenta extraer los campos "key" y "apiId" del objeto libro

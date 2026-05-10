@@ -159,4 +159,30 @@ public class UserController {
             @RequestBody BookStatusRequest request) {
         return userService.setBookStatus(username, request);
     }
+
+    /**
+     * Endpoint para obtener los IDs de las listas marcadas como favoritas por un
+     * usuario.
+     *
+     * @param username nombre del usuario
+     * @return lista de IDs de listas favoritas
+     */
+    @GetMapping("/users/username/{username}/favorites")
+    public List<String> getFavorites(@PathVariable String username) {
+        return userService.getFavoriteListIds(username);
+    }
+
+    /**
+     * Endpoint para alternar el estado de favorito de una lista para un usuario.
+     * Si la lista ya es favorita se elimina; si no, se añade.
+     *
+     * @param username nombre del usuario
+     * @param body     mapa con la clave "listId" indicando la lista a alternar
+     * @return lista actualizada de IDs de listas favoritas
+     */
+    @PostMapping("/users/username/{username}/favorites")
+    public List<String> toggleFavorite(@PathVariable String username, @RequestBody Map<String, String> body) {
+        String listId = body.get("listId");
+        return userService.toggleFavoriteList(username, listId);
+    }
 }
