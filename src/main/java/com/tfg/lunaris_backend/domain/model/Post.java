@@ -27,6 +27,7 @@ public class Post {
 
     private String username;
 
+    @Column(columnDefinition = "TEXT")
     private String userAvatarUrl;
 
     private String date;

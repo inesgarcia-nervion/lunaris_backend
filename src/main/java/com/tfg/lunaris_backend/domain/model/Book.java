@@ -1,5 +1,6 @@
 package com.tfg.lunaris_backend.domain.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -17,18 +18,21 @@ import java.util.List;
 /**
  * Entidad que representa un libro en la base de datos.
  * 
- * Contiene información sobre el libro, incluyendo título, imagen de portada, descripción, autor, 
+ * Contiene información sobre el libro, incluyendo título, imagen de portada,
+ * descripción, autor,
  * identificador de la API, año de publicación, puntuación y géneros asociados.
  */
 @Entity
 @Table(name = "books", schema = "public")
-@Data 
+@Data
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String coverImage;
+    @Column(columnDefinition = "TEXT")
     private String description;
     private String author;
     private String apiId;
