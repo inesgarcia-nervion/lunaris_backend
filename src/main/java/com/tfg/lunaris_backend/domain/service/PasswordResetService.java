@@ -10,14 +10,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.mail.MessagingException;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Servicio que maneja la lógica de negocio relacionada con el restablecimiento de contraseñas.
+ * Servicio que maneja la lógica de negocio relacionada con el restablecimiento
+ * de contraseñas.
  * 
- * Proporciona métodos para solicitar un restablecimiento de contraseña, validar tokens y restablecer contraseñas.
+ * Proporciona métodos para solicitar un restablecimiento de contraseña, validar
+ * tokens y restablecer contraseñas.
  */
 @Service
 public class PasswordResetService {
@@ -35,7 +36,9 @@ public class PasswordResetService {
     private PasswordEncoder passwordEncoder;
 
     /**
-     * Solicita un restablecimiento de contraseña para el usuario con el correo electrónico proporcionado.
+     * Solicita un restablecimiento de contraseña para el usuario con el correo
+     * electrónico proporcionado.
+     * 
      * @param email correo electrónico del usuario
      * @return estado de la solicitud ("SUCCESS", "EMAIL_NOT_FOUND", "EMAIL_ERROR")
      */
@@ -58,7 +61,7 @@ public class PasswordResetService {
         try {
             emailService.sendPasswordResetEmail(email, token);
             return "SUCCESS";
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return "EMAIL_ERROR";
         }
@@ -66,6 +69,7 @@ public class PasswordResetService {
 
     /**
      * Valida un token de restablecimiento de contraseña.
+     * 
      * @param token token a validar
      * @return true si el token es válido, false en caso contrario
      */
@@ -82,9 +86,11 @@ public class PasswordResetService {
 
     /**
      * Restablece la contraseña del usuario utilizando un token válido.
-     * @param token token de restablecimiento de contraseña
+     * 
+     * @param token       token de restablecimiento de contraseña
      * @param newPassword nueva contraseña del usuario
-     * @return true si la contraseña se restablece correctamente, false en caso contrario
+     * @return true si la contraseña se restablece correctamente, false en caso
+     *         contrario
      */
     @Transactional
     public boolean resetPassword(String token, String newPassword) {
