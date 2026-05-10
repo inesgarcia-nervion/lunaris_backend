@@ -4,6 +4,7 @@ WORKDIR /workspace
 COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw mvnw
+COPY target/tfg_backend-0.0.1-SNAPSHOT.jar app.jar
 
 RUN mvn -B -DskipTests dependency:go-offline
 
