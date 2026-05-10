@@ -20,6 +20,7 @@ public class Comment {
 
     private String username;
 
+    @Column(columnDefinition = "TEXT")
     private String userAvatarUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
