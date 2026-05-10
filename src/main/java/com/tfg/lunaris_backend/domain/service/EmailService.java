@@ -12,7 +12,8 @@ import jakarta.mail.internet.MimeMessage;
 /**
  * Servicio que maneja el envío de correos electrónicos.
  * 
- * Proporciona métodos para enviar correos electrónicos, como la recuperación de contraseña.
+ * Proporciona métodos para enviar correos electrónicos, como la recuperación de
+ * contraseña.
  */
 @Service
 public class EmailService {
@@ -20,7 +21,7 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.from}")
     private String fromEmail;
 
     @Value("${app.frontend.url}")
@@ -28,8 +29,9 @@ public class EmailService {
 
     /**
      * Envía un correo electrónico para restablecer la contraseña.
+     * 
      * @param toEmail correo electrónico del destinatario
-     * @param token token de restablecimiento de contraseña
+     * @param token   token de restablecimiento de contraseña
      * @throws MessagingException si ocurre un error al enviar el correo
      */
     public void sendPasswordResetEmail(String toEmail, String token) throws MessagingException {
