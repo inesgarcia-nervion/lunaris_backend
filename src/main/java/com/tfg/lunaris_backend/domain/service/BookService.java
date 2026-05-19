@@ -24,7 +24,8 @@ import org.springframework.data.domain.Pageable;
 /**
  * Servicio que maneja la lógica de negocio relacionada con los libros.
  * 
- * Proporciona métodos para obtener, crear, actualizar, eliminar y buscar libros.
+ * Proporciona métodos para obtener, crear, actualizar, eliminar y buscar
+ * libros.
  */
 @Service
 public class BookService {
@@ -40,6 +41,7 @@ public class BookService {
 
     /**
      * Obtiene una lista de todos los libros.
+     * 
      * @return lista de libros
      */
     public List<Book> getAllBooks() {
@@ -48,6 +50,7 @@ public class BookService {
 
     /**
      * Obtiene una página de libros con paginación.
+     * 
      * @param pageable información de paginación
      * @return página de libros
      */
@@ -57,9 +60,11 @@ public class BookService {
 
     /**
      * Obtiene un libro por su identificador.
+     * 
      * @param id identificador del libro
      * @return libro encontrado
-     * @throws BookNotFoundException si no se encuentra el libro con el id proporcionado
+     * @throws BookNotFoundException si no se encuentra el libro con el id
+     *                               proporcionado
      */
     public Book getBookById(Long id) {
         return bookRepository.findById(id)
@@ -68,6 +73,7 @@ public class BookService {
 
     /**
      * Crea un nuevo libro.
+     * 
      * @param request solicitud de creación de libro
      * @return libro creado
      */
@@ -75,8 +81,8 @@ public class BookService {
         if (bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(
                 request.getTitle(), request.getAuthor()).isPresent()) {
             throw new DuplicateBookException(
-                "Ya existe un libro con el título '" + request.getTitle() +
-                "' y el autor '" + request.getAuthor() + "'");
+                    "Ya existe un libro con el título '" + request.getTitle() +
+                            "' y el autor '" + request.getAuthor() + "'");
         }
         Book book = new Book();
         book.setTitle(request.getTitle());
@@ -99,7 +105,8 @@ public class BookService {
 
         Book saved = bookRepository.save(book);
 
-        // Si viene sagaId enlazar al libro creando una entrada SagaBook en la saga existente
+        // Si viene sagaId enlazar al libro creando una entrada SagaBook en la saga
+        // existente
         if (request.getSagaId() != null) {
             sagaRepository.findById(request.getSagaId()).ifPresent(saga -> {
                 SagaBook sb = new SagaBook();
@@ -131,10 +138,12 @@ public class BookService {
 
     /**
      * Actualiza un libro existente.
-     * @param id identificador del libro a actualizar
+     * 
+     * @param id          identificador del libro a actualizar
      * @param bookDetails detalles del libro a actualizar
      * @return libro actualizado
-     * @throws BookNotFoundException si no se encuentra el libro con el id proporcionado
+     * @throws BookNotFoundException si no se encuentra el libro con el id
+     *                               proporcionado
      */
     public Book updateBook(Long id, Book bookDetails) {
         Book book = bookRepository.findById(id)
@@ -151,6 +160,7 @@ public class BookService {
 
     /**
      * Elimina un libro por su identificador.
+     * 
      * @param id identificador del libro a eliminar
      */
     public void deleteBook(Long id) {
@@ -158,7 +168,9 @@ public class BookService {
     }
 
     /**
-     * Busca libros cuyo título o autor contenga el texto dado (ignorando mayúsculas).
+     * Busca libros cuyo título o autor contenga el texto dado (ignorando
+     * mayúsculas).
+     * 
      * @param query texto a buscar en el título o autor
      * @return lista de libros que coinciden con la búsqueda
      */
@@ -167,8 +179,10 @@ public class BookService {
     }
 
     /**
-     * Busca libros cuyo título o autor contenga el texto dado (ignorando mayúsculas) con paginación.
-     * @param query texto a buscar en el título o autor
+     * Busca libros cuyo título o autor contenga el texto dado (ignorando
+     * mayúsculas) con paginación.
+     * 
+     * @param query    texto a buscar en el título o autor
      * @param pageable información de paginación
      * @return página de libros que coinciden con la búsqueda
      */
@@ -178,6 +192,7 @@ public class BookService {
 
     /**
      * Busca un libro por su identificador de API.
+     * 
      * @param apiId identificador de API del libro
      * @return libro encontrado o vacío si no se encuentra
      */
@@ -186,7 +201,9 @@ public class BookService {
     }
 
     /**
-     * Importa un libro desde un DTO de Open Library. Si el libro ya existe (basado en apiId), lo devuelve sin crear uno nuevo.
+     * Importa un libro desde un DTO de Open Library. Si el libro ya existe (basado
+     * en apiId), lo devuelve sin crear uno nuevo.
+     * 
      * @param openLibraryBook DTO con los datos del libro de Open Library
      * @return libro importado o existente
      */
@@ -196,7 +213,19 @@ public class BookService {
                 .findFirst();
 
         if (existingBook.isPresent()) {
-            return existingBook.get(); 
+            Book existing = existingBook.get();
+            if ((existing.getGenres() == null || existing.getGenres().isEmpty())
+                    && openLibraryBook.getSubject() != null) {
+                List<Genre> genres = new ArrayList<>();
+                for (String subject : openLibraryBook.getSubject()) {
+                    genreRepository.findByNameIgnoreCase(subject).ifPresent(genres::add);
+                }
+                if (!genres.isEmpty()) {
+                    existing.setGenres(genres);
+                    bookRepository.save(existing);
+                }
+            }
+            return existing;
         }
 
         Book book = new Book();
@@ -209,6 +238,14 @@ public class BookService {
         book.setDescription(openLibraryBook.getDescription() != null ? openLibraryBook.getDescription() : "");
 
         book.setScore(openLibraryBook.getRatingsAverage() != null ? openLibraryBook.getRatingsAverage() : 0.0);
+
+        if (openLibraryBook.getSubject() != null) {
+            List<Genre> genres = new ArrayList<>();
+            for (String subject : openLibraryBook.getSubject()) {
+                genreRepository.findByNameIgnoreCase(subject).ifPresent(genres::add);
+            }
+            book.setGenres(genres);
+        }
 
         return bookRepository.save(book);
     }

@@ -8,12 +8,14 @@ import com.tfg.lunaris_backend.domain.dto.SagaScrapedDto.SagaBookEntry;
 import com.tfg.lunaris_backend.domain.model.Saga;
 import com.tfg.lunaris_backend.domain.model.SagaBook;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -37,10 +39,14 @@ public class SagaScrapingService {
     @Autowired
     private SagaRepository sagaRepository;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
     private static final String GOODREADS_BASE = "https://www.goodreads.com";
     private static final String GOODREADS_SEARCH_URL = GOODREADS_BASE + "/search?q=";
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-    private static final int TIMEOUT_MS = 10000;
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    private static final int TIMEOUT_MS = 15000;
+    private static final String OPEN_LIBRARY_SUBJECTS_URL = "https://openlibrary.org/subjects/";
     private static final Pattern SERIES_NUMBER_PATTERN = Pattern.compile("#([\\d.]+(?:-[\\d.]+)?)\\)");
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -54,6 +60,22 @@ public class SagaScrapingService {
      *         una saga
      */
     public SagaScrapedDto scrapeSaga(String bookTitle, String author) {
+        return scrapeSaga(bookTitle, author, null);
+    }
+
+    /**
+     * Busca la saga/serie de un libro a partir de su título, autor y subjects de
+     * Open Library.
+     * Intenta primero en Goodreads; si falla, usa el fallback de subjects de Open
+     * Library.
+     *
+     * @param bookTitle título del libro
+     * @param author    autor del libro
+     * @param subjects  lista de subjects de Open Library
+     * @return DTO con el nombre de la saga y sus libros, o null si no pertenece a
+     *         una saga
+     */
+    public SagaScrapedDto scrapeSaga(String bookTitle, String author, List<String> subjects) {
         Optional<Saga> cachedSaga = sagaRepository.findByBookTitleIgnoreCase(bookTitle);
         if (cachedSaga.isPresent()) {
             Saga saga = cachedSaga.get();
@@ -99,9 +121,14 @@ public class SagaScrapingService {
             log.info("El libro '{}' no pertenece a ninguna saga", bookTitle);
             return null;
 
+        } catch (HttpStatusException e) {
+            log.warn("Goodreads devolvió HTTP {} para '{}', intentando fallback OpenLibrary", e.getStatusCode(),
+                    bookTitle);
+            return scrapeFromOpenLibrarySubjects(subjects);
         } catch (IOException e) {
-            log.error("Error al scrapear saga para '{}': {}", bookTitle, e.getMessage());
-            return null;
+            log.error("Error de red scrapeando saga para '{}': {}, intentando fallback OpenLibrary", bookTitle,
+                    e.getMessage());
+            return scrapeFromOpenLibrarySubjects(subjects);
         }
     }
 
@@ -193,10 +220,7 @@ public class SagaScrapingService {
 
         log.debug("Buscando en Goodreads: {}", searchUrl);
 
-        Document doc = Jsoup.connect(searchUrl)
-                .userAgent(USER_AGENT)
-                .timeout(TIMEOUT_MS)
-                .get();
+        Document doc = buildJsoupConnection(searchUrl).get();
 
         Elements results = doc.select("table.tableList tr[itemscope] a.bookTitle");
         List<String> urls = new ArrayList<>();
@@ -238,10 +262,7 @@ public class SagaScrapingService {
     private String findSeriesUrl(String bookUrl) throws IOException {
         log.debug("Obteniendo página del libro: {}", bookUrl);
 
-        Document doc = Jsoup.connect(bookUrl)
-                .userAgent(USER_AGENT)
-                .timeout(TIMEOUT_MS)
-                .get();
+        Document doc = buildJsoupConnection(bookUrl).get();
         Element seriesLink = doc.selectFirst("h3.Text a[href*='/series/']");
         if (seriesLink == null) {
             // Intentar selector alternativo
@@ -271,10 +292,7 @@ public class SagaScrapingService {
     private SagaScrapedDto scrapeSeriesPage(String seriesUrl) throws IOException {
         log.debug("Scrapeando serie: {}", seriesUrl);
 
-        Document doc = Jsoup.connect(seriesUrl)
-                .userAgent(USER_AGENT)
-                .timeout(TIMEOUT_MS)
-                .get();
+        Document doc = buildJsoupConnection(seriesUrl).get();
 
         String sagaName = extractSeriesName(doc);
         if (sagaName == null) {
@@ -528,5 +546,130 @@ public class SagaScrapingService {
                 .replace("&quot;", "\"")
                 .replace("&lt;", "<")
                 .replace("&gt;", ">");
+    }
+
+    /**
+     * Crea una conexión Jsoup con cabeceras realistas para reducir el bloqueo por
+     * parte de Goodreads.
+     *
+     * @param url URL a la que conectar
+     * @return conexión Jsoup configurada
+     */
+    private org.jsoup.Connection buildJsoupConnection(String url) {
+        return Jsoup.connect(url)
+                .userAgent(USER_AGENT)
+                .timeout(TIMEOUT_MS)
+                .header("Accept",
+                        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.5")
+                .header("Accept-Encoding", "gzip, deflate, br")
+                .header("Connection", "keep-alive")
+                .header("Upgrade-Insecure-Requests", "1")
+                .header("Sec-Fetch-Dest", "document")
+                .header("Sec-Fetch-Mode", "navigate")
+                .header("Sec-Fetch-Site", "none")
+                .followRedirects(true)
+                .ignoreHttpErrors(false);
+    }
+
+    /**
+     * Fallback: obtiene la información de la saga usando la API de subjects de
+     * Open Library cuando Goodreads está bloqueado o no disponible.
+     *
+     * Busca en la lista de subjects alguno con el prefijo "Serie:" (convenio de
+     * Open Library para indicar series) y consulta el endpoint de subjects de OL
+     * para obtener los libros de esa serie.
+     *
+     * @param subjects lista de subjects de Open Library del libro (puede ser null)
+     * @return DTO con el nombre de la saga y sus libros, o null si no se encontró
+     *         ningún subject de serie o la consulta falló
+     */
+    private SagaScrapedDto scrapeFromOpenLibrarySubjects(List<String> subjects) {
+        if (subjects == null || subjects.isEmpty()) {
+            return null;
+        }
+
+        String seriesSubject = subjects.stream()
+                .filter(s -> s != null && s.startsWith("Serie:"))
+                .findFirst()
+                .orElse(null);
+
+        if (seriesSubject == null) {
+            log.info("No se encontró subject de serie en los subjects del libro");
+            return null;
+        }
+
+        // "Serie:Percy_Jackson_and_the_Olympians" → "Percy Jackson and the Olympians"
+        String sagaName = seriesSubject.substring(6).replace("_", " ");
+
+        // Verificar caché por nombre de saga antes de llamar a la API
+        Optional<Saga> cached = sagaRepository.findByName(sagaName);
+        if (cached.isPresent() && !cached.get().getBooks().isEmpty()) {
+            log.info("Saga '{}' encontrada en caché (fallback OL)", sagaName);
+            return convertToDto(cached.get());
+        }
+
+        // Slug para la API: "serie:percy_jackson_and_the_olympians"
+        String subjectSlug = seriesSubject.toLowerCase(java.util.Locale.ROOT);
+        String url = OPEN_LIBRARY_SUBJECTS_URL + URLEncoder.encode(subjectSlug, StandardCharsets.UTF_8)
+                + ".json?limit=30";
+
+        log.info("Consultando API de subjects de Open Library: {}", url);
+
+        try {
+            String json = restTemplate.getForObject(url, String.class);
+            if (json == null) {
+                return null;
+            }
+
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode works = root.get("works");
+            if (works == null || !works.isArray() || works.isEmpty()) {
+                log.info("No se encontraron obras para el subject '{}'", subjectSlug);
+                return null;
+            }
+
+            List<SagaBookEntry> books = new ArrayList<>();
+            for (JsonNode work : works) {
+                SagaBookEntry entry = new SagaBookEntry();
+
+                String title = work.has("title") ? work.get("title").asText(null) : null;
+                if (title == null)
+                    continue;
+                entry.setTitle(title);
+
+                JsonNode authorsNode = work.get("authors");
+                if (authorsNode != null && authorsNode.isArray() && !authorsNode.isEmpty()) {
+                    entry.setAuthor(authorsNode.get(0).path("name").asText(null));
+                }
+
+                if (work.has("first_publish_year") && !work.get("first_publish_year").isNull()) {
+                    entry.setYear(work.get("first_publish_year").asInt());
+                }
+
+                books.add(entry);
+            }
+
+            if (books.isEmpty()) {
+                return null;
+            }
+
+            // Ordenar por año de publicación para aproximar el orden de la saga
+            books.sort(java.util.Comparator.comparingInt(b -> b.getYear() != null ? b.getYear() : 9999));
+
+            // Asignar números de orden según posición
+            for (int i = 0; i < books.size(); i++) {
+                books.get(i).setOrderNumber(String.valueOf(i + 1));
+            }
+
+            SagaScrapedDto dto = new SagaScrapedDto(sagaName, books);
+            saveSagaToDb(dto);
+            log.info("Saga '{}' obtenida de Open Library con {} libros", sagaName, books.size());
+            return dto;
+
+        } catch (Exception e) {
+            log.error("Error al obtener saga de Open Library para subject '{}': {}", subjectSlug, e.getMessage());
+            return null;
+        }
     }
 }

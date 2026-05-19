@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.tfg.lunaris_backend.domain.dto.SagaScrapedDto;
 import com.tfg.lunaris_backend.domain.model.Saga;
+import java.util.List;
 import com.tfg.lunaris_backend.domain.service.SagaScrapingService;
 import com.tfg.lunaris_backend.domain.service.SagaService;
 
@@ -32,18 +33,24 @@ public class SagaController {
     private SagaScrapingService sagaScrapingService;
 
     /**
-     * Endpoint para realizar web scraping de una saga en función de su título y autor. 
-     * Recibe los parámetros `title` y `author` (opcional) y devuelve un objeto con los 
-     * datos extraídos de la saga. Si no se encuentra información, devuelve una respuesta sin contenido.
-     * @param title título de la saga
+     * Endpoint para realizar web scraping de una saga en función de su título y
+     * autor.
+     * Recibe los parámetros `title` y `author` (opcional) y devuelve un objeto con
+     * los
+     * datos extraídos de la saga. Si no se encuentra información, devuelve una
+     * respuesta sin contenido.
+     * 
+     * @param title  título de la saga
      * @param author autor de la saga (opcional)
-     * @return objeto con los datos extraídos de la saga o respuesta sin contenido si no se encuentra información
+     * @return objeto con los datos extraídos de la saga o respuesta sin contenido
+     *         si no se encuentra información
      */
     @GetMapping("/api/saga/scrape")
     public ResponseEntity<SagaScrapedDto> scrapeSaga(
             @RequestParam String title,
-            @RequestParam(required = false) String author) {
-        SagaScrapedDto result = sagaScrapingService.scrapeSaga(title, author);
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) List<String> subjects) {
+        SagaScrapedDto result = sagaScrapingService.scrapeSaga(title, author, subjects);
         if (result == null) {
             return ResponseEntity.noContent().build();
         }
@@ -51,7 +58,9 @@ public class SagaController {
     }
 
     /**
-     * Endpoint para obtener todas las sagas. Devuelve una lista de todas las sagas disponibles.
+     * Endpoint para obtener todas las sagas. Devuelve una lista de todas las sagas
+     * disponibles.
+     * 
      * @return lista de sagas
      */
     @GetMapping("/sagas")
@@ -60,7 +69,9 @@ public class SagaController {
     }
 
     /**
-     * Endpoint para obtener una saga por su ID. Devuelve la saga correspondiente si existe.
+     * Endpoint para obtener una saga por su ID. Devuelve la saga correspondiente si
+     * existe.
+     * 
      * @param id identificador de la saga
      * @return saga encontrada
      */
@@ -70,8 +81,10 @@ public class SagaController {
     }
 
     /**
-     * Endpoint para crear una nueva saga. Recibe un objeto con los datos de la saga a 
+     * Endpoint para crear una nueva saga. Recibe un objeto con los datos de la saga
+     * a
      * crear y devuelve la saga creada.
+     * 
      * @param saga objeto con los datos de la saga a crear
      * @return saga creada
      */
@@ -81,9 +94,11 @@ public class SagaController {
     }
 
     /**
-     * Endpoint para actualizar una saga existente. Recibe el ID de la saga a actualizar 
+     * Endpoint para actualizar una saga existente. Recibe el ID de la saga a
+     * actualizar
      * y un objeto con los datos a actualizar, y devuelve la saga actualizada.
-     * @param id identificador de la saga a actualizar
+     * 
+     * @param id          identificador de la saga a actualizar
      * @param sagaDetails objeto con los datos de la saga a actualizar
      * @return saga actualizada
      */
@@ -93,8 +108,9 @@ public class SagaController {
     }
 
     /**
-     * Endpoint para eliminar una saga por su ID. Recibe el ID de la saga a eliminar 
+     * Endpoint para eliminar una saga por su ID. Recibe el ID de la saga a eliminar
      * y elimina la saga correspondiente.
+     * 
      * @param id identificador de la saga a eliminar
      */
     @DeleteMapping("/sagas/{id}")

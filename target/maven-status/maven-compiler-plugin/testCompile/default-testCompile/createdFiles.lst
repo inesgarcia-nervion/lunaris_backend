@@ -29,6 +29,7 @@ com\tfg\lunaris_backend\domain\service\UserListServiceTest.class
 com\tfg\lunaris_backend\presentation\controller\BookControllerTest.class
 com\tfg\lunaris_backend\presentation\controller\UserListControllerTest.class
 com\tfg\lunaris_backend\domain\model\GenreTest.class
+com\tfg\lunaris_backend\presentation\controller\UserListControllerTest$1.class
 com\tfg\lunaris_backend\data\config\RestTemplateConfigTest.class
 com\tfg\lunaris_backend\presentation\controller\SagaControllerTest.class
 com\tfg\lunaris_backend\domain\service\BookRequestServiceTest.class
