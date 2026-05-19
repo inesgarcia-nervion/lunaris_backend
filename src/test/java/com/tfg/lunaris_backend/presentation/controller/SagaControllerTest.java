@@ -48,8 +48,8 @@ class SagaControllerTest {
         c.deleteSaga(5L);
 
         SagaScrapedDto dto = new SagaScrapedDto();
-        when(ss.scrapeSaga("t", null, null)).thenReturn(dto);
-        ResponseEntity<SagaScrapedDto> res = c.scrapeSaga("t", null, null);
+        when(ss.scrapeSaga("t", null, null, null)).thenReturn(dto);
+        ResponseEntity<SagaScrapedDto> res = c.scrapeSaga("t", null, null, null);
         assertTrue(res.getStatusCode().is2xxSuccessful());
     }
 
@@ -65,8 +65,8 @@ class SagaControllerTest {
         ReflectionTestUtils.setField(c, "sagaService", svc);
         ReflectionTestUtils.setField(c, "sagaScrapingService", ss);
 
-        when(ss.scrapeSaga("unknown", null, null)).thenReturn(null);
-        var res = c.scrapeSaga("unknown", null, null);
+        when(ss.scrapeSaga("unknown", null, null, null)).thenReturn(null);
+        var res = c.scrapeSaga("unknown", null, null, null);
         assertEquals(204, res.getStatusCode().value());
     }
 }

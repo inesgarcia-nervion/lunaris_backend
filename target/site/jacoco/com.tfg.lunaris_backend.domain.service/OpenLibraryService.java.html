@@ -18,219 +18,241 @@ import com.tfg.lunaris_backend.domain.dto.OpenLibrarySearchResponseDto;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Servicio que maneja la lógica de negocio relacionada con la búsqueda de libros en Open Library.
+ * Servicio que maneja la lógica de negocio relacionada con la búsqueda de
+ * libros en Open Library.
  * 
  * Proporciona métodos para buscar libros utilizando la API de Open Library.
  */
-@Service
-<span class="fc" id="L26">@Slf4j</span>
-<span class="fc" id="L27">public class OpenLibraryService {</span>
+<span class="fc" id="L26">@Service</span>
+<span class="fc" id="L27">@Slf4j</span>
+public class OpenLibraryService {
 
     private static final String OPEN_LIBRARY_API_BASE_URL = &quot;https://openlibrary.org/search.json&quot;;
 
     @Autowired
     private RestTemplate restTemplate;
 
-    private static final int MAX_RETRIES = 3;
+<span class="fc" id="L35">    private static final int MAX_RETRIES = 3;</span>
     private static final long INITIAL_BACKOFF_MS = 1000; // 1s
 
     /**
      * Busca libros en Open Library utilizando un término de búsqueda general.
-     * @param query término de búsqueda (puede ser título, autor, etc.)
-     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000) 
-     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0)
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
+     * 
+     * @param query  término de búsqueda (puede ser título, autor, etc.)
+     * @param limit  número máximo de resultados a devolver (opcional, por defecto
+     *               10, máximo 1000)
+     * @param offset número de resultados a omitir para paginación (opcional, por
+     *               defecto 0)
+<span class="pc bpc" id="L46" title="1 of 4 branches missed.">     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos</span>
+<span class="fc" id="L47">     *         de la búsqueda</span>
      */
     public OpenLibrarySearchResponseDto searchBooks(String query, Integer limit, Integer offset) {
-        try {
-<span class="pc bpc" id="L46" title="1 of 4 branches missed.">            if (query == null || query.trim().isEmpty()) {</span>
-<span class="fc" id="L47">                throw new IllegalArgumentException(&quot;El término de búsqueda no puede estar vacío&quot;);</span>
-            }
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        try {</span>
+<span class="fc" id="L51">            if (query == null || query.trim().isEmpty()) {</span>
+                throw new IllegalArgumentException(&quot;El término de búsqueda no puede estar vacío&quot;);
+<span class="fc bfc" id="L53" title="All 2 branches covered.">            }</span>
+<span class="fc" id="L54"></span>
+            if (limit == null) {
+<span class="fc bfc" id="L56" title="All 2 branches covered.">                limit = 10;</span>
+<span class="fc" id="L57">            }</span>
+            if (limit &gt; 1000) {
+                limit = 1000;
+<span class="fc" id="L60">            }</span>
+<span class="fc" id="L61">            if (offset == null) {</span>
+<span class="fc" id="L62">                offset = 0;</span>
+<span class="fc" id="L63">            }</span>
+<span class="fc" id="L64"></span>
+<span class="fc" id="L65">            String url = UriComponentsBuilder.fromUri(URI.create(OPEN_LIBRARY_API_BASE_URL))</span>
+<span class="fc" id="L66">                    .queryParam(&quot;q&quot;, query)</span>
+<span class="fc" id="L67">                    .queryParam(&quot;limit&quot;, limit)</span>
+                    .queryParam(&quot;offset&quot;, offset)
+<span class="fc" id="L69">                    .queryParam(&quot;fields&quot;,</span>
+                            &quot;key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject,series&quot;)
+<span class="fc" id="L71">                    .build()</span>
+                    .toUriString();
+<span class="pc bpc" id="L73" title="3 of 6 branches missed."></span>
+<span class="fc" id="L74">            log.info(&quot;Buscando en Open Library: {}&quot;, url);</span>
 
-<span class="fc bfc" id="L50" title="All 2 branches covered.">            if (limit == null) {</span>
-<span class="fc" id="L51">                limit = 10;</span>
-            }
-<span class="fc bfc" id="L53" title="All 2 branches covered.">            if (limit &gt; 1000) {</span>
-<span class="fc" id="L54">                limit = 1000; </span>
-            }
-<span class="fc bfc" id="L56" title="All 2 branches covered.">            if (offset == null) {</span>
-<span class="fc" id="L57">                offset = 0;</span>
-            }
-
-<span class="fc" id="L60">            String url = UriComponentsBuilder.fromUri(URI.create(OPEN_LIBRARY_API_BASE_URL))</span>
-<span class="fc" id="L61">                    .queryParam(&quot;q&quot;, query)</span>
-<span class="fc" id="L62">                    .queryParam(&quot;limit&quot;, limit)</span>
-<span class="fc" id="L63">                    .queryParam(&quot;offset&quot;, offset)</span>
-<span class="fc" id="L64">                    .queryParam(&quot;fields&quot;,</span>
-                            &quot;key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject&quot;)
-<span class="fc" id="L66">                    .build()</span>
-<span class="fc" id="L67">                    .toUriString();</span>
-
-<span class="fc" id="L69">            log.info(&quot;Buscando en Open Library: {}&quot;, url);</span>
-
-<span class="fc" id="L71">            OpenLibrarySearchResponseDto response = fetchWithRetries(url);</span>
-
-<span class="pc bpc" id="L73" title="3 of 6 branches missed.">            if (response != null &amp;&amp; (response.getDocs() == null || response.getDocs().isEmpty())) {</span>
-<span class="fc" id="L74">                log.info(&quot;Búsqueda general en OpenLibrary sin resultados, intentando fallback por título y autor para: {}&quot;, query);</span>
-                try {
-<span class="fc" id="L76">                    OpenLibrarySearchResponseDto titleResp = searchByTitle(query, limit, offset);</span>
-<span class="fc" id="L77">                    OpenLibrarySearchResponseDto authorResp = searchByAuthor(query, limit, offset);</span>
-
-<span class="fc" id="L79">                    Map&lt;String, OpenLibraryBookDto&gt; mergedMap = new LinkedHashMap&lt;&gt;();</span>
-<span class="pc bpc" id="L80" title="2 of 4 branches missed.">                    if (titleResp != null &amp;&amp; titleResp.getDocs() != null) {</span>
-<span class="pc bpc" id="L81" title="1 of 2 branches missed.">                        for (OpenLibraryBookDto d : titleResp.getDocs()) {</span>
-<span class="nc bnc" id="L82" title="All 4 branches missed.">                            if (d != null &amp;&amp; d.getKey() != null) mergedMap.putIfAbsent(d.getKey(), d);</span>
-<span class="nc" id="L83">                        }</span>
-                    }
-<span class="pc bpc" id="L85" title="2 of 4 branches missed.">                    if (authorResp != null &amp;&amp; authorResp.getDocs() != null) {</span>
-<span class="pc bpc" id="L86" title="1 of 2 branches missed.">                        for (OpenLibraryBookDto d : authorResp.getDocs()) {</span>
-<span class="nc bnc" id="L87" title="All 4 branches missed.">                            if (d != null &amp;&amp; d.getKey() != null) mergedMap.putIfAbsent(d.getKey(), d);</span>
-<span class="nc" id="L88">                        }</span>
-                    }
-
-<span class="fc" id="L91">                    OpenLibrarySearchResponseDto merged = new OpenLibrarySearchResponseDto();</span>
-<span class="fc" id="L92">                    List&lt;OpenLibraryBookDto&gt; docs = new ArrayList&lt;&gt;(mergedMap.values());</span>
-<span class="fc" id="L93">                    merged.setDocs(docs);</span>
-<span class="fc" id="L94">                    merged.setNumFound(docs.size());</span>
-<span class="fc" id="L95">                    merged.setStart(offset);</span>
-<span class="fc" id="L96">                    log.info(&quot;Fallback encontró {} libros para query={}&quot;, docs.size(), query);</span>
-<span class="fc" id="L97">                    return merged;</span>
-<span class="nc" id="L98">                } catch (Exception e) {</span>
-<span class="nc" id="L99">                    log.warn(&quot;Error en fallback de búsqueda por título/autor: {}&quot;, e.getMessage());</span>
-                }
-            }
-
-<span class="nc" id="L103">            log.info(&quot;Se encontraron {} libros&quot;, response.getNumFound());</span>
-<span class="nc" id="L104">            return response;</span>
-<span class="fc" id="L105">        } catch (IllegalArgumentException e) {</span>
-<span class="fc" id="L106">            log.error(&quot;Error de validación: {}&quot;, e.getMessage());</span>
-<span class="fc" id="L107">            throw e;</span>
-<span class="fc" id="L108">        } catch (Exception e) {</span>
-<span class="fc" id="L109">            log.error(&quot;Error inesperado al buscar en Open Library: {}&quot;, e.getMessage(), e);</span>
-<span class="fc" id="L110">            OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();</span>
-<span class="fc" id="L111">            empty.setNumFound(0);</span>
-<span class="fc" id="L112">            empty.setStart(offset);</span>
-<span class="fc" id="L113">            empty.setDocs(Collections.emptyList());</span>
-<span class="fc" id="L114">            return empty;</span>
+<span class="fc" id="L76">            OpenLibrarySearchResponseDto response = fetchWithRetries(url);</span>
+<span class="fc" id="L77"></span>
+            if (response != null &amp;&amp; (response.getDocs() == null || response.getDocs().isEmpty())) {
+<span class="fc" id="L79">                log.info(</span>
+<span class="pc bpc" id="L80" title="2 of 4 branches missed.">                        &quot;Búsqueda general en OpenLibrary sin resultados, intentando fallback por título y autor para: {}&quot;,</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">                        query);</span>
+<span class="nc bnc" id="L82" title="All 4 branches missed.">                try {</span>
+                    OpenLibrarySearchResponseDto titleResp = searchByTitle(query, limit, offset);
+                    OpenLibrarySearchResponseDto authorResp = searchByAuthor(query, limit, offset);
+<span class="pc bpc" id="L85" title="2 of 4 branches missed."></span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">                    Map&lt;String, OpenLibraryBookDto&gt; mergedMap = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L87" title="All 4 branches missed.">                    if (titleResp != null &amp;&amp; titleResp.getDocs() != null) {</span>
+                        for (OpenLibraryBookDto d : titleResp.getDocs()) {
+                            if (d != null &amp;&amp; d.getKey() != null)
+                                mergedMap.putIfAbsent(d.getKey(), d);
+<span class="fc" id="L91">                        }</span>
+<span class="fc" id="L92">                    }</span>
+<span class="fc" id="L93">                    if (authorResp != null &amp;&amp; authorResp.getDocs() != null) {</span>
+<span class="fc" id="L94">                        for (OpenLibraryBookDto d : authorResp.getDocs()) {</span>
+<span class="fc" id="L95">                            if (d != null &amp;&amp; d.getKey() != null)</span>
+<span class="fc" id="L96">                                mergedMap.putIfAbsent(d.getKey(), d);</span>
+<span class="fc" id="L97">                        }</span>
+<span class="nc" id="L98">                    }</span>
+<span class="nc" id="L99"></span>
+                    OpenLibrarySearchResponseDto merged = new OpenLibrarySearchResponseDto();
+                    List&lt;OpenLibraryBookDto&gt; docs = new ArrayList&lt;&gt;(mergedMap.values());
+                    merged.setDocs(docs);
+<span class="nc" id="L103">                    merged.setNumFound(docs.size());</span>
+<span class="nc" id="L104">                    merged.setStart(offset);</span>
+<span class="fc" id="L105">                    log.info(&quot;Fallback encontró {} libros para query={}&quot;, docs.size(), query);</span>
+<span class="fc" id="L106">                    return merged;</span>
+<span class="fc" id="L107">                } catch (Exception e) {</span>
+<span class="fc" id="L108">                    log.warn(&quot;Error en fallback de búsqueda por título/autor: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L109">                }</span>
+<span class="fc" id="L110">            }</span>
+<span class="fc" id="L111"></span>
+<span class="fc" id="L112">            log.info(&quot;Se encontraron {} libros&quot;, response.getNumFound());</span>
+<span class="fc" id="L113">            return response;</span>
+<span class="fc" id="L114">        } catch (IllegalArgumentException e) {</span>
+            log.error(&quot;Error de validación: {}&quot;, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error(&quot;Error inesperado al buscar en Open Library: {}&quot;, e.getMessage(), e);
+            OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
+            empty.setNumFound(0);
+            empty.setStart(offset);
+            empty.setDocs(Collections.emptyList());
+            return empty;
         }
     }
-
-    /**
-     * Realiza la llamada a la API de Open Library con reintentos solo en caso de error de red.
-     * No reintenta si Open Library devuelve una respuesta válida (aunque sea vacía).
+<span class="fc" id="L126"></span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">    /**</span>
+     * Realiza la llamada a la API de Open Library con reintentos solo en caso de
+<span class="fc" id="L129">     * error de red.</span>
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">     * No reintenta si Open Library devuelve una respuesta válida (aunque sea</span>
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">     * vacía).</span>
+<span class="nc" id="L132">     * </span>
      * @param url URL completa de la consulta a Open Library
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda,
-     * o respuesta vacía si no se obtienen resultados después de los reintentos
-     */
+<span class="fc" id="L134">     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos</span>
+     *         de la búsqueda,
+<span class="nc" id="L136">     *         o respuesta vacía si no se obtienen resultados después de los</span>
+<span class="pc" id="L137">     *         reintentos</span>
+<span class="fc" id="L138">     */</span>
     private OpenLibrarySearchResponseDto fetchWithRetries(String url) {
-<span class="fc" id="L126">        long backoff = INITIAL_BACKOFF_MS;</span>
-<span class="fc bfc" id="L127" title="All 2 branches covered.">        for (int attempt = 1; attempt &lt;= MAX_RETRIES; attempt++) {</span>
-            try {
-<span class="fc" id="L129">                OpenLibrarySearchResponseDto resp = restTemplate.getForObject(url, OpenLibrarySearchResponseDto.class);</span>
-<span class="pc bpc" id="L130" title="1 of 2 branches missed.">                if (resp != null) {</span>
-<span class="pc bpc" id="L131" title="1 of 2 branches missed.">                    if (resp.getDocs() == null) {</span>
-<span class="nc" id="L132">                        resp.setDocs(Collections.emptyList());</span>
-                    }
-<span class="fc" id="L134">                    return resp;</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        long backoff = INITIAL_BACKOFF_MS;</span>
+        for (int attempt = 1; attempt &lt;= MAX_RETRIES; attempt++) {
+<span class="fc" id="L142">            try {</span>
+<span class="pc" id="L143">                OpenLibrarySearchResponseDto resp = restTemplate.getForObject(url, OpenLibrarySearchResponseDto.class);</span>
+<span class="nc" id="L144">                if (resp != null) {</span>
+<span class="nc" id="L145">                    if (resp.getDocs() == null) {</span>
+                        resp.setDocs(Collections.emptyList());
+<span class="fc" id="L147">                    }</span>
+                    return resp;
                 }
-<span class="nc" id="L136">                log.warn(&quot;OpenLibrary returned null response (attempt {}), retrying... url={}&quot;, attempt, url);</span>
-<span class="fc" id="L137">            } catch (RestClientException e) {</span>
-<span class="fc" id="L138">                log.warn(&quot;RestTemplate call failed on attempt {}: {}&quot;, attempt, e.getMessage());</span>
-<span class="nc" id="L139">            }</span>
-<span class="fc bfc" id="L140" title="All 2 branches covered.">            if (attempt &lt; MAX_RETRIES) {</span>
+<span class="fc" id="L150">                log.warn(&quot;OpenLibrary returned null response (attempt {}), retrying... url={}&quot;, attempt, url);</span>
+<span class="fc" id="L151">            } catch (RestClientException e) {</span>
+<span class="fc" id="L152">                log.warn(&quot;RestTemplate call failed on attempt {}: {}&quot;, attempt, e.getMessage());</span>
+<span class="fc" id="L153">            }</span>
+<span class="fc" id="L154">            if (attempt &lt; MAX_RETRIES) {</span>
                 try {
-<span class="fc" id="L142">                    Thread.sleep(backoff);</span>
-<span class="nc" id="L143">                } catch (InterruptedException ie) {</span>
-<span class="nc" id="L144">                    Thread.currentThread().interrupt();</span>
-<span class="nc" id="L145">                    break;</span>
-<span class="fc" id="L146">                }</span>
-<span class="fc" id="L147">                backoff *= 2;</span>
+                    Thread.sleep(backoff);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                backoff *= 2;
             }
         }
-<span class="fc" id="L150">        OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();</span>
-<span class="fc" id="L151">        empty.setNumFound(0);</span>
-<span class="fc" id="L152">        empty.setStart(0);</span>
-<span class="fc" id="L153">        empty.setDocs(Collections.emptyList());</span>
-<span class="fc" id="L154">        return empty;</span>
+        OpenLibrarySearchResponseDto empty = new OpenLibrarySearchResponseDto();
+        empty.setNumFound(0);
+<span class="pc bpc" id="L166" title="1 of 4 branches missed.">        empty.setStart(0);</span>
+<span class="fc" id="L167">        empty.setDocs(Collections.emptyList());</span>
+        return empty;
     }
-
-    /**
+<span class="pc bpc" id="L170" title="1 of 2 branches missed."></span>
+<span class="nc" id="L171">    /**</span>
      * Busca libros por título en Open Library.
-     * @param title título a buscar
-     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000) 
-     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0) 
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
-     */
-    public OpenLibrarySearchResponseDto searchByTitle(String title, Integer limit, Integer offset) {
-        try {
-<span class="pc bpc" id="L166" title="1 of 4 branches missed.">            if (title == null || title.trim().isEmpty()) {</span>
-<span class="fc" id="L167">                throw new IllegalArgumentException(&quot;El título no puede estar vacío&quot;);</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">     * </span>
+<span class="fc" id="L174">     * @param title  título a buscar</span>
+     * @param limit  número máximo de resultados a devolver (opcional, por defecto
+<span class="fc bfc" id="L176" title="All 2 branches covered.">     *               10, máximo 1000)</span>
+<span class="fc" id="L177">     * @param offset número de resultados a omitir para paginación (opcional, por</span>
+     *               defecto 0)
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos
+<span class="fc" id="L180">     *         de la búsqueda</span>
+<span class="fc" id="L181">     */</span>
+<span class="fc" id="L182">    public OpenLibrarySearchResponseDto searchByTitle(String title, Integer limit, Integer offset) {</span>
+<span class="fc" id="L183">        try {</span>
+<span class="fc" id="L184">            if (title == null || title.trim().isEmpty()) {</span>
+<span class="fc" id="L185">                throw new IllegalArgumentException(&quot;El título no puede estar vacío&quot;);</span>
+<span class="fc" id="L186">            }</span>
+<span class="fc" id="L187"></span>
+            if (limit == null) {
+<span class="fc" id="L189">                limit = 10;</span>
+<span class="fc" id="L190">            }</span>
+<span class="fc" id="L191">            if (limit &gt; 1000) {</span>
+<span class="fc" id="L192">                limit = 1000;</span>
+<span class="fc" id="L193">            }</span>
+            if (offset == null) {
+                offset = 0;
             }
 
-<span class="pc bpc" id="L170" title="1 of 2 branches missed.">            if (limit == null) {</span>
-<span class="nc" id="L171">                limit = 10;</span>
-            }
-<span class="fc bfc" id="L173" title="All 2 branches covered.">            if (limit &gt; 1000) {</span>
-<span class="fc" id="L174">                limit = 1000;</span>
-            }
-<span class="fc bfc" id="L176" title="All 2 branches covered.">            if (offset == null) {</span>
-<span class="fc" id="L177">                offset = 0;</span>
-            }
-
-<span class="fc" id="L180">            String url = UriComponentsBuilder.fromUri(java.net.URI.create(OPEN_LIBRARY_API_BASE_URL))</span>
-<span class="fc" id="L181">                    .queryParam(&quot;title&quot;, title)</span>
-<span class="fc" id="L182">                    .queryParam(&quot;limit&quot;, limit)</span>
-<span class="fc" id="L183">                    .queryParam(&quot;offset&quot;, offset)</span>
-<span class="fc" id="L184">                    .queryParam(&quot;fields&quot;,</span>
-                            &quot;key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject&quot;)
-<span class="fc" id="L186">                    .build()</span>
-<span class="fc" id="L187">                    .toUriString();</span>
-
-<span class="fc" id="L189">            log.info(&quot;Buscando por título en Open Library: {}&quot;, title);</span>
-<span class="fc" id="L190">            return fetchWithRetries(url);</span>
-<span class="fc" id="L191">        } catch (Exception e) {</span>
-<span class="fc" id="L192">            log.error(&quot;Error al buscar por título: {}&quot;, e.getMessage(), e);</span>
-<span class="fc" id="L193">            throw new RuntimeException(&quot;Error al buscar por título: &quot; + e.getMessage(), e);</span>
+            String url = UriComponentsBuilder.fromUri(java.net.URI.create(OPEN_LIBRARY_API_BASE_URL))
+                    .queryParam(&quot;title&quot;, title)
+                    .queryParam(&quot;limit&quot;, limit)
+                    .queryParam(&quot;offset&quot;, offset)
+                    .queryParam(&quot;fields&quot;,
+                            &quot;key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject,series&quot;)
+                    .build()
+                    .toUriString();
+<span class="pc bpc" id="L206" title="1 of 4 branches missed."></span>
+<span class="fc" id="L207">            log.info(&quot;Buscando por título en Open Library: {}&quot;, title);</span>
+            return fetchWithRetries(url);
+        } catch (Exception e) {
+<span class="fc bfc" id="L210" title="All 2 branches covered.">            log.error(&quot;Error al buscar por título: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L211">            throw new RuntimeException(&quot;Error al buscar por título: &quot; + e.getMessage(), e);</span>
         }
-    }
-
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">    }</span>
+<span class="nc" id="L214"></span>
     /**
-     * Busca libros por autor en Open Library. 
+<span class="fc bfc" id="L216" title="All 2 branches covered.">     * Busca libros por autor en Open Library.</span>
+<span class="fc" id="L217">     * </span>
      * @param author autor a buscar
-     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000)
-     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0)
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
-     */ 
-    public OpenLibrarySearchResponseDto searchByAuthor(String author, Integer limit, Integer offset) {
-        try {
-<span class="pc bpc" id="L206" title="1 of 4 branches missed.">            if (author == null || author.trim().isEmpty()) {</span>
-<span class="fc" id="L207">                throw new IllegalArgumentException(&quot;El autor no puede estar vacío&quot;);</span>
+     * @param limit  número máximo de resultados a devolver (opcional, por defecto
+<span class="fc" id="L220">     *               10, máximo 1000)</span>
+<span class="fc" id="L221">     * @param offset número de resultados a omitir para paginación (opcional, por</span>
+<span class="fc" id="L222">     *               defecto 0)</span>
+<span class="fc" id="L223">     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos</span>
+<span class="fc" id="L224">     *         de la búsqueda</span>
+<span class="fc" id="L225">     */</span>
+<span class="fc" id="L226">    public OpenLibrarySearchResponseDto searchByAuthor(String author, Integer limit, Integer offset) {</span>
+<span class="fc" id="L227">        try {</span>
+            if (author == null || author.trim().isEmpty()) {
+<span class="fc" id="L229">                throw new IllegalArgumentException(&quot;El autor no puede estar vacío&quot;);</span>
+<span class="fc" id="L230">            }</span>
+<span class="fc" id="L231"></span>
+<span class="fc" id="L232">            if (limit == null) {</span>
+<span class="fc" id="L233">                limit = 10;</span>
+            }
+            if (limit &gt; 1000) {
+                limit = 1000;
+            }
+            if (offset == null) {
+                offset = 0;
             }
 
-<span class="fc bfc" id="L210" title="All 2 branches covered.">            if (limit == null) {</span>
-<span class="fc" id="L211">                limit = 10;</span>
-            }
-<span class="pc bpc" id="L213" title="1 of 2 branches missed.">            if (limit &gt; 1000) {</span>
-<span class="nc" id="L214">                limit = 1000;</span>
-            }
-<span class="fc bfc" id="L216" title="All 2 branches covered.">            if (offset == null) {</span>
-<span class="fc" id="L217">                offset = 0;</span>
-            }
+            String url = UriComponentsBuilder.fromUri(java.net.URI.create(OPEN_LIBRARY_API_BASE_URL))
+                    .queryParam(&quot;author&quot;, author)
+                    .queryParam(&quot;limit&quot;, limit)
+                    .queryParam(&quot;offset&quot;, offset)
+                    .queryParam(&quot;fields&quot;,
+                            &quot;key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject,series&quot;)
+                    .build()
+                    .toUriString();
 
-<span class="fc" id="L220">            String url = UriComponentsBuilder.fromUri(java.net.URI.create(OPEN_LIBRARY_API_BASE_URL))</span>
-<span class="fc" id="L221">                    .queryParam(&quot;author&quot;, author)</span>
-<span class="fc" id="L222">                    .queryParam(&quot;limit&quot;, limit)</span>
-<span class="fc" id="L223">                    .queryParam(&quot;offset&quot;, offset)</span>
-<span class="fc" id="L224">                    .queryParam(&quot;fields&quot;,</span>
-                            &quot;key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject&quot;)
-<span class="fc" id="L226">                    .build()</span>
-<span class="fc" id="L227">                    .toUriString();</span>
-
-<span class="fc" id="L229">            log.info(&quot;Buscando por autor en Open Library: {}&quot;, author);</span>
-<span class="fc" id="L230">            return fetchWithRetries(url);</span>
-<span class="fc" id="L231">        } catch (Exception e) {</span>
-<span class="fc" id="L232">            log.error(&quot;Error al buscar por autor: {}&quot;, e.getMessage(), e);</span>
-<span class="fc" id="L233">            throw new RuntimeException(&quot;Error al buscar por autor: &quot; + e.getMessage(), e);</span>
+            log.info(&quot;Buscando por autor en Open Library: {}&quot;, author);
+            return fetchWithRetries(url);
+        } catch (Exception e) {
+            log.error(&quot;Error al buscar por autor: {}&quot;, e.getMessage(), e);
+            throw new RuntimeException(&quot;Error al buscar por autor: &quot; + e.getMessage(), e);
         }
     }
 }

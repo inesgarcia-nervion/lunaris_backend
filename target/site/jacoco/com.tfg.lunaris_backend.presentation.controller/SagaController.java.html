@@ -49,12 +49,13 @@ import java.util.List;
     public ResponseEntity&lt;SagaScrapedDto&gt; scrapeSaga(
             @RequestParam String title,
             @RequestParam(required = false) String author,
-            @RequestParam(required = false) List&lt;String&gt; subjects) {
-<span class="fc" id="L53">        SagaScrapedDto result = sagaScrapingService.scrapeSaga(title, author, subjects);</span>
-<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (result == null) {</span>
-<span class="fc" id="L55">            return ResponseEntity.noContent().build();</span>
+            @RequestParam(required = false) List&lt;String&gt; subjects,
+            @RequestParam(required = false) List&lt;String&gt; series) {
+<span class="fc" id="L54">        SagaScrapedDto result = sagaScrapingService.scrapeSaga(title, author, subjects, series);</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (result == null) {</span>
+<span class="fc" id="L56">            return ResponseEntity.noContent().build();</span>
         }
-<span class="fc" id="L57">        return ResponseEntity.ok(result);</span>
+<span class="fc" id="L58">        return ResponseEntity.ok(result);</span>
     }
 
     /**
@@ -65,7 +66,7 @@ import java.util.List;
      */
     @GetMapping(&quot;/sagas&quot;)
     public List&lt;Saga&gt; getAllSagas() {
-<span class="fc" id="L68">        return sagaService.getAllSagas();</span>
+<span class="fc" id="L69">        return sagaService.getAllSagas();</span>
     }
 
     /**
@@ -77,7 +78,7 @@ import java.util.List;
      */
     @GetMapping(&quot;/sagas/{id}&quot;)
     public Saga getSagaById(@PathVariable Long id) {
-<span class="fc" id="L80">        return sagaService.getSagaById(id);</span>
+<span class="fc" id="L81">        return sagaService.getSagaById(id);</span>
     }
 
     /**
@@ -90,7 +91,7 @@ import java.util.List;
      */
     @PostMapping(&quot;/sagas&quot;)
     public Saga createSaga(@RequestBody Saga saga) {
-<span class="fc" id="L93">        return sagaService.createSaga(saga);</span>
+<span class="fc" id="L94">        return sagaService.createSaga(saga);</span>
     }
 
     /**
@@ -104,7 +105,7 @@ import java.util.List;
      */
     @PutMapping(&quot;/sagas/{id}&quot;)
     public Saga updateSaga(@PathVariable Long id, @RequestBody Saga sagaDetails) {
-<span class="fc" id="L107">        return sagaService.updateSaga(id, sagaDetails);</span>
+<span class="fc" id="L108">        return sagaService.updateSaga(id, sagaDetails);</span>
     }
 
     /**
@@ -115,7 +116,7 @@ import java.util.List;
      */
     @DeleteMapping(&quot;/sagas/{id}&quot;)
     public void deleteSaga(@PathVariable Long id) {
-<span class="fc" id="L118">        sagaService.deleteSaga(id);</span>
-<span class="fc" id="L119">    }</span>
+<span class="fc" id="L119">        sagaService.deleteSaga(id);</span>
+<span class="fc" id="L120">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

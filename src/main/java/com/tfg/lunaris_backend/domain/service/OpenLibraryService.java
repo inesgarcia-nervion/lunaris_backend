@@ -18,7 +18,8 @@ import com.tfg.lunaris_backend.domain.dto.OpenLibrarySearchResponseDto;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Servicio que maneja la lógica de negocio relacionada con la búsqueda de libros en Open Library.
+ * Servicio que maneja la lógica de negocio relacionada con la búsqueda de
+ * libros en Open Library.
  * 
  * Proporciona métodos para buscar libros utilizando la API de Open Library.
  */
@@ -36,10 +37,14 @@ public class OpenLibraryService {
 
     /**
      * Busca libros en Open Library utilizando un término de búsqueda general.
-     * @param query término de búsqueda (puede ser título, autor, etc.)
-     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000) 
-     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0)
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
+     * 
+     * @param query  término de búsqueda (puede ser título, autor, etc.)
+     * @param limit  número máximo de resultados a devolver (opcional, por defecto
+     *               10, máximo 1000)
+     * @param offset número de resultados a omitir para paginación (opcional, por
+     *               defecto 0)
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos
+     *         de la búsqueda
      */
     public OpenLibrarySearchResponseDto searchBooks(String query, Integer limit, Integer offset) {
         try {
@@ -51,7 +56,7 @@ public class OpenLibraryService {
                 limit = 10;
             }
             if (limit > 1000) {
-                limit = 1000; 
+                limit = 1000;
             }
             if (offset == null) {
                 offset = 0;
@@ -62,7 +67,7 @@ public class OpenLibraryService {
                     .queryParam("limit", limit)
                     .queryParam("offset", offset)
                     .queryParam("fields",
-                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject")
+                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject,series")
                     .build()
                     .toUriString();
 
@@ -71,7 +76,9 @@ public class OpenLibraryService {
             OpenLibrarySearchResponseDto response = fetchWithRetries(url);
 
             if (response != null && (response.getDocs() == null || response.getDocs().isEmpty())) {
-                log.info("Búsqueda general en OpenLibrary sin resultados, intentando fallback por título y autor para: {}", query);
+                log.info(
+                        "Búsqueda general en OpenLibrary sin resultados, intentando fallback por título y autor para: {}",
+                        query);
                 try {
                     OpenLibrarySearchResponseDto titleResp = searchByTitle(query, limit, offset);
                     OpenLibrarySearchResponseDto authorResp = searchByAuthor(query, limit, offset);
@@ -79,12 +86,14 @@ public class OpenLibraryService {
                     Map<String, OpenLibraryBookDto> mergedMap = new LinkedHashMap<>();
                     if (titleResp != null && titleResp.getDocs() != null) {
                         for (OpenLibraryBookDto d : titleResp.getDocs()) {
-                            if (d != null && d.getKey() != null) mergedMap.putIfAbsent(d.getKey(), d);
+                            if (d != null && d.getKey() != null)
+                                mergedMap.putIfAbsent(d.getKey(), d);
                         }
                     }
                     if (authorResp != null && authorResp.getDocs() != null) {
                         for (OpenLibraryBookDto d : authorResp.getDocs()) {
-                            if (d != null && d.getKey() != null) mergedMap.putIfAbsent(d.getKey(), d);
+                            if (d != null && d.getKey() != null)
+                                mergedMap.putIfAbsent(d.getKey(), d);
                         }
                     }
 
@@ -116,11 +125,16 @@ public class OpenLibraryService {
     }
 
     /**
-     * Realiza la llamada a la API de Open Library con reintentos solo en caso de error de red.
-     * No reintenta si Open Library devuelve una respuesta válida (aunque sea vacía).
+     * Realiza la llamada a la API de Open Library con reintentos solo en caso de
+     * error de red.
+     * No reintenta si Open Library devuelve una respuesta válida (aunque sea
+     * vacía).
+     * 
      * @param url URL completa de la consulta a Open Library
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda,
-     * o respuesta vacía si no se obtienen resultados después de los reintentos
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos
+     *         de la búsqueda,
+     *         o respuesta vacía si no se obtienen resultados después de los
+     *         reintentos
      */
     private OpenLibrarySearchResponseDto fetchWithRetries(String url) {
         long backoff = INITIAL_BACKOFF_MS;
@@ -156,10 +170,14 @@ public class OpenLibraryService {
 
     /**
      * Busca libros por título en Open Library.
-     * @param title título a buscar
-     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000) 
-     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0) 
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
+     * 
+     * @param title  título a buscar
+     * @param limit  número máximo de resultados a devolver (opcional, por defecto
+     *               10, máximo 1000)
+     * @param offset número de resultados a omitir para paginación (opcional, por
+     *               defecto 0)
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos
+     *         de la búsqueda
      */
     public OpenLibrarySearchResponseDto searchByTitle(String title, Integer limit, Integer offset) {
         try {
@@ -182,7 +200,7 @@ public class OpenLibraryService {
                     .queryParam("limit", limit)
                     .queryParam("offset", offset)
                     .queryParam("fields",
-                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject")
+                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject,series")
                     .build()
                     .toUriString();
 
@@ -195,12 +213,16 @@ public class OpenLibraryService {
     }
 
     /**
-     * Busca libros por autor en Open Library. 
+     * Busca libros por autor en Open Library.
+     * 
      * @param author autor a buscar
-     * @param limit número máximo de resultados a devolver (opcional, por defecto 10, máximo 1000)
-     * @param offset número de resultados a omitir para paginación (opcional, por defecto 0)
-     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos de la búsqueda
-     */ 
+     * @param limit  número máximo de resultados a devolver (opcional, por defecto
+     *               10, máximo 1000)
+     * @param offset número de resultados a omitir para paginación (opcional, por
+     *               defecto 0)
+     * @return respuesta de búsqueda con la lista de libros encontrados y metadatos
+     *         de la búsqueda
+     */
     public OpenLibrarySearchResponseDto searchByAuthor(String author, Integer limit, Integer offset) {
         try {
             if (author == null || author.trim().isEmpty()) {
@@ -222,7 +244,7 @@ public class OpenLibraryService {
                     .queryParam("limit", limit)
                     .queryParam("offset", offset)
                     .queryParam("fields",
-                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject")
+                            "key,title,author_name,first_publish_year,cover_i,edition_count,ia,has_fulltext,description,ratings_average,subject,series")
                     .build()
                     .toUriString();
 

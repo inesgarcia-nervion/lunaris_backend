@@ -49,8 +49,9 @@ public class SagaController {
     public ResponseEntity<SagaScrapedDto> scrapeSaga(
             @RequestParam String title,
             @RequestParam(required = false) String author,
-            @RequestParam(required = false) List<String> subjects) {
-        SagaScrapedDto result = sagaScrapingService.scrapeSaga(title, author, subjects);
+            @RequestParam(required = false) List<String> subjects,
+            @RequestParam(required = false) List<String> series) {
+        SagaScrapedDto result = sagaScrapingService.scrapeSaga(title, author, subjects, series);
         if (result == null) {
             return ResponseEntity.noContent().build();
         }

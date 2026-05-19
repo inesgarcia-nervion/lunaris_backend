@@ -6,7 +6,7 @@ tfg_backend,com.tfg.lunaris_backend.domain.dto,CommentRequestDto,0,17,0,0,0,8,0,
 tfg_backend,com.tfg.lunaris_backend.domain.dto,NewsRequestDto,0,31,0,0,0,14,0,9,0,9
 tfg_backend,com.tfg.lunaris_backend.domain.dto,PostResponseDto,0,48,0,0,0,18,0,9,0,9
 tfg_backend,com.tfg.lunaris_backend.domain.dto,OpenLibrarySearchResponseDto,0,11,1,3,0,1,1,2,0,1
-tfg_backend,com.tfg.lunaris_backend.domain.dto,OpenLibraryBookDto,0,24,0,6,0,4,0,5,0,2
+tfg_backend,com.tfg.lunaris_backend.domain.dto,OpenLibraryBookDto,0,25,0,6,0,4,0,5,0,2
 tfg_backend,com.tfg.lunaris_backend.presentation.exceptions,UserNotFoundException,0,4,0,0,0,2,0,1,0,1
 tfg_backend,com.tfg.lunaris_backend.presentation.exceptions,UserListNotFoundException,0,4,0,0,0,2,0,1,0,1
 tfg_backend,com.tfg.lunaris_backend.presentation.exceptions,ReviewNotFoundException,0,4,0,0,0,2,0,1,0,1
@@ -31,15 +31,15 @@ tfg_backend,com.tfg.lunaris_backend.presentation.controller,ReviewController,0,7
 tfg_backend,com.tfg.lunaris_backend.presentation.controller,AuthController,0,145,1,12,0,28,1,12,0,6
 tfg_backend,com.tfg.lunaris_backend.presentation.controller,BookController,0,50,0,0,0,12,0,9,0,9
 tfg_backend,com.tfg.lunaris_backend.presentation.controller,BookRequestController,0,42,1,5,0,9,1,7,0,5
-tfg_backend,com.tfg.lunaris_backend.presentation.controller,SagaController,0,43,0,2,0,11,0,8,0,7
+tfg_backend,com.tfg.lunaris_backend.presentation.controller,SagaController,0,44,0,2,0,11,0,8,0,7
 tfg_backend,com.tfg.lunaris_backend.domain.service,PostService,147,26,12,0,32,6,11,5,5,5
-tfg_backend,com.tfg.lunaris_backend.domain.service,SagaScrapingService,272,1005,65,123,55,251,46,70,2,20
+tfg_backend,com.tfg.lunaris_backend.domain.service,SagaScrapingService,294,1017,70,126,56,246,52,70,4,20
 tfg_backend,com.tfg.lunaris_backend.domain.service,GenreService,0,69,0,0,0,12,0,9,0,9
 tfg_backend,com.tfg.lunaris_backend.domain.service,BookRequestService,0,26,0,0,0,6,0,5,0,5
 tfg_backend,com.tfg.lunaris_backend.domain.service,NewsService,0,26,0,0,0,6,0,5,0,5
 tfg_backend,com.tfg.lunaris_backend.domain.service,UserListService,13,76,3,3,3,16,4,9,1,9
 tfg_backend,com.tfg.lunaris_backend.domain.service,EmailService,0,47,0,0,0,12,0,2,0,2
-tfg_backend,com.tfg.lunaris_backend.domain.service,OpenLibraryService,65,427,24,40,16,100,20,18,0,6
+tfg_backend,com.tfg.lunaris_backend.domain.service,OpenLibraryService,63,429,24,40,12,104,20,18,0,6
 tfg_backend,com.tfg.lunaris_backend.domain.service,PasswordResetService,0,117,0,14,0,31,0,11,0,4
 tfg_backend,com.tfg.lunaris_backend.domain.service,SagaService,0,58,0,0,0,11,0,8,0,8
 tfg_backend,com.tfg.lunaris_backend.domain.service,UserService.new TypeReference() {...},3,0,0,0,1,0,1,0,1,0
@@ -49,7 +49,7 @@ tfg_backend,com.tfg.lunaris_backend.domain.service,CustomUserDetailsService,0,47
 tfg_backend,com.tfg.lunaris_backend.domain.service,UserService,426,171,47,23,82,31,45,17,16,10
 tfg_backend,com.tfg.lunaris_backend.domain.service,ReviewService,41,260,25,37,6,68,20,21,0,10
 tfg_backend,com.tfg.lunaris_backend.domain.service,AuthorService,0,62,0,0,0,12,0,8,0,8
-tfg_backend,com.tfg.lunaris_backend.domain.service,BookService,195,294,26,24,36,60,20,21,2,14
+tfg_backend,com.tfg.lunaris_backend.domain.service,BookService,195,296,26,24,34,59,20,21,2,14
 tfg_backend,com.tfg.lunaris_backend.presentation.security,JwtAuthenticationFilter,0,59,2,8,0,17,2,5,0,2
 tfg_backend,com.tfg.lunaris_backend.presentation.security,JwtUtils,0,82,0,2,0,20,0,7,0,6
 tfg_backend,com.tfg.lunaris_backend.domain.model,BookRequest,0,33,0,0,0,14,0,8,0,8

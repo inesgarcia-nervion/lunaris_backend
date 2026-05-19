@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OpenLibraryBookDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.dto</a> &gt; <span class="el_source">OpenLibraryBookDto.java</span></div><h1>OpenLibraryBookDto.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -10,8 +11,8 @@ import java.util.List;
 /**
  * DTO que representa un libro tal y como viene en la respuesta de OpenLibrary.
  * 
- * Contiene los campos relevantes para un libro, incluyendo título, autor, año 
- * de publicación, imagen de portada, descripción, puntuación y otros detalles 
+ * Contiene los campos relevantes para un libro, incluyendo título, autor, año
+ * de publicación, imagen de portada, descripción, puntuación y otros detalles
  * que pueden ser útiles para mostrar información al usuario.
  */
 @Data
@@ -50,17 +51,21 @@ public class OpenLibraryBookDto {
     private Double ratingsAverage;
 
     @JsonProperty(&quot;subject&quot;)
+    @JsonAlias({ &quot;subjects&quot;, &quot;categories&quot; })
     private List&lt;String&gt; subject;
 
+    @JsonProperty(&quot;series&quot;)
+    private List&lt;String&gt; series;
+
     public String getFirstAuthor() {
-<span class="fc bfc" id="L56" title="All 4 branches covered.">        return (authorNames != null &amp;&amp; !authorNames.isEmpty()) ? authorNames.get(0) : null;</span>
+<span class="fc bfc" id="L61" title="All 4 branches covered.">        return (authorNames != null &amp;&amp; !authorNames.isEmpty()) ? authorNames.get(0) : null;</span>
     }
 
     public String getCoverUrl() {
-<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (coverId != null) {</span>
-<span class="fc" id="L61">            return &quot;https://covers.openlibrary.org/b/id/&quot; + coverId + &quot;-M.jpg&quot;;</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (coverId != null) {</span>
+<span class="fc" id="L66">            return &quot;https://covers.openlibrary.org/b/id/&quot; + coverId + &quot;-M.jpg&quot;;</span>
         }
-<span class="fc" id="L63">        return null;</span>
+<span class="fc" id="L68">        return null;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,5 +1,6 @@
 package com.tfg.lunaris_backend.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -10,8 +11,8 @@ import java.util.List;
 /**
  * DTO que representa un libro tal y como viene en la respuesta de OpenLibrary.
  * 
- * Contiene los campos relevantes para un libro, incluyendo título, autor, año 
- * de publicación, imagen de portada, descripción, puntuación y otros detalles 
+ * Contiene los campos relevantes para un libro, incluyendo título, autor, año
+ * de publicación, imagen de portada, descripción, puntuación y otros detalles
  * que pueden ser útiles para mostrar información al usuario.
  */
 @Data
@@ -50,7 +51,11 @@ public class OpenLibraryBookDto {
     private Double ratingsAverage;
 
     @JsonProperty("subject")
+    @JsonAlias({ "subjects", "categories" })
     private List<String> subject;
+
+    @JsonProperty("series")
+    private List<String> series;
 
     public String getFirstAuthor() {
         return (authorNames != null && !authorNames.isEmpty()) ? authorNames.get(0) : null;

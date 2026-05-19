@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 /**
  * Servicio que maneja la lógica de negocio relacionada con el scraping de sagas
- * en Goodreads. 
+ * en Goodreads.
  * 
  * Proporciona métodos para buscar sagas y obtener información detallada de los
  * libros que las componen.
@@ -60,7 +60,7 @@ public class SagaScrapingService {
      *         una saga
      */
     public SagaScrapedDto scrapeSaga(String bookTitle, String author) {
-        return scrapeSaga(bookTitle, author, null);
+        return scrapeSaga(bookTitle, author, null, null);
     }
 
     /**
@@ -76,6 +76,22 @@ public class SagaScrapingService {
      *         una saga
      */
     public SagaScrapedDto scrapeSaga(String bookTitle, String author, List<String> subjects) {
+        return scrapeSaga(bookTitle, author, subjects, null);
+    }
+
+    /**
+     * Busca la saga/serie de un libro a partir de su título, autor, subjects y
+     * series de
+     * Open Library.
+     *
+     * @param bookTitle título del libro
+     * @param author    autor del libro
+     * @param subjects  lista de subjects de Open Library
+     * @param series    lista de nombres de series de Open Library
+     * @return DTO con el nombre de la saga y sus libros, o null si no pertenece a
+     *         una saga
+     */
+    public SagaScrapedDto scrapeSaga(String bookTitle, String author, List<String> subjects, List<String> series) {
         Optional<Saga> cachedSaga = sagaRepository.findByBookTitleIgnoreCase(bookTitle);
         if (cachedSaga.isPresent()) {
             Saga saga = cachedSaga.get();
@@ -124,11 +140,11 @@ public class SagaScrapingService {
         } catch (HttpStatusException e) {
             log.warn("Goodreads devolvió HTTP {} para '{}', intentando fallback OpenLibrary", e.getStatusCode(),
                     bookTitle);
-            return scrapeFromOpenLibrarySubjects(subjects);
+            return scrapeFromOpenLibrarySubjects(subjects, series);
         } catch (IOException e) {
             log.error("Error de red scrapeando saga para '{}': {}, intentando fallback OpenLibrary", bookTitle,
                     e.getMessage());
-            return scrapeFromOpenLibrarySubjects(subjects);
+            return scrapeFromOpenLibrarySubjects(subjects, series);
         }
     }
 
@@ -584,23 +600,26 @@ public class SagaScrapingService {
      * @return DTO con el nombre de la saga y sus libros, o null si no se encontró
      *         ningún subject de serie o la consulta falló
      */
-    private SagaScrapedDto scrapeFromOpenLibrarySubjects(List<String> subjects) {
-        if (subjects == null || subjects.isEmpty()) {
-            return null;
+    private SagaScrapedDto scrapeFromOpenLibrarySubjects(List<String> subjects, List<String> series) {
+        String sagaName = null;
+        if (series != null) {
+            sagaName = series.stream().filter(s -> s != null && !s.isBlank()).findFirst().orElse(null);
         }
 
-        String seriesSubject = subjects.stream()
-                .filter(s -> s != null && s.startsWith("Serie:"))
-                .findFirst()
-                .orElse(null);
-
-        if (seriesSubject == null) {
-            log.info("No se encontró subject de serie en los subjects del libro");
-            return null;
+        if (sagaName == null && subjects != null) {
+            String seriesSubject = subjects.stream()
+                    .filter(s -> s != null && s.startsWith("Serie:"))
+                    .findFirst()
+                    .orElse(null);
+            if (seriesSubject != null) {
+                sagaName = seriesSubject.substring(6).replace("_", " ");
+            }
         }
 
-        // "Serie:Percy_Jackson_and_the_Olympians" → "Percy Jackson and the Olympians"
-        String sagaName = seriesSubject.substring(6).replace("_", " ");
+        if (sagaName == null) {
+            log.info("No se encontró información de serie para el libro");
+            return null;
+        }
 
         // Verificar caché por nombre de saga antes de llamar a la API
         Optional<Saga> cached = sagaRepository.findByName(sagaName);
@@ -609,8 +628,7 @@ public class SagaScrapingService {
             return convertToDto(cached.get());
         }
 
-        // Slug para la API: "serie:percy_jackson_and_the_olympians"
-        String subjectSlug = seriesSubject.toLowerCase(java.util.Locale.ROOT);
+        String subjectSlug = sagaName.toLowerCase(java.util.Locale.ROOT).replace(" ", "_");
         String url = OPEN_LIBRARY_SUBJECTS_URL + URLEncoder.encode(subjectSlug, StandardCharsets.UTF_8)
                 + ".json?limit=30";
 

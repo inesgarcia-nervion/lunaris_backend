@@ -2,6 +2,7 @@ package com.tfg.lunaris_backend.domain.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.tfg.lunaris_backend.data.repository.BookRepository;
 import com.tfg.lunaris_backend.data.repository.GenreRepository;
@@ -207,6 +208,7 @@ public class BookService {
      * @param openLibraryBook DTO con los datos del libro de Open Library
      * @return libro importado o existente
      */
+    @Transactional
     public Book importFromOpenLibrary(OpenLibraryBookDto openLibraryBook) {
         Optional<Book> existingBook = bookRepository.findAll().stream()
                 .filter(b -> b.getApiId() != null && b.getApiId().equals(openLibraryBook.getKey()))
