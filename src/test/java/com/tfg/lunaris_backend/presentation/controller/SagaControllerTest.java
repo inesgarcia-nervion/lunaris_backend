@@ -20,7 +20,8 @@ import static org.mockito.Mockito.when;
 class SagaControllerTest {
 
     /**
-     * Verifica que los métodos del controlador delegan correctamente en el servicio y que el scraping funciona.
+     * Verifica que los métodos del controlador delegan correctamente en el servicio
+     * y que el scraping funciona.
      */
     @Test
     void delegatesAndScrape() {
@@ -47,13 +48,14 @@ class SagaControllerTest {
         c.deleteSaga(5L);
 
         SagaScrapedDto dto = new SagaScrapedDto();
-        when(ss.scrapeSaga("t", null)).thenReturn(dto);
-        ResponseEntity<SagaScrapedDto> res = c.scrapeSaga("t", null);
+        when(ss.scrapeSaga("t", null, null)).thenReturn(dto);
+        ResponseEntity<SagaScrapedDto> res = c.scrapeSaga("t", null, null);
         assertTrue(res.getStatusCode().is2xxSuccessful());
     }
 
     /**
-     * Verifica que el scraping de una saga devuelve no content si el resultado es nulo.
+     * Verifica que el scraping de una saga devuelve no content si el resultado es
+     * nulo.
      */
     @Test
     void scrapeSaga_nullResult_returnsNoContent() {
@@ -63,8 +65,8 @@ class SagaControllerTest {
         ReflectionTestUtils.setField(c, "sagaService", svc);
         ReflectionTestUtils.setField(c, "sagaScrapingService", ss);
 
-        when(ss.scrapeSaga("unknown", null)).thenReturn(null);
-        var res = c.scrapeSaga("unknown", null);
+        when(ss.scrapeSaga("unknown", null, null)).thenReturn(null);
+        var res = c.scrapeSaga("unknown", null, null);
         assertEquals(204, res.getStatusCode().value());
     }
 }
