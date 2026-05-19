@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 /**
  * Servicio que maneja la lógica de negocio relacionada con el scraping de sagas
- * en Goodreads.
+ * en Goodreads. 
  * 
  * Proporciona métodos para buscar sagas y obtener información detallada de los
  * libros que las componen.
