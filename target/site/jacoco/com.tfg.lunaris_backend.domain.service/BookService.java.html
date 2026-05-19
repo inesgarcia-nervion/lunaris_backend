@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">BookService.java</span></div><h1>BookService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.tfg.lunaris_backend.data.repository.BookRepository;
+import com.tfg.lunaris_backend.data.repository.GenreRepository;
+import com.tfg.lunaris_backend.domain.dto.BookCreateRequest;
+import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
+import com.tfg.lunaris_backend.domain.model.Book;
+import com.tfg.lunaris_backend.domain.model.Saga;
+import com.tfg.lunaris_backend.domain.model.SagaBook;
+import com.tfg.lunaris_backend.domain.model.Genre;
+import com.tfg.lunaris_backend.presentation.exceptions.BookNotFoundException;
+import com.tfg.lunaris_backend.presentation.exceptions.DuplicateBookException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con los libros.
+ * 
+ * Proporciona métodos para obtener, crear, actualizar, eliminar y buscar
+ * libros.
+ */
+@Service
+<span class="fc" id="L31">public class BookService {</span>
+
+    @Autowired
+    private BookRepository bookRepository;
+
+    @Autowired
+    private com.tfg.lunaris_backend.data.repository.SagaRepository sagaRepository;
+
+    @Autowired
+    private GenreRepository genreRepository;
+
+    /**
+     * Obtiene una lista de todos los libros.
+     * 
+     * @return lista de libros
+     */
+    public List&lt;Book&gt; getAllBooks() {
+<span class="fc" id="L48">        return bookRepository.findAll();</span>
+    }
+
+    /**
+     * Obtiene una página de libros con paginación.
+     * 
+     * @param pageable información de paginación
+     * @return página de libros
+     */
+    public Page&lt;Book&gt; getAllBooks(Pageable pageable) {
+<span class="fc" id="L58">        return bookRepository.findAll(pageable);</span>
+    }
+
+    /**
+     * Obtiene un libro por su identificador.
+     * 
+     * @param id identificador del libro
+     * @return libro encontrado
+     * @throws BookNotFoundException si no se encuentra el libro con el id
+     *                               proporcionado
+     */
+    public Book getBookById(Long id) {
+<span class="fc" id="L70">        return bookRepository.findById(id)</span>
+<span class="fc" id="L71">                .orElseThrow(() -&gt; new BookNotFoundException(&quot;Libro no encontrado con id &quot; + id));</span>
+    }
+
+    /**
+     * Crea un nuevo libro.
+     * 
+     * @param request solicitud de creación de libro
+     * @return libro creado
+     */
+    public Book createBook(BookCreateRequest request) {
+<span class="fc" id="L81">        if (bookRepository.findByTitleIgnoreCaseAndAuthorIgnoreCase(</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                request.getTitle(), request.getAuthor()).isPresent()) {</span>
+<span class="nc" id="L83">            throw new DuplicateBookException(</span>
+<span class="nc" id="L84">                    &quot;Ya existe un libro con el título '&quot; + request.getTitle() +</span>
+<span class="nc" id="L85">                            &quot;' y el autor '&quot; + request.getAuthor() + &quot;'&quot;);</span>
+        }
+<span class="fc" id="L87">        Book book = new Book();</span>
+<span class="fc" id="L88">        book.setTitle(request.getTitle());</span>
+<span class="fc" id="L89">        book.setAuthor(request.getAuthor());</span>
+<span class="fc" id="L90">        book.setDescription(request.getDescription());</span>
+<span class="fc" id="L91">        book.setCoverImage(request.getCoverImage());</span>
+<span class="fc" id="L92">        book.setReleaseYear(request.getReleaseYear());</span>
+<span class="fc" id="L93">        book.setScore(request.getScore());</span>
+<span class="fc bfc" id="L94" title="All 4 branches covered.">        book.setApiId(request.getApiId() != null &amp;&amp; !request.getApiId().isBlank()</span>
+<span class="fc" id="L95">                ? request.getApiId()</span>
+<span class="fc" id="L96">                : &quot;custom-&quot; + UUID.randomUUID());</span>
+
+<span class="pc bpc" id="L98" title="1 of 4 branches missed.">        if (request.getGenreIds() != null &amp;&amp; !request.getGenreIds().isEmpty()) {</span>
+<span class="fc" id="L99">            List&lt;Genre&gt; genres = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            for (Long genreId : request.getGenreIds()) {</span>
+<span class="fc" id="L101">                genreRepository.findById(genreId).ifPresent(genres::add);</span>
+<span class="fc" id="L102">            }</span>
+<span class="fc" id="L103">            book.setGenres(genres);</span>
+        }
+
+<span class="fc" id="L106">        Book saved = bookRepository.save(book);</span>
+
+        // Si viene sagaId enlazar al libro creando una entrada SagaBook en la saga
+        // existente
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        if (request.getSagaId() != null) {</span>
+<span class="nc" id="L111">            sagaRepository.findById(request.getSagaId()).ifPresent(saga -&gt; {</span>
+<span class="nc" id="L112">                SagaBook sb = new SagaBook();</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                sb.setTitle(saved.getTitle() != null ? saved.getTitle().trim() : null);</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">                sb.setAuthor(saved.getAuthor() != null ? saved.getAuthor().trim() : null);</span>
+<span class="nc" id="L115">                sb.setYear(saved.getReleaseYear());</span>
+<span class="nc" id="L116">                sb.setSaga(saga);</span>
+<span class="nc" id="L117">                saga.getBooks().add(sb);</span>
+<span class="nc" id="L118">                sagaRepository.save(saga);</span>
+<span class="nc" id="L119">            });</span>
+<span class="pc bpc" id="L120" title="3 of 4 branches missed.">        } else if (request.getSagaName() != null &amp;&amp; !request.getSagaName().isBlank()) {</span>
+<span class="nc" id="L121">            String name = request.getSagaName().trim();</span>
+<span class="nc" id="L122">            Saga saga = sagaRepository.findByName(name).orElseGet(() -&gt; {</span>
+<span class="nc" id="L123">                Saga s = new Saga();</span>
+<span class="nc" id="L124">                s.setName(name);</span>
+<span class="nc" id="L125">                return s;</span>
+            });
+<span class="nc" id="L127">            SagaBook sb = new SagaBook();</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            sb.setTitle(saved.getTitle() != null ? saved.getTitle().trim() : null);</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">            sb.setAuthor(saved.getAuthor() != null ? saved.getAuthor().trim() : null);</span>
+<span class="nc" id="L130">            sb.setYear(saved.getReleaseYear());</span>
+<span class="nc" id="L131">            sb.setSaga(saga);</span>
+<span class="nc" id="L132">            saga.getBooks().add(sb);</span>
+<span class="nc" id="L133">            sagaRepository.save(saga);</span>
+        }
+
+<span class="fc" id="L136">        return saved;</span>
+    }
+
+    /**
+     * Actualiza un libro existente.
+     * 
+     * @param id          identificador del libro a actualizar
+     * @param bookDetails detalles del libro a actualizar
+     * @return libro actualizado
+     * @throws BookNotFoundException si no se encuentra el libro con el id
+     *                               proporcionado
+     */
+    public Book updateBook(Long id, Book bookDetails) {
+<span class="fc" id="L149">        Book book = bookRepository.findById(id)</span>
+<span class="fc" id="L150">                .orElseThrow(() -&gt; new BookNotFoundException(&quot;Libro no encontrado con id &quot; + id));</span>
+<span class="fc" id="L151">        book.setTitle(bookDetails.getTitle());</span>
+<span class="fc" id="L152">        book.setCoverImage(bookDetails.getCoverImage());</span>
+<span class="fc" id="L153">        book.setDescription(bookDetails.getDescription());</span>
+<span class="fc" id="L154">        book.setAuthor(bookDetails.getAuthor());</span>
+<span class="fc" id="L155">        book.setApiId(bookDetails.getApiId());</span>
+<span class="fc" id="L156">        book.setReleaseYear(bookDetails.getReleaseYear());</span>
+<span class="fc" id="L157">        book.setScore(bookDetails.getScore());</span>
+<span class="fc" id="L158">        return bookRepository.save(book);</span>
+    }
+
+    /**
+     * Elimina un libro por su identificador.
+     * 
+     * @param id identificador del libro a eliminar
+     */
+    public void deleteBook(Long id) {
+<span class="fc" id="L167">        bookRepository.deleteById(id);</span>
+<span class="fc" id="L168">    }</span>
+
+    /**
+     * Busca libros cuyo título o autor contenga el texto dado (ignorando
+     * mayúsculas).
+     * 
+     * @param query texto a buscar en el título o autor
+     * @return lista de libros que coinciden con la búsqueda
+     */
+    public List&lt;Book&gt; searchBooks(String query) {
+<span class="fc" id="L178">        return bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(query, query);</span>
+    }
+
+    /**
+     * Busca libros cuyo título o autor contenga el texto dado (ignorando
+     * mayúsculas) con paginación.
+     * 
+     * @param query    texto a buscar en el título o autor
+     * @param pageable información de paginación
+     * @return página de libros que coinciden con la búsqueda
+     */
+    public Page&lt;Book&gt; searchBooks(String query, Pageable pageable) {
+<span class="fc" id="L190">        return bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(query, query, pageable);</span>
+    }
+
+    /**
+     * Busca un libro por su identificador de API.
+     * 
+     * @param apiId identificador de API del libro
+     * @return libro encontrado o vacío si no se encuentra
+     */
+    public Optional&lt;Book&gt; findByApiId(String apiId) {
+<span class="fc" id="L200">        return bookRepository.findByApiId(apiId);</span>
+    }
+
+    /**
+     * Importa un libro desde un DTO de Open Library. Si el libro ya existe (basado
+     * en apiId), lo devuelve sin crear uno nuevo.
+     * 
+     * @param openLibraryBook DTO con los datos del libro de Open Library
+     * @return libro importado o existente
+     */
+    public Book importFromOpenLibrary(OpenLibraryBookDto openLibraryBook) {
+<span class="fc" id="L211">        Optional&lt;Book&gt; existingBook = bookRepository.findAll().stream()</span>
+<span class="pc bpc" id="L212" title="2 of 4 branches missed.">                .filter(b -&gt; b.getApiId() != null &amp;&amp; b.getApiId().equals(openLibraryBook.getKey()))</span>
+<span class="fc" id="L213">                .findFirst();</span>
+
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        if (existingBook.isPresent()) {</span>
+<span class="fc" id="L216">            Book existing = existingBook.get();</span>
+<span class="pc bpc" id="L217" title="2 of 4 branches missed.">            if ((existing.getGenres() == null || existing.getGenres().isEmpty())</span>
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">                    &amp;&amp; openLibraryBook.getSubject() != null) {</span>
+<span class="nc" id="L219">                List&lt;Genre&gt; genres = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">                for (String subject : openLibraryBook.getSubject()) {</span>
+<span class="nc" id="L221">                    genreRepository.findByNameIgnoreCase(subject).ifPresent(genres::add);</span>
+<span class="nc" id="L222">                }</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">                if (!genres.isEmpty()) {</span>
+<span class="nc" id="L224">                    existing.setGenres(genres);</span>
+<span class="nc" id="L225">                    bookRepository.save(existing);</span>
+                }
+            }
+<span class="fc" id="L228">            return existing;</span>
+        }
+
+<span class="fc" id="L231">        Book book = new Book();</span>
+<span class="fc" id="L232">        book.setTitle(openLibraryBook.getTitle());</span>
+<span class="fc" id="L233">        book.setAuthor(openLibraryBook.getFirstAuthor());</span>
+<span class="fc" id="L234">        book.setReleaseYear(openLibraryBook.getFirstPublishYear());</span>
+<span class="fc" id="L235">        book.setCoverImage(openLibraryBook.getCoverUrl());</span>
+<span class="fc" id="L236">        book.setApiId(openLibraryBook.getKey());</span>
+
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        book.setDescription(openLibraryBook.getDescription() != null ? openLibraryBook.getDescription() : &quot;&quot;);</span>
+
+<span class="fc bfc" id="L240" title="All 2 branches covered.">        book.setScore(openLibraryBook.getRatingsAverage() != null ? openLibraryBook.getRatingsAverage() : 0.0);</span>
+
+<span class="pc bpc" id="L242" title="1 of 2 branches missed.">        if (openLibraryBook.getSubject() != null) {</span>
+<span class="nc" id="L243">            List&lt;Genre&gt; genres = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">            for (String subject : openLibraryBook.getSubject()) {</span>
+<span class="nc" id="L245">                genreRepository.findByNameIgnoreCase(subject).ifPresent(genres::add);</span>
+<span class="nc" id="L246">            }</span>
+<span class="nc" id="L247">            book.setGenres(genres);</span>
+        }
+
+<span class="fc" id="L250">        return bookRepository.save(book);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

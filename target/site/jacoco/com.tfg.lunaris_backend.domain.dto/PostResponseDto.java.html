@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.dto</a> &gt; <span class="el_source">PostResponseDto.java</span></div><h1>PostResponseDto.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.dto;
+
+import java.util.List;
+
+/**
+ * DTO para la respuesta de un post, con formato compatible con el frontend.
+ */
+public class PostResponseDto {
+    private Long id;
+    private UserDto user;
+    private List&lt;String&gt; imageUrls;
+    private String text;
+    private int likes;
+    private boolean liked;
+    private List&lt;CommentDto&gt; comments;
+
+<span class="fc" id="L17">    public PostResponseDto() {</span>
+<span class="fc" id="L18">    }</span>
+
+    public PostResponseDto(Long id, UserDto user, List&lt;String&gt; imageUrls, String text, int likes, boolean liked,
+<span class="fc" id="L21">            List&lt;CommentDto&gt; comments) {</span>
+<span class="fc" id="L22">        this.id = id;</span>
+<span class="fc" id="L23">        this.user = user;</span>
+<span class="fc" id="L24">        this.imageUrls = imageUrls;</span>
+<span class="fc" id="L25">        this.text = text;</span>
+<span class="fc" id="L26">        this.likes = likes;</span>
+<span class="fc" id="L27">        this.liked = liked;</span>
+<span class="fc" id="L28">        this.comments = comments;</span>
+<span class="fc" id="L29">    }</span>
+
+    public Long getId() {
+<span class="fc" id="L32">        return id;</span>
+    }
+
+    public UserDto getUser() {
+<span class="fc" id="L36">        return user;</span>
+    }
+
+    public List&lt;String&gt; getImageUrls() {
+<span class="fc" id="L40">        return imageUrls;</span>
+    }
+
+    public String getText() {
+<span class="fc" id="L44">        return text;</span>
+    }
+
+    public int getLikes() {
+<span class="fc" id="L48">        return likes;</span>
+    }
+
+    public boolean isLiked() {
+<span class="fc" id="L52">        return liked;</span>
+    }
+
+    public List&lt;CommentDto&gt; getComments() {
+<span class="fc" id="L56">        return comments;</span>
+    }
+
+    public static class UserDto {
+        private String name;
+        private String avatarUrl;
+
+<span class="fc" id="L63">        public UserDto() {</span>
+<span class="fc" id="L64">        }</span>
+
+<span class="fc" id="L66">        public UserDto(String name, String avatarUrl) {</span>
+<span class="fc" id="L67">            this.name = name;</span>
+<span class="fc" id="L68">            this.avatarUrl = avatarUrl;</span>
+<span class="fc" id="L69">        }</span>
+
+        public String getName() {
+<span class="fc" id="L72">            return name;</span>
+        }
+
+        public String getAvatarUrl() {
+<span class="fc" id="L76">            return avatarUrl;</span>
+        }
+    }
+
+    public static class CommentDto {
+        private Long id;
+        private UserDto user;
+        private String text;
+
+<span class="fc" id="L85">        public CommentDto() {</span>
+<span class="fc" id="L86">        }</span>
+
+<span class="fc" id="L88">        public CommentDto(Long id, UserDto user, String text) {</span>
+<span class="fc" id="L89">            this.id = id;</span>
+<span class="fc" id="L90">            this.user = user;</span>
+<span class="fc" id="L91">            this.text = text;</span>
+<span class="fc" id="L92">        }</span>
+
+        public Long getId() {
+<span class="fc" id="L95">            return id;</span>
+        }
+
+        public UserDto getUser() {
+<span class="fc" id="L99">            return user;</span>
+        }
+
+        public String getText() {
+<span class="fc" id="L103">            return text;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

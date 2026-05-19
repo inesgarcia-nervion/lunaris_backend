@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserListService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">UserListService.java</span></div><h1>UserListService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.tfg.lunaris_backend.data.repository.UserListRepository;
+import com.tfg.lunaris_backend.domain.model.UserList;
+import com.tfg.lunaris_backend.presentation.exceptions.UserListNotFoundException;
+
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con las listas de
+ * usuarios.
+ * 
+ * Proporciona métodos para crear, actualizar, eliminar y obtener listas de
+ * usuarios.
+ */
+@Service
+<span class="fc" id="L22">public class UserListService {</span>
+
+    @Autowired
+    private UserListRepository userListRepository;
+
+    /**
+     * Obtiene todas las listas de usuarios.
+     * 
+     * @return lista de listas de usuarios
+     */
+    public List&lt;UserList&gt; getAllUserLists() {
+<span class="fc" id="L33">        return userListRepository.findAll();</span>
+    }
+
+    /**
+     * Obtiene todas las listas de usuarios de manera paginada.
+     * 
+     * @param pageable información de paginación
+     * @return página de listas de usuarios
+     */
+    public Page&lt;UserList&gt; getAllUserLists(Pageable pageable) {
+<span class="fc" id="L43">        return userListRepository.findAll(pageable);</span>
+    }
+
+    /**
+     * Obtiene una lista de usuarios por su ID.
+     * 
+     * @param id ID de la lista de usuarios
+     * @return lista de usuarios encontrada
+     * @throws UserListNotFoundException si la lista de usuarios no existe
+     */
+    public UserList getUserListById(Long id) {
+<span class="fc" id="L54">        return userListRepository.findById(id)</span>
+<span class="fc" id="L55">                .orElseThrow(() -&gt; new UserListNotFoundException(&quot;Lista no encontrada con id &quot; + id));</span>
+    }
+
+    /**
+     * Crea una nueva lista de usuarios.
+     * 
+     * @param userList lista de usuarios a crear
+     * @return lista de usuarios creada
+     */
+    public UserList createUserList(UserList userList) {
+<span class="fc" id="L65">        return userListRepository.save(userList);</span>
+    }
+
+    /**
+     * Actualiza una lista de usuarios existente.
+     * 
+     * @param id              ID de la lista de usuarios a actualizar
+     * @param userListDetails detalles de la lista de usuarios a actualizar
+     * @return lista de usuarios actualizada
+     * @throws UserListNotFoundException si la lista de usuarios no existe
+     */
+    public UserList updateUserList(Long id, UserList userListDetails) {
+<span class="fc" id="L77">        UserList userList = userListRepository.findById(id)</span>
+<span class="fc" id="L78">                .orElseThrow(() -&gt; new UserListNotFoundException(&quot;Lista no encontrada con id &quot; + id));</span>
+<span class="fc" id="L79">        userList.setName(userListDetails.getName());</span>
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (userListDetails.getOwner() != null)</span>
+<span class="nc" id="L81">            userList.setOwner(userListDetails.getOwner());</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">        if (userListDetails.getIsPrivate() != null)</span>
+<span class="fc" id="L83">            userList.setIsPrivate(userListDetails.getIsPrivate());</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (userListDetails.getBooksJson() != null)</span>
+<span class="nc" id="L85">            userList.setBooksJson(userListDetails.getBooksJson());</span>
+<span class="fc" id="L86">        return userListRepository.save(userList);</span>
+    }
+
+    /**
+     * Elimina una lista de usuarios por su ID.
+     * 
+     * @param id ID de la lista de usuarios a eliminar
+     */
+    public void deleteUserList(Long id) {
+<span class="fc" id="L95">        userListRepository.deleteById(id);</span>
+<span class="fc" id="L96">    }</span>
+
+    public java.util.List&lt;UserList&gt; getListsByOwner(String owner) {
+<span class="nc" id="L99">        return userListRepository.findByOwner(owner);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

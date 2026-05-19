@@ -13,7 +13,8 @@ import static org.mockito.Mockito.*;
 class WebConfigTest {
 
     /**
-     * Verifica que el método addCorsMappings llama a addMapping con el patrón correcto.
+     * Verifica que el método addCorsMappings llama a addMapping con el patrón
+     * correcto.
      */
     @Test
     void addCorsMappings_callsAddMapping() {
@@ -22,7 +23,7 @@ class WebConfigTest {
         CorsRegistration registration = Mockito.mock(CorsRegistration.class);
 
         when(registry.addMapping("/**")).thenReturn(registration);
-        when(registration.allowedOrigins((String[]) Mockito.any(String[].class))).thenReturn(registration);
+        when(registration.allowedOriginPatterns((String[]) Mockito.any(String[].class))).thenReturn(registration);
         when(registration.allowedMethods((String[]) Mockito.any(String[].class))).thenReturn(registration);
         when(registration.allowedHeaders((String[]) Mockito.any(String[].class))).thenReturn(registration);
         when(registration.allowCredentials(anyBoolean())).thenReturn(registration);

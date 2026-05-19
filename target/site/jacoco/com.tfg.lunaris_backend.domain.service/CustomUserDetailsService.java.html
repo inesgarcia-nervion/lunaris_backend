@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomUserDetailsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">CustomUserDetailsService.java</span></div><h1>CustomUserDetailsService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import com.tfg.lunaris_backend.data.repository.UserRepository;
+import com.tfg.lunaris_backend.domain.model.User;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con los detalles de usuario para la autenticación.
+ * 
+ * Implementa UserDetailsService para cargar los detalles de usuario desde la base de datos.
+ */
+@Service
+<span class="fc" id="L23">public class CustomUserDetailsService implements UserDetailsService {</span>
+
+    @Autowired
+    private UserRepository userRepository;
+
+    /**
+     * Carga los detalles de un usuario por su nombre de usuario.
+     * @param username nombre de usuario
+     * @return detalles del usuario
+     * @throws UsernameNotFoundException si no se encuentra el usuario
+     */
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+<span class="fc" id="L36">        User user = userRepository.findByUsername(username)</span>
+<span class="fc" id="L37">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;Usuario no encontrado: &quot; + username));</span>
+
+<span class="fc bfc" id="L39" title="All 4 branches covered.">        String roleName = (user.getRole() != null &amp;&amp; !user.getRole().isBlank()) ? user.getRole() : &quot;USER&quot;;</span>
+<span class="fc" id="L40">        Collection&lt;GrantedAuthority&gt; authorities = List</span>
+<span class="fc" id="L41">                .of(new SimpleGrantedAuthority(&quot;ROLE_&quot; + roleName.toUpperCase()));</span>
+
+<span class="fc" id="L43">        return new org.springframework.security.core.userdetails.User(</span>
+<span class="fc" id="L44">                user.getUsername(), user.getPassword(), authorities);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

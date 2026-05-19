@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">PostController.java</span></div><h1>PostController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import com.tfg.lunaris_backend.domain.dto.CommentRequestDto;
+import com.tfg.lunaris_backend.domain.dto.PostRequestDto;
+import com.tfg.lunaris_backend.domain.dto.PostResponseDto;
+import com.tfg.lunaris_backend.domain.model.Comment;
+import com.tfg.lunaris_backend.domain.model.Post;
+import com.tfg.lunaris_backend.domain.service.PostService;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+/**
+ * Controlador que maneja las operaciones relacionadas con los posts.
+ *
+ * Proporciona endpoints para crear, obtener, actualizar y eliminar posts,
+ * así como gestionar likes y comentarios.
+ */
+@RestController
+<span class="fc" id="L28">public class PostController {</span>
+
+    @Autowired
+    private PostService postService;
+
+    private PostResponseDto toDto(Post post, String currentUser) {
+<span class="pc bpc" id="L34" title="2 of 4 branches missed.">        boolean liked = currentUser != null &amp;&amp; post.getLikedByUsers() != null</span>
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">                &amp;&amp; post.getLikedByUsers().contains(currentUser);</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        List&lt;PostResponseDto.CommentDto&gt; commentDtos = post.getComments() == null ? List.of()</span>
+<span class="fc" id="L37">                : post.getComments().stream()</span>
+<span class="pc" id="L38">                        .map(c -&gt; new PostResponseDto.CommentDto(</span>
+<span class="nc" id="L39">                                c.getId(),</span>
+<span class="nc" id="L40">                                new PostResponseDto.UserDto(c.getUsername(), c.getUserAvatarUrl()),</span>
+<span class="nc" id="L41">                                c.getText()))</span>
+<span class="fc" id="L42">                        .collect(Collectors.toList());</span>
+<span class="fc" id="L43">        return new PostResponseDto(</span>
+<span class="fc" id="L44">                post.getId(),</span>
+<span class="fc" id="L45">                new PostResponseDto.UserDto(post.getUsername(), post.getUserAvatarUrl()),</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                post.getImageUrls() == null ? List.of() : post.getImageUrls(),</span>
+<span class="fc" id="L47">                post.getContent(),</span>
+<span class="fc" id="L48">                post.getLikes(),</span>
+                liked,
+                commentDtos);
+    }
+
+    /**
+     * Endpoint para obtener todos los posts.
+     * 
+     * @param auth información de autenticación del usuario (opcional)
+     * @return lista de posts en formato DTO
+     */
+    @GetMapping(&quot;/posts&quot;)
+    public List&lt;PostResponseDto&gt; getAllPosts(Authentication auth) {
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        String currentUser = auth != null ? auth.getName() : null;</span>
+<span class="fc" id="L62">        return postService.getAllPosts().stream()</span>
+<span class="fc" id="L63">                .map(p -&gt; toDto(p, currentUser))</span>
+<span class="fc" id="L64">                .collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Endpoint para obtener un post por su ID.
+     * 
+     * @param id   identificador del post
+     * @param auth información de autenticación
+     * @return post encontrado en formato DTO
+     */
+    @GetMapping(&quot;/posts/{id}&quot;)
+    public PostResponseDto getPostById(@PathVariable Long id, Authentication auth) {
+<span class="fc" id="L76">        Post post = postService.getPostById(id);</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (post == null)</span>
+<span class="fc" id="L78">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Post no encontrado&quot;);</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">        String currentUser = auth != null ? auth.getName() : null;</span>
+<span class="fc" id="L80">        return toDto(post, currentUser);</span>
+    }
+
+    /**
+     * Endpoint para crear un nuevo post.
+     * 
+     * @param dto  datos del nuevo post
+     * @param auth información de autenticación del usuario
+     * @return post creado en formato DTO
+     */
+    @PostMapping(&quot;/posts&quot;)
+    public PostResponseDto createPost(@RequestBody PostRequestDto dto, Authentication auth) {
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        if (auth == null)</span>
+<span class="fc" id="L93">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="fc" id="L94">        Post post = new Post();</span>
+<span class="fc" id="L95">        post.setContent(dto.getText());</span>
+<span class="fc" id="L96">        post.setUsername(auth.getName());</span>
+<span class="fc" id="L97">        post.setUserAvatarUrl(dto.getUserAvatarUrl());</span>
+<span class="fc" id="L98">        post.setDate(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (dto.getImageUrls() != null)</span>
+<span class="fc" id="L100">            post.getImageUrls().addAll(dto.getImageUrls());</span>
+<span class="fc" id="L101">        Post saved = postService.createPost(post);</span>
+<span class="fc" id="L102">        return toDto(saved, auth.getName());</span>
+    }
+
+    /**
+     * Endpoint para actualizar un post existente.
+     * 
+     * @param id   identificador del post
+     * @param dto  nuevos datos del post
+     * @param auth información de autenticación
+     * @return post actualizado en formato DTO
+     */
+    @PutMapping(&quot;/posts/{id}&quot;)
+    public PostResponseDto updatePost(@PathVariable Long id, @RequestBody PostRequestDto dto, Authentication auth) {
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (auth == null)</span>
+<span class="nc" id="L116">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="nc" id="L117">        Post existing = postService.getPostById(id);</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        if (existing == null)</span>
+<span class="nc" id="L119">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Post no encontrado&quot;);</span>
+<span class="nc" id="L120">        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+<span class="nc bnc" id="L121" title="All 4 branches missed.">        if (!isAdmin &amp;&amp; !auth.getName().equals(existing.getUsername())) {</span>
+<span class="nc" id="L122">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;No autorizado&quot;);</span>
+        }
+<span class="nc" id="L124">        Post updated = postService.updatePost(id, dto.getText(), dto.getImageUrls());</span>
+<span class="nc" id="L125">        return toDto(updated, auth.getName());</span>
+    }
+
+    /**
+     * Endpoint para eliminar un post.
+     * 
+     * @param id   identificador del post
+     * @param auth información de autenticación
+     */
+    @DeleteMapping(&quot;/posts/{id}&quot;)
+    public void deletePost(@PathVariable Long id, Authentication auth) {
+<span class="fc" id="L136">        Post existing = postService.getPostById(id);</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if (existing == null)</span>
+<span class="fc" id="L138">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Post no encontrado&quot;);</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        String currentUser = auth != null ? auth.getName() : null;</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        boolean isAdmin = auth != null &amp;&amp; auth.getAuthorities().stream()</span>
+<span class="fc bfc" id="L141" title="All 2 branches covered.">                .anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+<span class="pc bpc" id="L142" title="1 of 6 branches missed.">        if (isAdmin || (currentUser != null &amp;&amp; currentUser.equals(existing.getUsername()))) {</span>
+<span class="fc" id="L143">            postService.deletePost(id);</span>
+<span class="fc" id="L144">            return;</span>
+        }
+<span class="fc" id="L146">        throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;No autorizado a eliminar este post&quot;);</span>
+    }
+
+    /**
+     * Endpoint para alternar el like de un post.
+     * 
+     * @param id   identificador del post
+     * @param auth información de autenticación
+     * @return post actualizado en formato DTO
+     */
+    @PostMapping(&quot;/posts/{id}/like&quot;)
+    public PostResponseDto toggleLike(@PathVariable Long id, Authentication auth) {
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        if (auth == null)</span>
+<span class="nc" id="L159">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="nc" id="L160">        Post updated = postService.toggleLike(id, auth.getName());</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (updated == null)</span>
+<span class="nc" id="L162">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Post no encontrado&quot;);</span>
+<span class="nc" id="L163">        return toDto(updated, auth.getName());</span>
+    }
+
+    /**
+     * Endpoint para añadir un comentario a un post.
+     * 
+     * @param id   identificador del post
+     * @param dto  datos del comentario
+     * @param auth información de autenticación
+     * @return post actualizado con el nuevo comentario
+     */
+    @PostMapping(&quot;/posts/{id}/comments&quot;)
+    public PostResponseDto addComment(@PathVariable Long id, @RequestBody CommentRequestDto dto, Authentication auth) {
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        if (auth == null)</span>
+<span class="nc" id="L177">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="nc" id="L178">        Post post = postService.addComment(id, dto.getText(), auth.getName(), dto.getUserAvatarUrl());</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (post == null)</span>
+<span class="nc" id="L180">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Post no encontrado&quot;);</span>
+<span class="nc" id="L181">        return toDto(post, auth.getName());</span>
+    }
+
+    /**
+     * Endpoint para eliminar un comentario de un post.
+     * 
+     * @param id        identificador del post
+     * @param commentId identificador del comentario
+     * @param auth      información de autenticación
+     * @return post actualizado sin el comentario eliminado
+     */
+    @DeleteMapping(&quot;/posts/{id}/comments/{commentId}&quot;)
+    public PostResponseDto deleteComment(@PathVariable Long id, @PathVariable Long commentId, Authentication auth) {
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (auth == null)</span>
+<span class="nc" id="L195">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="nc" id="L196">        Post post = postService.getPostById(id);</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        if (post == null)</span>
+<span class="nc" id="L198">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Post no encontrado&quot;);</span>
+<span class="nc" id="L199">        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+<span class="nc" id="L200">        Comment comment = post.getComments().stream().filter(c -&gt; c.getId().equals(commentId)).findFirst().orElse(null);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (comment == null)</span>
+<span class="nc" id="L202">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Comentario no encontrado&quot;);</span>
+<span class="nc bnc" id="L203" title="All 4 branches missed.">        if (!isAdmin &amp;&amp; !auth.getName().equals(comment.getUsername())) {</span>
+<span class="nc" id="L204">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;No autorizado a eliminar este comentario&quot;);</span>
+        }
+<span class="nc" id="L206">        Post updated = postService.deleteComment(id, commentId);</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">        if (updated == null)</span>
+<span class="nc" id="L208">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Post no encontrado&quot;);</span>
+<span class="nc" id="L209">        return toDto(updated, auth.getName());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

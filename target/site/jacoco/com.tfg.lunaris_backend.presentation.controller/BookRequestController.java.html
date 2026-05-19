@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookRequestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">BookRequestController.java</span></div><h1>BookRequestController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.tfg.lunaris_backend.domain.model.BookRequest;
+import com.tfg.lunaris_backend.domain.service.BookRequestService;
+
+import java.util.List;
+
+/**
+ * Controlador que maneja las operaciones relacionadas con las solicitudes de libros.
+ * 
+ * Proporciona endpoints para crear, eliminar y obtener solicitudes de libros.
+ */
+@RestController
+<span class="fc" id="L25">public class BookRequestController {</span>
+    @Autowired
+    private BookRequestService bookRequestService;
+
+    /**
+     * Endpoint para obtener todas las solicitudes de libros.
+     * @return lista de solicitudes de libros
+     */
+    @GetMapping(&quot;/requests&quot;)
+    public List&lt;BookRequest&gt; getAll() {
+<span class="fc" id="L35">        return bookRequestService.getAll();</span>
+    }
+
+    /**
+    * Endpoint para crear una nueva solicitud de libro. Recibe un objeto `BookRequest` con 
+    * los datos necesarios para crear la solicitud, y devuelve la solicitud creada.
+    * @param br objeto con los datos para crear la solicitud de libro
+    * @return solicitud de libro creada
+    */  
+    @PostMapping(&quot;/requests&quot;)
+    public BookRequest create(@RequestBody BookRequest br) {
+<span class="fc" id="L46">        return bookRequestService.create(br);</span>
+    }
+
+    /**
+    * Endpoint para eliminar una solicitud de libro por su ID. Solo los usuarios con rol ADMIN pueden eliminar solicitudes.
+    * @param id identificador de la solicitud de libro a eliminar
+    * @param auth información de autenticación del usuario que realiza la solicitud
+    * @throws ResponseStatusException con estado 403 si el usuario no tiene permisos para eliminar la solicitud
+    */
+    @DeleteMapping(&quot;/requests/{id}&quot;)
+    public void delete(@PathVariable Long id, Authentication auth) {
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        boolean isAdmin = auth != null &amp;&amp; auth.getAuthorities().stream()</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">                .anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (!isAdmin) {</span>
+<span class="fc" id="L61">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;No autorizado&quot;);</span>
+        }
+
+<span class="fc" id="L64">        bookRequestService.delete(id);</span>
+<span class="fc" id="L65">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SagaScrapingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">SagaScrapingService.java</span></div><h1>SagaScrapingService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import com.tfg.lunaris_backend.data.repository.SagaRepository;
+import com.tfg.lunaris_backend.domain.dto.SagaScrapedDto;
+import com.tfg.lunaris_backend.domain.dto.SagaScrapedDto.SagaBookEntry;
+import com.tfg.lunaris_backend.domain.model.Saga;
+import com.tfg.lunaris_backend.domain.model.SagaBook;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.HttpStatusException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con el scraping de sagas
+ * en Goodreads. 
+ * 
+ * Proporciona métodos para buscar sagas y obtener información detallada de los
+ * libros que las componen.
+ */
+@Service
+<span class="fc" id="L36">@Slf4j</span>
+<span class="fc" id="L37">public class SagaScrapingService {</span>
+
+    @Autowired
+    private SagaRepository sagaRepository;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    private static final String GOODREADS_BASE = &quot;https://www.goodreads.com&quot;;
+    private static final String GOODREADS_SEARCH_URL = GOODREADS_BASE + &quot;/search?q=&quot;;
+    private static final String USER_AGENT = &quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36&quot;;
+    private static final int TIMEOUT_MS = 15000;
+    private static final String OPEN_LIBRARY_SUBJECTS_URL = &quot;https://openlibrary.org/subjects/&quot;;
+<span class="fc" id="L50">    private static final Pattern SERIES_NUMBER_PATTERN = Pattern.compile(&quot;#([\\d.]+(?:-[\\d.]+)?)\\)&quot;);</span>
+<span class="fc" id="L51">    private static final ObjectMapper objectMapper = new ObjectMapper();</span>
+
+    /**
+     * Busca la saga/serie de un libro a partir de su título y autor.
+     * Scrapea Goodreads para obtener la lista completa de libros de la saga.
+     * 
+     * @param bookTitle título del libro
+     * @param author    autor del libro (puede ser null)
+     * @return DTO con el nombre de la saga y sus libros, o null si no pertenece a
+     *         una saga
+     */
+    public SagaScrapedDto scrapeSaga(String bookTitle, String author) {
+<span class="fc" id="L63">        return scrapeSaga(bookTitle, author, null);</span>
+    }
+
+    /**
+     * Busca la saga/serie de un libro a partir de su título, autor y subjects de
+     * Open Library.
+     * Intenta primero en Goodreads; si falla, usa el fallback de subjects de Open
+     * Library.
+     *
+     * @param bookTitle título del libro
+     * @param author    autor del libro
+     * @param subjects  lista de subjects de Open Library
+     * @return DTO con el nombre de la saga y sus libros, o null si no pertenece a
+     *         una saga
+     */
+    public SagaScrapedDto scrapeSaga(String bookTitle, String author, List&lt;String&gt; subjects) {
+<span class="fc" id="L79">        Optional&lt;Saga&gt; cachedSaga = sagaRepository.findByBookTitleIgnoreCase(bookTitle);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (cachedSaga.isPresent()) {</span>
+<span class="fc" id="L81">            Saga saga = cachedSaga.get();</span>
+<span class="fc" id="L82">            boolean hasGoodreadsUrls = saga.getBooks().stream()</span>
+<span class="pc bpc" id="L83" title="1 of 4 branches missed.">                    .anyMatch(sb -&gt; sb.getGoodreadsUrl() != null &amp;&amp; !sb.getGoodreadsUrl().isBlank());</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">            if (!hasGoodreadsUrls) {</span>
+<span class="fc" id="L85">                log.info(&quot;Saga local encontrada para '{}' (manual)&quot;, bookTitle);</span>
+<span class="fc" id="L86">                return convertToDto(saga);</span>
+            }
+
+<span class="fc bfc" id="L89" title="All 2 branches covered.">            boolean hasUnfiltered = saga.getBooks().stream().anyMatch(sb -&gt; sb.getOrderNumber() == null</span>
+<span class="pc bpc" id="L90" title="2 of 4 branches missed.">                    || sb.getOrderNumber().isBlank() || sb.getOrderNumber().contains(&quot;-&quot;));</span>
+<span class="pc bpc" id="L91" title="1 of 4 branches missed.">            if (!hasUnfiltered &amp;&amp; saga.getBooks().size() &gt; 2) {</span>
+<span class="nc" id="L92">                log.info(&quot;Saga encontrada en caché para '{}'&quot;, bookTitle);</span>
+<span class="nc" id="L93">                return convertToDto(saga);</span>
+            }
+<span class="fc" id="L95">            sagaRepository.delete(saga);</span>
+<span class="fc" id="L96">            log.info(&quot;Caché obsoleta de saga '{}' eliminada, re-scrapeando...&quot;, saga.getName());</span>
+        }
+
+        try {
+<span class="fc" id="L100">            List&lt;String&gt; bookUrls = findBookUrls(bookTitle);</span>
+<span class="pc bpc" id="L101" title="2 of 6 branches missed.">            if (bookUrls.isEmpty() &amp;&amp; author != null &amp;&amp; !author.isBlank()) {</span>
+<span class="fc" id="L102">                String query = (bookTitle + &quot; &quot; + author).trim();</span>
+<span class="fc" id="L103">                bookUrls = findBookUrls(query);</span>
+            }
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            if (bookUrls.isEmpty()) {</span>
+<span class="fc" id="L106">                log.info(&quot;No se encontró el libro '{}' en Goodreads&quot;, bookTitle);</span>
+<span class="fc" id="L107">                return null;</span>
+            }
+
+<span class="fc bfc" id="L110" title="All 2 branches covered.">            for (String bookUrl : bookUrls) {</span>
+<span class="fc" id="L111">                String seriesUrl = findSeriesUrl(bookUrl);</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">                if (seriesUrl != null) {</span>
+<span class="fc" id="L113">                    SagaScrapedDto result = scrapeSeriesPage(seriesUrl);</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">                    if (result != null) {</span>
+<span class="fc" id="L115">                        saveSagaToDb(result);</span>
+<span class="fc" id="L116">                        return result;</span>
+                    }
+                }
+<span class="fc" id="L119">            }</span>
+
+<span class="fc" id="L121">            log.info(&quot;El libro '{}' no pertenece a ninguna saga&quot;, bookTitle);</span>
+<span class="fc" id="L122">            return null;</span>
+
+<span class="nc" id="L124">        } catch (HttpStatusException e) {</span>
+<span class="nc" id="L125">            log.warn(&quot;Goodreads devolvió HTTP {} para '{}', intentando fallback OpenLibrary&quot;, e.getStatusCode(),</span>
+                    bookTitle);
+<span class="nc" id="L127">            return scrapeFromOpenLibrarySubjects(subjects);</span>
+<span class="fc" id="L128">        } catch (IOException e) {</span>
+<span class="fc" id="L129">            log.error(&quot;Error de red scrapeando saga para '{}': {}, intentando fallback OpenLibrary&quot;, bookTitle,</span>
+<span class="fc" id="L130">                    e.getMessage());</span>
+<span class="fc" id="L131">            return scrapeFromOpenLibrarySubjects(subjects);</span>
+        }
+    }
+
+    /**
+     * Convierte la entidad Saga a un DTO para la respuesta, extrayendo sólo los
+     * campos necesarios.
+     * 
+     * @param saga entidad de la saga con sus libros
+     * @return DTO con el nombre de la saga y una lista de libros con sus datos
+     *         relevantes
+     */
+    private SagaScrapedDto convertToDto(Saga saga) {
+<span class="fc" id="L144">        List&lt;SagaBookEntry&gt; entries = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        for (SagaBook sb : saga.getBooks()) {</span>
+<span class="fc" id="L146">            SagaBookEntry entry = new SagaBookEntry();</span>
+<span class="fc" id="L147">            entry.setTitle(sb.getTitle());</span>
+<span class="fc" id="L148">            entry.setAuthor(sb.getAuthor());</span>
+<span class="fc" id="L149">            entry.setOrderNumber(sb.getOrderNumber());</span>
+<span class="fc" id="L150">            entry.setPages(sb.getPages());</span>
+<span class="fc" id="L151">            entry.setYear(sb.getYear());</span>
+<span class="fc" id="L152">            entry.setStorygraphUrl(sb.getGoodreadsUrl());</span>
+<span class="fc" id="L153">            entries.add(entry);</span>
+<span class="fc" id="L154">        }</span>
+<span class="fc" id="L155">        return new SagaScrapedDto(saga.getName(), entries);</span>
+    }
+
+    /**
+     * Guarda la saga scrapeada en la base de datos. Si ya existe una saga con el
+     * mismo nombre,
+     * se actualiza sólo si la nueva tiene más libros o datos más completos.
+     * 
+     * @param dto DTO con el nombre de la saga y sus libros obtenidos del scraping
+     */
+    private void saveSagaToDb(SagaScrapedDto dto) {
+<span class="fc" id="L166">        Optional&lt;Saga&gt; existing = sagaRepository.findByName(dto.getSagaName());</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        if (existing.isPresent()) {</span>
+<span class="fc" id="L168">            Saga saga = existing.get();</span>
+<span class="fc bfc" id="L169" title="All 2 branches covered.">            if (saga.getBooks().size() &gt;= dto.getBooks().size()) {</span>
+<span class="fc" id="L170">                return;</span>
+            }
+<span class="fc" id="L172">            saga.getBooks().clear();</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">            for (SagaBookEntry entry : dto.getBooks()) {</span>
+<span class="fc" id="L174">                SagaBook sb = new SagaBook();</span>
+<span class="fc" id="L175">                sb.setTitle(entry.getTitle());</span>
+<span class="fc" id="L176">                sb.setAuthor(entry.getAuthor());</span>
+<span class="fc" id="L177">                sb.setOrderNumber(entry.getOrderNumber());</span>
+<span class="fc" id="L178">                sb.setPages(entry.getPages());</span>
+<span class="fc" id="L179">                sb.setYear(entry.getYear());</span>
+<span class="fc" id="L180">                sb.setGoodreadsUrl(entry.getStorygraphUrl());</span>
+<span class="fc" id="L181">                sb.setSaga(saga);</span>
+<span class="fc" id="L182">                saga.getBooks().add(sb);</span>
+<span class="fc" id="L183">            }</span>
+<span class="fc" id="L184">            sagaRepository.save(saga);</span>
+<span class="fc" id="L185">            log.info(&quot;Saga '{}' actualizada en base de datos con {} libros&quot;, dto.getSagaName(), saga.getBooks().size());</span>
+<span class="fc" id="L186">            return;</span>
+        }
+
+<span class="fc" id="L189">        Saga saga = new Saga();</span>
+<span class="fc" id="L190">        saga.setName(dto.getSagaName());</span>
+
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        for (SagaBookEntry entry : dto.getBooks()) {</span>
+<span class="fc" id="L193">            SagaBook sb = new SagaBook();</span>
+<span class="fc" id="L194">            sb.setTitle(entry.getTitle());</span>
+<span class="fc" id="L195">            sb.setAuthor(entry.getAuthor());</span>
+<span class="fc" id="L196">            sb.setOrderNumber(entry.getOrderNumber());</span>
+<span class="fc" id="L197">            sb.setPages(entry.getPages());</span>
+<span class="fc" id="L198">            sb.setYear(entry.getYear());</span>
+<span class="fc" id="L199">            sb.setGoodreadsUrl(entry.getStorygraphUrl());</span>
+<span class="fc" id="L200">            sb.setSaga(saga);</span>
+<span class="fc" id="L201">            saga.getBooks().add(sb);</span>
+<span class="fc" id="L202">        }</span>
+
+<span class="fc" id="L204">        sagaRepository.save(saga);</span>
+<span class="fc" id="L205">        log.info(&quot;Saga '{}' guardada en base de datos con {} libros&quot;, dto.getSagaName(), saga.getBooks().size());</span>
+<span class="fc" id="L206">    }</span>
+
+    /**
+     * Busca en Goodreads la URL de la serie a la que pertenece un libro, a partir
+     * de su título.
+     * 
+     * @param bookTitle título del libro a buscar
+     * @return URL de la serie en Goodreads, o null si no se encuentra o no
+     *         pertenece a ninguna serie
+     * @throws IOException si hay un error al conectar o parsear la página de
+     *                     Goodreads
+     */
+    private List&lt;String&gt; findBookUrls(String bookTitle) throws IOException {
+<span class="fc" id="L219">        String searchUrl = GOODREADS_SEARCH_URL + URLEncoder.encode(bookTitle, StandardCharsets.UTF_8);</span>
+
+<span class="fc" id="L221">        log.debug(&quot;Buscando en Goodreads: {}&quot;, searchUrl);</span>
+
+<span class="fc" id="L223">        Document doc = buildJsoupConnection(searchUrl).get();</span>
+
+<span class="fc" id="L225">        Elements results = doc.select(&quot;table.tableList tr[itemscope] a.bookTitle&quot;);</span>
+<span class="fc" id="L226">        List&lt;String&gt; urls = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L227">        int limit = Math.min(results.size(), 5);</span>
+
+<span class="fc bfc" id="L229" title="All 2 branches covered.">        for (int i = 0; i &lt; limit; i++) {</span>
+<span class="fc" id="L230">            String href = results.get(i).attr(&quot;href&quot;);</span>
+<span class="fc" id="L231">            String hrefLower = href.toLowerCase();</span>
+<span class="pc bpc" id="L232" title="1 of 4 branches missed.">            if (hrefLower.contains(&quot;summary&quot;) || hrefLower.contains(&quot;study-guide&quot;)</span>
+<span class="pc bpc" id="L233" title="2 of 4 branches missed.">                    || hrefLower.contains(&quot;book-analysis&quot;) || hrefLower.contains(&quot;companion&quot;)</span>
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">                    || hrefLower.contains(&quot;unofficial&quot;)) {</span>
+<span class="nc" id="L235">                continue;</span>
+            }
+<span class="fc bfc" id="L237" title="All 2 branches covered.">            if (href.startsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L238">                urls.add(GOODREADS_BASE + href);</span>
+            } else {
+<span class="fc" id="L240">                urls.add(href);</span>
+            }
+        }
+
+<span class="fc bfc" id="L244" title="All 4 branches covered.">        if (urls.isEmpty() &amp;&amp; !results.isEmpty()) {</span>
+<span class="fc" id="L245">            String href = results.first().attr(&quot;href&quot;);</span>
+<span class="pc bpc" id="L246" title="1 of 2 branches missed.">            urls.add(href.startsWith(&quot;/&quot;) ? GOODREADS_BASE + href : href);</span>
+        }
+
+<span class="fc" id="L249">        return urls;</span>
+    }
+
+    /**
+     * Dada la URL de un libro en Goodreads, obtiene la URL de la serie a la que
+     * pertenece, si existe.
+     * 
+     * @param bookUrl URL del libro en Goodreads
+     * @return URL de la serie en Goodreads, o null si no se encuentra o el libro no
+     *         pertenece a ninguna serie
+     * @throws IOException si hay un error al conectar o parsear la página del libro
+     *                     en Goodreads
+     */
+    private String findSeriesUrl(String bookUrl) throws IOException {
+<span class="fc" id="L263">        log.debug(&quot;Obteniendo página del libro: {}&quot;, bookUrl);</span>
+
+<span class="fc" id="L265">        Document doc = buildJsoupConnection(bookUrl).get();</span>
+<span class="fc" id="L266">        Element seriesLink = doc.selectFirst(&quot;h3.Text a[href*='/series/']&quot;);</span>
+<span class="pc bpc" id="L267" title="1 of 2 branches missed.">        if (seriesLink == null) {</span>
+            // Intentar selector alternativo
+<span class="fc" id="L269">            seriesLink = doc.selectFirst(&quot;a[href*='/series/']&quot;);</span>
+        }
+<span class="fc bfc" id="L271" title="All 2 branches covered.">        if (seriesLink == null) {</span>
+<span class="fc" id="L272">            return null;</span>
+        }
+
+<span class="fc" id="L275">        String href = seriesLink.attr(&quot;href&quot;);</span>
+<span class="pc bpc" id="L276" title="1 of 2 branches missed.">        if (!href.startsWith(&quot;http&quot;)) {</span>
+<span class="fc" id="L277">            href = GOODREADS_BASE + href;</span>
+        }
+<span class="fc" id="L279">        return href;</span>
+    }
+
+    /**
+     * Scrapea la página de la serie en Goodreads para extraer el nombre de la saga
+     * y la lista de libros con sus datos.
+     * 
+     * @param seriesUrl URL de la serie en Goodreads
+     * @return DTO con el nombre de la saga y una lista de libros con sus datos
+     *         relevantes, o null si no se pudo extraer la información
+     * @throws IOException si hay un error al conectar o parsear la página de la
+     *                     serie en Goodreads
+     */
+    private SagaScrapedDto scrapeSeriesPage(String seriesUrl) throws IOException {
+<span class="fc" id="L293">        log.debug(&quot;Scrapeando serie: {}&quot;, seriesUrl);</span>
+
+<span class="fc" id="L295">        Document doc = buildJsoupConnection(seriesUrl).get();</span>
+
+<span class="fc" id="L297">        String sagaName = extractSeriesName(doc);</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">        if (sagaName == null) {</span>
+<span class="fc" id="L299">            log.warn(&quot;No se pudo extraer el nombre de la serie de {}&quot;, seriesUrl);</span>
+<span class="fc" id="L300">            return null;</span>
+        }
+
+<span class="fc" id="L303">        List&lt;SagaBookEntry&gt; books = extractBooksFromJson(doc);</span>
+
+<span class="pc bpc" id="L305" title="1 of 2 branches missed.">        if (books.isEmpty()) {</span>
+<span class="fc" id="L306">            books = extractBooksFromHtml(doc);</span>
+        }
+
+<span class="fc" id="L309">        books = filterSagaBooks(books);</span>
+
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        if (books.isEmpty()) {</span>
+<span class="fc" id="L312">            log.warn(&quot;No se encontraron libros en la serie '{}'&quot;, sagaName);</span>
+<span class="fc" id="L313">            return null;</span>
+        }
+
+<span class="fc" id="L316">        return new SagaScrapedDto(sagaName, books);</span>
+    }
+
+    /**
+     * Filtra la lista de libros de la saga para eliminar entradas sin número de
+     * orden o con números de orden no válidos (rangos, duplicados).
+     * 
+     * @param books lista original de libros extraídos del scraping
+     * @return lista filtrada de libros que tienen un número de orden válido y único
+     *         dentro de la saga
+     */
+    private List&lt;SagaBookEntry&gt; filterSagaBooks(List&lt;SagaBookEntry&gt; books) {
+<span class="fc" id="L328">        java.util.LinkedHashSet&lt;String&gt; seenNumbers = new java.util.LinkedHashSet&lt;&gt;();</span>
+<span class="fc" id="L329">        List&lt;SagaBookEntry&gt; filtered = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L331" title="All 2 branches covered.">        for (SagaBookEntry book : books) {</span>
+<span class="fc" id="L332">            String order = book.getOrderNumber();</span>
+<span class="fc bfc" id="L333" title="All 4 branches covered.">            if (order == null || order.isBlank()) {</span>
+<span class="fc" id="L334">                continue;</span>
+            }
+<span class="fc bfc" id="L336" title="All 2 branches covered.">            if (order.contains(&quot;-&quot;)) {</span>
+<span class="fc" id="L337">                continue;</span>
+            }
+<span class="fc bfc" id="L339" title="All 2 branches covered.">            if (!seenNumbers.add(order)) {</span>
+<span class="fc" id="L340">                continue;</span>
+            }
+<span class="fc" id="L342">            filtered.add(book);</span>
+<span class="fc" id="L343">        }</span>
+<span class="fc" id="L344">        return filtered;</span>
+    }
+
+    /**
+     * Extrae el nombre de la saga de la página de la serie en Goodreads, intentando
+     * primero el
+     * encabezado específico y luego el título de la página como fallback.
+     * 
+     * @param doc documento HTML de la página de la serie en Goodreads
+     * @return nombre de la saga, o null si no se pudo extraer el nombre de la saga
+     *         de la página
+     */
+    private String extractSeriesName(Document doc) {
+<span class="fc" id="L357">        Element header = doc.selectFirst(&quot;div.responsiveSeriesHeader__title h1&quot;);</span>
+<span class="fc bfc" id="L358" title="All 2 branches covered.">        if (header != null) {</span>
+<span class="fc" id="L359">            String name = header.text().trim();</span>
+<span class="fc bfc" id="L360" title="All 2 branches covered.">            if (name.endsWith(&quot; Series&quot;)) {</span>
+<span class="fc" id="L361">                name = name.substring(0, name.length() - 7).trim();</span>
+            }
+<span class="fc" id="L363">            return name;</span>
+        }
+<span class="fc" id="L365">        String title = doc.title();</span>
+<span class="pc bpc" id="L366" title="1 of 4 branches missed.">        if (title != null &amp;&amp; title.contains(&quot;Series&quot;)) {</span>
+<span class="fc" id="L367">            return title.replace(&quot;Series by&quot;, &quot;&quot;).replace(&quot;| Goodreads&quot;, &quot;&quot;).trim();</span>
+        }
+<span class="fc" id="L369">        return null;</span>
+    }
+
+    /**
+     * Extrae la lista de libros de la saga a partir del JSON embebido en la página
+     * de la serie
+     * en Goodreads, que suele ser más estructurado y completo que el HTML.
+     * 
+     * @param doc documento HTML de la página de la serie en Goodreads
+     * @return lista de libros extraída del JSON, o una lista vacía si no se pudo
+     *         extraer o el JSON no estaba presente en la página
+     */
+    private List&lt;SagaBookEntry&gt; extractBooksFromJson(Document doc) {
+<span class="fc" id="L382">        List&lt;SagaBookEntry&gt; books = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L383">        Elements reactElements = doc.select(&quot;[data-react-class='ReactComponents.SeriesList']&quot;);</span>
+<span class="fc bfc" id="L384" title="All 2 branches covered.">        if (reactElements.isEmpty()) {</span>
+<span class="fc" id="L385">            return books;</span>
+        }
+
+<span class="fc bfc" id="L388" title="All 2 branches covered.">        for (Element reactElement : reactElements) {</span>
+<span class="fc" id="L389">            String jsonStr = reactElement.attr(&quot;data-react-props&quot;);</span>
+<span class="fc bfc" id="L390" title="All 2 branches covered.">            if (jsonStr.isEmpty()) {</span>
+<span class="fc" id="L391">                continue;</span>
+            }
+
+            try {
+<span class="fc" id="L395">                JsonNode root = objectMapper.readTree(jsonStr);</span>
+<span class="fc" id="L396">                JsonNode seriesArray = root.get(&quot;series&quot;);</span>
+<span class="pc bpc" id="L397" title="1 of 4 branches missed.">                if (seriesArray == null || !seriesArray.isArray()) {</span>
+<span class="fc" id="L398">                    continue;</span>
+                }
+
+<span class="fc bfc" id="L401" title="All 2 branches covered.">                for (JsonNode entry : seriesArray) {</span>
+<span class="fc" id="L402">                    JsonNode bookNode = entry.get(&quot;book&quot;);</span>
+<span class="fc bfc" id="L403" title="All 2 branches covered.">                    if (bookNode == null) {</span>
+<span class="fc" id="L404">                        continue;</span>
+                    }
+
+<span class="fc" id="L407">                    SagaBookEntry bookEntry = new SagaBookEntry();</span>
+
+<span class="fc" id="L409">                    String titleBare = getTextNode(bookNode, &quot;bookTitleBare&quot;);</span>
+<span class="fc" id="L410">                    bookEntry.setTitle(cleanHtmlEntities(titleBare));</span>
+
+<span class="fc" id="L412">                    JsonNode authorNode = bookNode.get(&quot;author&quot;);</span>
+<span class="fc bfc" id="L413" title="All 2 branches covered.">                    if (authorNode != null) {</span>
+<span class="fc" id="L414">                        bookEntry.setAuthor(getTextNode(authorNode, &quot;name&quot;));</span>
+                    }
+
+<span class="fc" id="L417">                    String fullTitle = getTextNode(bookNode, &quot;title&quot;);</span>
+<span class="fc" id="L418">                    bookEntry.setOrderNumber(extractOrderNumber(fullTitle));</span>
+
+<span class="pc bpc" id="L420" title="1 of 4 branches missed.">                    if (bookNode.has(&quot;numPages&quot;) &amp;&amp; !bookNode.get(&quot;numPages&quot;).isNull()) {</span>
+<span class="fc" id="L421">                        bookEntry.setPages(bookNode.get(&quot;numPages&quot;).asInt());</span>
+                    }
+
+<span class="fc" id="L424">                    String pubDate = getTextNode(bookNode, &quot;publicationDate&quot;);</span>
+<span class="pc bpc" id="L425" title="2 of 4 branches missed.">                    if (pubDate != null &amp;&amp; !pubDate.isEmpty()) {</span>
+                        try {
+<span class="fc" id="L427">                            bookEntry.setYear(Integer.parseInt(pubDate.trim()));</span>
+<span class="fc" id="L428">                        } catch (NumberFormatException ignored) {</span>
+<span class="fc" id="L429">                        }</span>
+                    }
+
+<span class="fc" id="L432">                    String bookUrlPath = getTextNode(bookNode, &quot;bookUrl&quot;);</span>
+<span class="pc bpc" id="L433" title="1 of 2 branches missed.">                    if (bookUrlPath != null) {</span>
+<span class="fc" id="L434">                        bookEntry.setStorygraphUrl(GOODREADS_BASE + bookUrlPath);</span>
+                    }
+
+<span class="fc" id="L437">                    books.add(bookEntry);</span>
+<span class="fc" id="L438">                }</span>
+<span class="fc" id="L439">            } catch (Exception e) {</span>
+<span class="fc" id="L440">                log.error(&quot;Error parseando JSON de la serie: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L441">            }</span>
+<span class="fc" id="L442">        }</span>
+
+<span class="fc" id="L444">        return books;</span>
+    }
+
+    /**
+     * Extrae la lista de libros de la saga a partir del HTML de la página de la
+     * serie en Goodreads,
+     * como fallback si el JSON no estaba presente o no se pudo parsear.
+     * 
+     * @param doc documento HTML de la página de la serie en Goodreads
+     * @return lista de libros extraída del HTML, o una lista vacía si no se pudo
+     *         extraer la
+     *         información de los libros del HTML de la página de la serie en
+     *         Goodreads
+     */
+    private List&lt;SagaBookEntry&gt; extractBooksFromHtml(Document doc) {
+<span class="fc" id="L459">        List&lt;SagaBookEntry&gt; books = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L460">        Elements items = doc.select(&quot;div.listWithDividers__item&quot;);</span>
+
+<span class="fc bfc" id="L462" title="All 2 branches covered.">        for (Element item : items) {</span>
+<span class="fc" id="L463">            SagaBookEntry bookEntry = new SagaBookEntry();</span>
+
+<span class="fc" id="L465">            Element numberHeader = item.selectFirst(&quot;h3&quot;);</span>
+<span class="pc bpc" id="L466" title="1 of 2 branches missed.">            if (numberHeader != null) {</span>
+<span class="fc" id="L467">                String text = numberHeader.text().trim();</span>
+<span class="fc" id="L468">                Matcher m = Pattern.compile(&quot;\\d+(?:\\.\\d+)?&quot;).matcher(text);</span>
+<span class="fc bfc" id="L469" title="All 2 branches covered.">                if (m.find()) {</span>
+<span class="fc" id="L470">                    bookEntry.setOrderNumber(m.group());</span>
+                }
+            }
+
+<span class="fc" id="L474">            Element titleElement = item.selectFirst(&quot;span[itemprop=name]&quot;);</span>
+<span class="fc bfc" id="L475" title="All 2 branches covered.">            if (titleElement != null) {</span>
+<span class="fc" id="L476">                bookEntry.setTitle(titleElement.text().trim());</span>
+            }
+
+<span class="fc" id="L479">            Element authorElement = item.selectFirst(&quot;span[itemprop=author] span[itemprop=name]&quot;);</span>
+<span class="fc bfc" id="L480" title="All 2 branches covered.">            if (authorElement != null) {</span>
+<span class="fc" id="L481">                bookEntry.setAuthor(authorElement.text().trim());</span>
+            }
+
+<span class="fc" id="L484">            Element linkElement = item.selectFirst(&quot;a[itemprop=url]&quot;);</span>
+<span class="fc bfc" id="L485" title="All 2 branches covered.">            if (linkElement != null) {</span>
+<span class="fc" id="L486">                String href = linkElement.attr(&quot;href&quot;);</span>
+<span class="pc bpc" id="L487" title="1 of 2 branches missed.">                bookEntry.setStorygraphUrl(href.startsWith(&quot;http&quot;) ? href : GOODREADS_BASE + href);</span>
+            }
+
+<span class="fc bfc" id="L490" title="All 2 branches covered.">            if (bookEntry.getTitle() != null) {</span>
+<span class="fc" id="L491">                books.add(bookEntry);</span>
+            }
+<span class="fc" id="L493">        }</span>
+
+<span class="fc" id="L495">        return books;</span>
+    }
+
+    /**
+     * Extrae el número de orden del libro dentro de la saga a partir del título
+     * completo, buscando patrones como &quot;#1&quot;, &quot;#2.5&quot;, &quot;#1-3&quot;, etc.
+     * 
+     * @param fullTitle título completo del libro que puede contener el número
+     *                  de orden dentro de la saga
+     * @return número de orden extraído del título, o null si no se pudo encontrar
+     *         un número de orden válido en el título del libro dentro de la saga
+     */
+    private String extractOrderNumber(String fullTitle) {
+<span class="fc bfc" id="L508" title="All 2 branches covered.">        if (fullTitle == null)</span>
+<span class="fc" id="L509">            return null;</span>
+<span class="fc" id="L510">        Matcher m = SERIES_NUMBER_PATTERN.matcher(fullTitle);</span>
+<span class="fc bfc" id="L511" title="All 2 branches covered.">        if (m.find()) {</span>
+<span class="fc" id="L512">            return m.group(1);</span>
+        }
+<span class="fc" id="L514">        return null;</span>
+    }
+
+    /**
+     * Extrae el texto de un nodo JSON, devolviendo null si el nodo no existe o es
+     * nulo, y limpiando entidades HTML comunes.
+     * 
+     * @param node  nodo JSON del que extraer el texto
+     * @param field nombre del campo a extraer del nodo JSON
+     * @return texto del campo extraído y limpiado de entidades HTML, o null si el
+     *         campo no existe o es nulo en el nodo JSON
+     */
+    private String getTextNode(JsonNode node, String field) {
+<span class="fc" id="L527">        JsonNode value = node.get(field);</span>
+<span class="fc bfc" id="L528" title="All 4 branches covered.">        if (value == null || value.isNull())</span>
+<span class="fc" id="L529">            return null;</span>
+<span class="fc" id="L530">        return value.asText();</span>
+    }
+
+    /**
+     * Limpia entidades HTML comunes de un texto, como &amp;#39; &amp;amp; &amp;quot; &amp;lt; &amp;gt;,
+     * para obtener un texto legible.
+     * 
+     * @param text texto que puede contener entidades HTML
+     * @return texto con las entidades HTML comunes reemplazadas por sus caracteres
+     *         correspondientes, o null si el texto de entrada es null
+     */
+    private String cleanHtmlEntities(String text) {
+<span class="fc bfc" id="L542" title="All 2 branches covered.">        if (text == null)</span>
+<span class="fc" id="L543">            return null;</span>
+<span class="fc" id="L544">        return text.replace(&quot;&amp;#39;&quot;, &quot;'&quot;)</span>
+<span class="fc" id="L545">                .replace(&quot;&amp;amp;&quot;, &quot;&amp;&quot;)</span>
+<span class="fc" id="L546">                .replace(&quot;&amp;quot;&quot;, &quot;\&quot;&quot;)</span>
+<span class="fc" id="L547">                .replace(&quot;&amp;lt;&quot;, &quot;&lt;&quot;)</span>
+<span class="fc" id="L548">                .replace(&quot;&amp;gt;&quot;, &quot;&gt;&quot;);</span>
+    }
+
+    /**
+     * Crea una conexión Jsoup con cabeceras realistas para reducir el bloqueo por
+     * parte de Goodreads.
+     *
+     * @param url URL a la que conectar
+     * @return conexión Jsoup configurada
+     */
+    private org.jsoup.Connection buildJsoupConnection(String url) {
+<span class="fc" id="L559">        return Jsoup.connect(url)</span>
+<span class="fc" id="L560">                .userAgent(USER_AGENT)</span>
+<span class="fc" id="L561">                .timeout(TIMEOUT_MS)</span>
+<span class="fc" id="L562">                .header(&quot;Accept&quot;,</span>
+                        &quot;text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8&quot;)
+<span class="fc" id="L564">                .header(&quot;Accept-Language&quot;, &quot;en-US,en;q=0.5&quot;)</span>
+<span class="fc" id="L565">                .header(&quot;Accept-Encoding&quot;, &quot;gzip, deflate, br&quot;)</span>
+<span class="fc" id="L566">                .header(&quot;Connection&quot;, &quot;keep-alive&quot;)</span>
+<span class="fc" id="L567">                .header(&quot;Upgrade-Insecure-Requests&quot;, &quot;1&quot;)</span>
+<span class="fc" id="L568">                .header(&quot;Sec-Fetch-Dest&quot;, &quot;document&quot;)</span>
+<span class="fc" id="L569">                .header(&quot;Sec-Fetch-Mode&quot;, &quot;navigate&quot;)</span>
+<span class="fc" id="L570">                .header(&quot;Sec-Fetch-Site&quot;, &quot;none&quot;)</span>
+<span class="fc" id="L571">                .followRedirects(true)</span>
+<span class="fc" id="L572">                .ignoreHttpErrors(false);</span>
+    }
+
+    /**
+     * Fallback: obtiene la información de la saga usando la API de subjects de
+     * Open Library cuando Goodreads está bloqueado o no disponible.
+     *
+     * Busca en la lista de subjects alguno con el prefijo &quot;Serie:&quot; (convenio de
+     * Open Library para indicar series) y consulta el endpoint de subjects de OL
+     * para obtener los libros de esa serie.
+     *
+     * @param subjects lista de subjects de Open Library del libro (puede ser null)
+     * @return DTO con el nombre de la saga y sus libros, o null si no se encontró
+     *         ningún subject de serie o la consulta falló
+     */
+    private SagaScrapedDto scrapeFromOpenLibrarySubjects(List&lt;String&gt; subjects) {
+<span class="pc bpc" id="L588" title="3 of 4 branches missed.">        if (subjects == null || subjects.isEmpty()) {</span>
+<span class="fc" id="L589">            return null;</span>
+        }
+
+<span class="nc" id="L592">        String seriesSubject = subjects.stream()</span>
+<span class="nc bnc" id="L593" title="All 4 branches missed.">                .filter(s -&gt; s != null &amp;&amp; s.startsWith(&quot;Serie:&quot;))</span>
+<span class="nc" id="L594">                .findFirst()</span>
+<span class="nc" id="L595">                .orElse(null);</span>
+
+<span class="nc bnc" id="L597" title="All 2 branches missed.">        if (seriesSubject == null) {</span>
+<span class="nc" id="L598">            log.info(&quot;No se encontró subject de serie en los subjects del libro&quot;);</span>
+<span class="nc" id="L599">            return null;</span>
+        }
+
+        // &quot;Serie:Percy_Jackson_and_the_Olympians&quot; → &quot;Percy Jackson and the Olympians&quot;
+<span class="nc" id="L603">        String sagaName = seriesSubject.substring(6).replace(&quot;_&quot;, &quot; &quot;);</span>
+
+        // Verificar caché por nombre de saga antes de llamar a la API
+<span class="nc" id="L606">        Optional&lt;Saga&gt; cached = sagaRepository.findByName(sagaName);</span>
+<span class="nc bnc" id="L607" title="All 4 branches missed.">        if (cached.isPresent() &amp;&amp; !cached.get().getBooks().isEmpty()) {</span>
+<span class="nc" id="L608">            log.info(&quot;Saga '{}' encontrada en caché (fallback OL)&quot;, sagaName);</span>
+<span class="nc" id="L609">            return convertToDto(cached.get());</span>
+        }
+
+        // Slug para la API: &quot;serie:percy_jackson_and_the_olympians&quot;
+<span class="nc" id="L613">        String subjectSlug = seriesSubject.toLowerCase(java.util.Locale.ROOT);</span>
+<span class="nc" id="L614">        String url = OPEN_LIBRARY_SUBJECTS_URL + URLEncoder.encode(subjectSlug, StandardCharsets.UTF_8)</span>
+                + &quot;.json?limit=30&quot;;
+
+<span class="nc" id="L617">        log.info(&quot;Consultando API de subjects de Open Library: {}&quot;, url);</span>
+
+        try {
+<span class="nc" id="L620">            String json = restTemplate.getForObject(url, String.class);</span>
+<span class="nc bnc" id="L621" title="All 2 branches missed.">            if (json == null) {</span>
+<span class="nc" id="L622">                return null;</span>
+            }
+
+<span class="nc" id="L625">            JsonNode root = objectMapper.readTree(json);</span>
+<span class="nc" id="L626">            JsonNode works = root.get(&quot;works&quot;);</span>
+<span class="nc bnc" id="L627" title="All 6 branches missed.">            if (works == null || !works.isArray() || works.isEmpty()) {</span>
+<span class="nc" id="L628">                log.info(&quot;No se encontraron obras para el subject '{}'&quot;, subjectSlug);</span>
+<span class="nc" id="L629">                return null;</span>
+            }
+
+<span class="nc" id="L632">            List&lt;SagaBookEntry&gt; books = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L633" title="All 2 branches missed.">            for (JsonNode work : works) {</span>
+<span class="nc" id="L634">                SagaBookEntry entry = new SagaBookEntry();</span>
+
+<span class="nc bnc" id="L636" title="All 2 branches missed.">                String title = work.has(&quot;title&quot;) ? work.get(&quot;title&quot;).asText(null) : null;</span>
+<span class="nc bnc" id="L637" title="All 2 branches missed.">                if (title == null)</span>
+<span class="nc" id="L638">                    continue;</span>
+<span class="nc" id="L639">                entry.setTitle(title);</span>
+
+<span class="nc" id="L641">                JsonNode authorsNode = work.get(&quot;authors&quot;);</span>
+<span class="nc bnc" id="L642" title="All 6 branches missed.">                if (authorsNode != null &amp;&amp; authorsNode.isArray() &amp;&amp; !authorsNode.isEmpty()) {</span>
+<span class="nc" id="L643">                    entry.setAuthor(authorsNode.get(0).path(&quot;name&quot;).asText(null));</span>
+                }
+
+<span class="nc bnc" id="L646" title="All 4 branches missed.">                if (work.has(&quot;first_publish_year&quot;) &amp;&amp; !work.get(&quot;first_publish_year&quot;).isNull()) {</span>
+<span class="nc" id="L647">                    entry.setYear(work.get(&quot;first_publish_year&quot;).asInt());</span>
+                }
+
+<span class="nc" id="L650">                books.add(entry);</span>
+<span class="nc" id="L651">            }</span>
+
+<span class="nc bnc" id="L653" title="All 2 branches missed.">            if (books.isEmpty()) {</span>
+<span class="nc" id="L654">                return null;</span>
+            }
+
+            // Ordenar por año de publicación para aproximar el orden de la saga
+<span class="nc bnc" id="L658" title="All 2 branches missed.">            books.sort(java.util.Comparator.comparingInt(b -&gt; b.getYear() != null ? b.getYear() : 9999));</span>
+
+            // Asignar números de orden según posición
+<span class="nc bnc" id="L661" title="All 2 branches missed.">            for (int i = 0; i &lt; books.size(); i++) {</span>
+<span class="nc" id="L662">                books.get(i).setOrderNumber(String.valueOf(i + 1));</span>
+            }
+
+<span class="nc" id="L665">            SagaScrapedDto dto = new SagaScrapedDto(sagaName, books);</span>
+<span class="nc" id="L666">            saveSagaToDb(dto);</span>
+<span class="nc" id="L667">            log.info(&quot;Saga '{}' obtenida de Open Library con {} libros&quot;, sagaName, books.size());</span>
+<span class="nc" id="L668">            return dto;</span>
+
+<span class="nc" id="L670">        } catch (Exception e) {</span>
+<span class="nc" id="L671">            log.error(&quot;Error al obtener saga de Open Library para subject '{}': {}&quot;, subjectSlug, e.getMessage());</span>
+<span class="nc" id="L672">            return null;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

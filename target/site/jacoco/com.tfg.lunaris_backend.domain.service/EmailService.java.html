@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">EmailService.java</span></div><h1>EmailService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+
+/**
+ * Servicio que maneja el envío de correos electrónicos.
+ * 
+ * Proporciona métodos para enviar correos electrónicos, como la recuperación de
+ * contraseña.
+ */
+@Service
+<span class="fc" id="L19">public class EmailService {</span>
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @Value(&quot;${spring.mail.from}&quot;)
+    private String fromEmail;
+
+    @Value(&quot;${app.frontend.url}&quot;)
+    private String frontendUrl;
+
+    /**
+     * Envía un correo electrónico para restablecer la contraseña.
+     * 
+     * @param toEmail correo electrónico del destinatario
+     * @param token   token de restablecimiento de contraseña
+     * @throws MessagingException si ocurre un error al enviar el correo
+     */
+    public void sendPasswordResetEmail(String toEmail, String token) throws MessagingException {
+<span class="fc" id="L38">        MimeMessage message = mailSender.createMimeMessage();</span>
+<span class="fc" id="L39">        MimeMessageHelper helper = new MimeMessageHelper(message, true, &quot;UTF-8&quot;);</span>
+
+<span class="fc" id="L41">        helper.setFrom(fromEmail);</span>
+<span class="fc" id="L42">        helper.setTo(toEmail);</span>
+<span class="fc" id="L43">        helper.setSubject(&quot;Lunaris - Recuperación de contraseña&quot;);</span>
+
+<span class="fc" id="L45">        String resetLink = frontendUrl + &quot;/reset-password?token=&quot; + token;</span>
+
+<span class="fc" id="L47">        String htmlContent = &quot;&quot;&quot;</span>
+                &lt;!DOCTYPE html&gt;
+                &lt;html&gt;
+                &lt;head&gt;
+                    &lt;style&gt;
+                        body { font-family: 'Poppins', Arial, sans-serif; background-color: #fafafa; padding: 20px; }
+                        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+                        .logo { text-align: center; margin-bottom: 20px; }
+                        .logo img { width: 100px; }
+                        h1 { color: #4e2a6a; text-align: center; }
+                        p { color: #555; line-height: 1.6; }
+                        .button { display: block; width: fit-content; margin: 30px auto; padding: 15px 30px; background: linear-gradient(90deg, #b48bff, #b18bff); color: white; text-decoration: none; border-radius: 10px; font-weight: bold; }
+                        .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+                    &lt;/style&gt;
+                &lt;/head&gt;
+                &lt;body&gt;
+                    &lt;div class=&quot;container&quot;&gt;
+                        &lt;h1&gt;🌙 Lunaris&lt;/h1&gt;
+                        &lt;h2 style=&quot;text-align: center; color: #caa6ff;&quot;&gt;Recuperación de contraseña&lt;/h2&gt;
+                        &lt;p&gt;Hola,&lt;/p&gt;
+                        &lt;p&gt;Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en Lunaris.&lt;/p&gt;
+                        &lt;p&gt;Haz clic en el siguiente botón para crear una nueva contraseña:&lt;/p&gt;
+                        &lt;a href=&quot;%s&quot; class=&quot;button&quot;&gt;Restablecer contraseña&lt;/a&gt;
+                        &lt;p&gt;Si no solicitaste este cambio, puedes ignorar este correo. Tu contraseña seguirá siendo la misma.&lt;/p&gt;
+                        &lt;p&gt;Este enlace expirará en &lt;strong&gt;1 hora&lt;/strong&gt;.&lt;/p&gt;
+                        &lt;div class=&quot;footer&quot;&gt;
+                            &lt;p&gt;© 2026 Lunaris - Tu biblioteca personal&lt;/p&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/body&gt;
+                &lt;/html&gt;
+                &quot;&quot;&quot;
+<span class="fc" id="L79">                .formatted(resetLink);</span>
+
+<span class="fc" id="L81">        helper.setText(htmlContent, true);</span>
+<span class="fc" id="L82">        mailSender.send(message);</span>
+<span class="fc" id="L83">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

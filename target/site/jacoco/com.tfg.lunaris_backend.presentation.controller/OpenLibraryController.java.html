@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OpenLibraryController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">OpenLibraryController.java</span></div><h1>OpenLibraryController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.tfg.lunaris_backend.domain.dto.OpenLibrarySearchResponseDto;
+import com.tfg.lunaris_backend.domain.service.OpenLibraryService;
+
+/**
+ * Controlador que maneja las operaciones relacionadas con la búsqueda de libros en Open Library.
+ * 
+ * Proporciona endpoints para buscar libros por título, autor o de manera general.
+ */
+@RestController
+@RequestMapping(&quot;/api/openlibrary&quot;)
+<span class="fc" id="L19">public class OpenLibraryController {</span>
+
+    @Autowired
+    private OpenLibraryService openLibraryService;
+
+    /**
+     * Endpoint para buscar libros en Open Library. Recibe un parámetro de consulta `q` con el 
+     * texto a buscar, y opcionalmente `limit` y `offset` para paginación. Devuelve una respuesta
+     * con los resultados de la búsqueda.
+     * @param query texto a buscar
+     * @param limit número máximo de resultados a devolver
+     * @param offset desplazamiento para la paginación
+     * @return respuesta con los resultados de la búsqueda
+     */
+    @GetMapping(&quot;/search&quot;)
+    public OpenLibrarySearchResponseDto search(
+            @RequestParam(&quot;q&quot;) String query,
+            @RequestParam(value = &quot;limit&quot;, required = false) Integer limit,
+            @RequestParam(value = &quot;offset&quot;, required = false) Integer offset) {
+<span class="fc" id="L38">        return openLibraryService.searchBooks(query, limit, offset);</span>
+    }
+
+    /**
+     * Endpoint para buscar libros por título en Open Library. Recibe un parámetro de consulta `title` con el
+     * texto a buscar en el título, y opcionalmente `limit` y `offset` para paginación. Devuelve una respuesta
+     * con los resultados de la búsqueda.
+     * @param title texto a buscar en el título
+     * @param limit número máximo de resultados a devolver
+     * @param offset desplazamiento para la paginación
+     * @return respuesta con los resultados de la búsqueda por título
+     */
+    @GetMapping(&quot;/search/title&quot;)
+    public OpenLibrarySearchResponseDto searchByTitle(
+            @RequestParam(&quot;title&quot;) String title,
+            @RequestParam(value = &quot;limit&quot;, required = false) Integer limit,
+            @RequestParam(value = &quot;offset&quot;, required = false) Integer offset) {
+<span class="fc" id="L55">        return openLibraryService.searchByTitle(title, limit, offset);</span>
+    }
+
+    /**
+     * Endpoint para buscar libros por autor en Open Library. Recibe un parámetro de consulta `author` con el
+     * texto a buscar en el autor, y opcionalmente `limit` y `offset` para paginación. Devuelve una respuesta
+     * con los resultados de la búsqueda.
+     * @param author texto a buscar en el autor
+     * @param limit número máximo de resultados a devolver
+     * @param offset desplazamiento para la paginación
+     * @return respuesta con los resultados de la búsqueda por autor
+     */
+    @GetMapping(&quot;/search/author&quot;)
+    public OpenLibrarySearchResponseDto searchByAuthor(
+            @RequestParam(&quot;author&quot;) String author,
+            @RequestParam(value = &quot;limit&quot;, required = false) Integer limit,
+            @RequestParam(value = &quot;offset&quot;, required = false) Integer offset) {
+<span class="fc" id="L72">        return openLibraryService.searchByAuthor(author, limit, offset);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

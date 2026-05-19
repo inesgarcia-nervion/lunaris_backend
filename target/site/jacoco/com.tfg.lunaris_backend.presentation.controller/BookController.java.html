@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">BookController.java</span></div><h1>BookController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.tfg.lunaris_backend.domain.dto.BookCreateRequest;
+import com.tfg.lunaris_backend.domain.dto.OpenLibraryBookDto;
+import com.tfg.lunaris_backend.domain.model.Book;
+import com.tfg.lunaris_backend.domain.service.BookService;
+
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+/**
+ * Controlador que maneja las operaciones relacionadas con los libros.
+ * 
+ * Proporciona endpoints para crear, actualizar, eliminar y obtener libros.
+ */
+@RestController
+<span class="fc" id="L28">public class BookController {</span>
+    @Autowired
+    private BookService bookService;
+
+    /**
+     * Endpoint para obtener una lista de todos los libros de manera paginada.
+     * @param pageable información de paginación
+     * @return página de libros
+     */
+    @GetMapping(&quot;/books&quot;)
+    public Page&lt;Book&gt; getAllBooks(Pageable pageable) {
+<span class="fc" id="L39">        return bookService.getAllBooks(pageable);</span>
+    }
+
+    /**
+     * Endpoint para obtener un libro por su ID.
+     * @param id identificador del libro
+     * @return libro encontrado
+     */
+    @GetMapping(&quot;/books/{id}&quot;)
+    public Book getBookById(@PathVariable Long id) {
+<span class="fc" id="L49">        return bookService.getBookById(id);</span>
+    }
+
+    /**
+     * Endpoint para crear un nuevo libro. Recibe un objeto `BookCreateRequest` con 
+     * los datos necesarios para crear el libro, y devuelve el libro creado.
+     * @param request objeto con los datos para crear el libro
+     * @return libro creado
+     */ 
+    @PostMapping(&quot;/books&quot;)
+    public Book createBook(@RequestBody BookCreateRequest request) {
+<span class="fc" id="L60">        return bookService.createBook(request);</span>
+    }
+
+    /**
+     * Endpoint para actualizar un libro existente. Recibe el ID del libro a 
+     * actualizar y un objeto `Book` con los detalles a actualizar.
+     * @param id identificador del libro a actualizar
+     * @param bookDetails detalles del libro a actualizar
+     * @return libro actualizado
+     */
+    @PutMapping(&quot;/books/{id}&quot;)
+    public Book updateBook(@PathVariable Long id, @RequestBody Book bookDetails) {
+<span class="fc" id="L72">        return bookService.updateBook(id, bookDetails);</span>
+    }
+
+    /**
+     * Endpoint para eliminar un libro por su ID.
+     * @param id identificador del libro a eliminar
+     */
+    @DeleteMapping(&quot;/books/{id}&quot;)
+    public void deleteBook(@PathVariable Long id) {
+<span class="fc" id="L81">        bookService.deleteBook(id);</span>
+<span class="fc" id="L82">    }</span>
+
+    /**
+     * Endpoint para buscar libros por título o autor. Recibe un parámetro de consulta 
+     * `q` con el texto a buscar, y devuelve una lista de libros que coinciden con el título o autor.
+     * @param query texto a buscar en el título o autor
+     * @return lista de libros que coinciden con el criterio de búsqueda
+     */
+    @GetMapping(&quot;/books/search&quot;)
+    public List&lt;Book&gt; searchBooks(@RequestParam(&quot;q&quot;) String query) {
+<span class="fc" id="L92">        return bookService.searchBooks(query);</span>
+    }
+
+    /**
+     * Endpoint para obtener un libro por su ID de API. Recibe un parámetro de consulta 
+     * `apiId` con el ID del libro en la API externa, y devuelve el libro encontrado o un 
+     * estado 404 si no se encuentra.
+     * @param apiId ID del libro en la API externa
+     * @return libro encontrado o estado 404
+     */
+    @GetMapping(&quot;/books/by-api-id&quot;)
+    public org.springframework.http.ResponseEntity&lt;Book&gt; getByApiId(@RequestParam(&quot;apiId&quot;) String apiId) {
+<span class="fc" id="L104">        return bookService.findByApiId(apiId)</span>
+<span class="fc" id="L105">                .map(org.springframework.http.ResponseEntity::ok)</span>
+<span class="fc" id="L106">                .orElse(org.springframework.http.ResponseEntity.notFound().build());</span>
+    }
+
+    /**
+     * Endpoint para importar un libro desde la API de Open Library. Recibe un objeto `OpenLibraryBookDto` 
+     * con los datos del libro obtenidos de Open Library, y devuelve el libro creado o actualizado en la base de datos.
+     * @param openLibraryBook objeto con los datos del libro de Open Library
+     * @return libro creado o actualizado
+     */
+    @PostMapping(&quot;/books/import/openlibrary&quot;)
+    public Book importFromOpenLibrary(@RequestBody OpenLibraryBookDto openLibraryBook) {
+<span class="fc" id="L117">        return bookService.importFromOpenLibrary(openLibraryBook);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

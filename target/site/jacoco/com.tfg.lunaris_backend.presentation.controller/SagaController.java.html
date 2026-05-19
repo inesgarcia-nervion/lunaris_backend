@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SagaController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">SagaController.java</span></div><h1>SagaController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.tfg.lunaris_backend.domain.dto.SagaScrapedDto;
+import com.tfg.lunaris_backend.domain.model.Saga;
+import java.util.List;
+import com.tfg.lunaris_backend.domain.service.SagaScrapingService;
+import com.tfg.lunaris_backend.domain.service.SagaService;
+
+import java.util.List;
+
+/**
+ * Controlador que maneja las operaciones relacionadas con las sagas.
+ * 
+ * Proporciona endpoints para crear, obtener, actualizar y eliminar sagas.
+ */
+@RestController
+<span class="fc" id="L28">public class SagaController {</span>
+    @Autowired
+    private SagaService sagaService;
+
+    @Autowired
+    private SagaScrapingService sagaScrapingService;
+
+    /**
+     * Endpoint para realizar web scraping de una saga en función de su título y
+     * autor.
+     * Recibe los parámetros `title` y `author` (opcional) y devuelve un objeto con
+     * los
+     * datos extraídos de la saga. Si no se encuentra información, devuelve una
+     * respuesta sin contenido.
+     * 
+     * @param title  título de la saga
+     * @param author autor de la saga (opcional)
+     * @return objeto con los datos extraídos de la saga o respuesta sin contenido
+     *         si no se encuentra información
+     */
+    @GetMapping(&quot;/api/saga/scrape&quot;)
+    public ResponseEntity&lt;SagaScrapedDto&gt; scrapeSaga(
+            @RequestParam String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) List&lt;String&gt; subjects) {
+<span class="fc" id="L53">        SagaScrapedDto result = sagaScrapingService.scrapeSaga(title, author, subjects);</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (result == null) {</span>
+<span class="fc" id="L55">            return ResponseEntity.noContent().build();</span>
+        }
+<span class="fc" id="L57">        return ResponseEntity.ok(result);</span>
+    }
+
+    /**
+     * Endpoint para obtener todas las sagas. Devuelve una lista de todas las sagas
+     * disponibles.
+     * 
+     * @return lista de sagas
+     */
+    @GetMapping(&quot;/sagas&quot;)
+    public List&lt;Saga&gt; getAllSagas() {
+<span class="fc" id="L68">        return sagaService.getAllSagas();</span>
+    }
+
+    /**
+     * Endpoint para obtener una saga por su ID. Devuelve la saga correspondiente si
+     * existe.
+     * 
+     * @param id identificador de la saga
+     * @return saga encontrada
+     */
+    @GetMapping(&quot;/sagas/{id}&quot;)
+    public Saga getSagaById(@PathVariable Long id) {
+<span class="fc" id="L80">        return sagaService.getSagaById(id);</span>
+    }
+
+    /**
+     * Endpoint para crear una nueva saga. Recibe un objeto con los datos de la saga
+     * a
+     * crear y devuelve la saga creada.
+     * 
+     * @param saga objeto con los datos de la saga a crear
+     * @return saga creada
+     */
+    @PostMapping(&quot;/sagas&quot;)
+    public Saga createSaga(@RequestBody Saga saga) {
+<span class="fc" id="L93">        return sagaService.createSaga(saga);</span>
+    }
+
+    /**
+     * Endpoint para actualizar una saga existente. Recibe el ID de la saga a
+     * actualizar
+     * y un objeto con los datos a actualizar, y devuelve la saga actualizada.
+     * 
+     * @param id          identificador de la saga a actualizar
+     * @param sagaDetails objeto con los datos de la saga a actualizar
+     * @return saga actualizada
+     */
+    @PutMapping(&quot;/sagas/{id}&quot;)
+    public Saga updateSaga(@PathVariable Long id, @RequestBody Saga sagaDetails) {
+<span class="fc" id="L107">        return sagaService.updateSaga(id, sagaDetails);</span>
+    }
+
+    /**
+     * Endpoint para eliminar una saga por su ID. Recibe el ID de la saga a eliminar
+     * y elimina la saga correspondiente.
+     * 
+     * @param id identificador de la saga a eliminar
+     */
+    @DeleteMapping(&quot;/sagas/{id}&quot;)
+    public void deleteSaga(@PathVariable Long id) {
+<span class="fc" id="L118">        sagaService.deleteSaga(id);</span>
+<span class="fc" id="L119">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

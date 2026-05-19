@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import com.tfg.lunaris_backend.domain.dto.AuthRequest;
+import com.tfg.lunaris_backend.domain.dto.AuthResponse;
+import com.tfg.lunaris_backend.domain.dto.NewPasswordRequest;
+import com.tfg.lunaris_backend.domain.dto.PasswordResetRequest;
+import com.tfg.lunaris_backend.domain.service.PasswordResetService;
+import com.tfg.lunaris_backend.data.repository.UserRepository;
+import com.tfg.lunaris_backend.presentation.security.JwtUtils;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+/**
+ * Controlador que maneja las operaciones de autenticación y restablecimiento de contraseña.
+ * 
+ * Proporciona endpoints para iniciar sesión, solicitar restablecimiento de contraseña, 
+ * validar tokens de restablecimiento y actualizar contraseñas.
+ */
+@RestController
+@RequestMapping(&quot;/auth&quot;)
+<span class="fc" id="L28">public class AuthController {</span>
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
+
+    /**
+     * Endpoint para iniciar sesión. Recibe un objeto `AuthRequest` con el nombre de usuario y la contraseña,
+     * y devuelve un token JWT si las credenciales son válidas.
+     * @param request objeto con el nombre de usuario y la contraseña
+     * @return ResponseEntity con el token JWT o un mensaje de error
+     */
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;?&gt; login(@RequestBody AuthRequest request) {
+        try {
+<span class="fc" id="L51">            authenticationManager.authenticate(</span>
+<span class="fc" id="L52">                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));</span>
+
+<span class="fc" id="L54">            String role = userRepository.findByUsername(request.getUsername())</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">                    .map(u -&gt; u.getRole() != null ? u.getRole() : &quot;USER&quot;)</span>
+<span class="fc" id="L56">                    .orElse(&quot;USER&quot;);</span>
+
+<span class="fc" id="L58">            String token = jwtUtils.generateToken(request.getUsername(), role);</span>
+<span class="fc" id="L59">            return ResponseEntity.ok(new AuthResponse(token));</span>
+<span class="fc" id="L60">        } catch (AuthenticationException ex) {</span>
+<span class="fc" id="L61">            return ResponseEntity.status(401).body(&quot;Credenciales inválidas&quot;);</span>
+        }
+    }
+
+    /**
+     * Endpoint para solicitar el restablecimiento de contraseña. Recibe un objeto `PasswordResetRequest` con el correo electrónico,
+     * y envía un correo con instrucciones para restablecer la contraseña si el correo existe.
+     * @param request objeto con el correo electrónico
+     * @return ResponseEntity con un mensaje de éxito o error
+     */
+    @PostMapping(&quot;/forgot-password&quot;)
+    public ResponseEntity&lt;?&gt; forgotPassword(@RequestBody PasswordResetRequest request) {
+<span class="fc" id="L73">        String result = passwordResetService.requestPasswordReset(request.getEmail());</span>
+
+<span class="fc bfc" id="L75" title="All 3 branches covered.">        return switch (result) {</span>
+<span class="fc" id="L76">            case &quot;SUCCESS&quot; -&gt; ResponseEntity</span>
+<span class="fc" id="L77">                    .ok(Map.of(&quot;message&quot;, &quot;Se ha enviado un correo con instrucciones para restablecer tu contraseña.&quot;));</span>
+<span class="fc" id="L78">            case &quot;EMAIL_NOT_FOUND&quot; -&gt; ResponseEntity.status(404)</span>
+<span class="fc" id="L79">                    .body(Map.of(&quot;error&quot;, &quot;No existe ninguna cuenta con ese correo electrónico.&quot;));</span>
+            default -&gt;
+<span class="fc" id="L81">                ResponseEntity.status(500).body(Map.of(&quot;error&quot;, &quot;Error al enviar el correo. Inténtalo de nuevo.&quot;));</span>
+        };
+    }
+
+    /**
+     * Endpoint para validar un token de restablecimiento de contraseña. Recibe un token como parámetro,
+     * y devuelve si el token es válido o no.
+     * @param token token de restablecimiento de contraseña
+     * @return ResponseEntity con el estado de validez del token
+     */
+    @GetMapping(&quot;/validate-token&quot;)
+    public ResponseEntity&lt;?&gt; validateToken(@RequestParam String token) {
+<span class="fc" id="L93">        boolean valid = passwordResetService.validateToken(token);</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (valid) {</span>
+<span class="fc" id="L95">            return ResponseEntity.ok(Map.of(&quot;valid&quot;, true));</span>
+        }
+<span class="fc" id="L97">        return ResponseEntity.status(400)</span>
+<span class="fc" id="L98">                .body(Map.of(&quot;valid&quot;, false, &quot;error&quot;, &quot;El enlace ha expirado o no es válido.&quot;));</span>
+    }
+
+    /**
+     * Endpoint para restablecer la contraseña. Recibe un objeto `NewPasswordRequest` con el token y la nueva contraseña,
+     * y actualiza la contraseña si el token es válido.
+     * @param request objeto con el token y la nueva contraseña
+     * @return ResponseEntity con un mensaje de éxito o error
+     */
+    @PostMapping(&quot;/reset-password&quot;)
+    public ResponseEntity&lt;?&gt; resetPassword(@RequestBody NewPasswordRequest request) {
+<span class="pc bpc" id="L109" title="1 of 4 branches missed.">        if (request.getNewPassword() == null || request.getNewPassword().length() &lt; 6) {</span>
+<span class="fc" id="L110">            return ResponseEntity.status(400).body(Map.of(&quot;error&quot;, &quot;La contraseña debe tener al menos 6 caracteres.&quot;));</span>
+        }
+
+<span class="fc" id="L113">        boolean result = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        if (result) {</span>
+<span class="fc" id="L115">            return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Contraseña actualizada correctamente.&quot;));</span>
+        }
+<span class="fc" id="L117">        return ResponseEntity.status(400).body(Map.of(&quot;error&quot;, &quot;El enlace ha expirado o no es válido.&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserListController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">UserListController.java</span></div><h1>UserListController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import com.tfg.lunaris_backend.domain.model.UserList;
+import com.tfg.lunaris_backend.domain.service.UserListService;
+
+/**
+ * Controlador que maneja las operaciones relacionadas con las listas de
+ * usuarios.
+ * 
+ * Proporciona endpoints para crear, obtener, actualizar y eliminar listas de
+ * usuarios.
+ */
+@RestController
+<span class="fc" id="L28">public class UserListController {</span>
+    @Autowired
+    private UserListService userListService;
+
+    /**
+     * Endpoint para obtener todas las listas de usuarios. Devuelve una página de
+     * listas de usuarios disponibles.
+     * 
+     * @param pageable información de paginación
+     * @return página de listas de usuarios
+     */
+    @GetMapping(&quot;/user_list&quot;)
+    public Page&lt;UserList&gt; getAllUserLists(Pageable pageable) {
+<span class="fc" id="L41">        return userListService.getAllUserLists(pageable);</span>
+    }
+
+    @GetMapping(&quot;/user_list/all&quot;)
+    public java.util.List&lt;UserList&gt; getAllUserListsNoPage() {
+<span class="nc" id="L46">        return userListService.getAllUserLists();</span>
+    }
+
+    @GetMapping(&quot;/user_list/owner/{owner}&quot;)
+    public java.util.List&lt;UserList&gt; getListsByOwner(@PathVariable String owner) {
+<span class="nc" id="L51">        return userListService.getListsByOwner(owner);</span>
+    }
+
+    /**
+     * Endpoint para obtener una lista de usuarios por su ID. Devuelve la lista de
+     * usuarios correspondiente si existe.
+     * 
+     * @param id identificador de la lista de usuarios
+     * @return lista de usuarios encontrada
+     */
+    @GetMapping(&quot;/user_list/{id}&quot;)
+    public UserList getUserListById(@PathVariable Long id) {
+<span class="fc" id="L63">        return userListService.getUserListById(id);</span>
+    }
+
+    /**
+     * Endpoint para crear una nueva lista de usuarios. Recibe un objeto con los
+     * datos
+     * de la lista de usuarios a crear y devuelve la lista de usuarios creada.
+     * 
+     * @param userList objeto con los datos de la lista de usuarios a crear
+     * @return lista de usuarios creada
+     */
+    @PostMapping(&quot;/user_list&quot;)
+    public UserList createUserList(@RequestBody UserList userList) {
+<span class="fc" id="L76">        return userListService.createUserList(userList);</span>
+    }
+
+    /**
+     * Endpoint para actualizar una lista de usuarios existente. Recibe el ID de la
+     * lista de usuarios a actualizar
+     * y un objeto con los datos a actualizar, y devuelve la lista de usuarios
+     * actualizada.
+     * 
+     * @param id              identificador de la lista de usuarios a actualizar
+     * @param userListDetails objeto con los datos de la lista de usuarios a
+     *                        actualizar
+     * @return lista de usuarios actualizada
+     */
+    @PutMapping(&quot;/user_list/{id}&quot;)
+    public UserList updateUserList(@PathVariable Long id, @RequestBody UserList userListDetails, Authentication auth) {
+<span class="fc" id="L92">        UserList existing = userListService.getUserListById(id);</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        boolean isAdmin = auth != null &amp;&amp; auth.getAuthorities().stream()</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">                .anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+<span class="pc bpc" id="L95" title="2 of 6 branches missed.">        if (!isAdmin &amp;&amp; (auth == null || !auth.getName().equals(existing.getOwner()))) {</span>
+<span class="fc" id="L96">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;No tienes permiso para modificar esta lista&quot;);</span>
+        }
+<span class="fc" id="L98">        return userListService.updateUserList(id, userListDetails);</span>
+    }
+
+    /**
+     * Endpoint para eliminar una lista de usuarios por su ID. Recibe el ID de la
+     * lista de usuarios a eliminar
+     * y elimina la lista de usuarios correspondiente.
+     * 
+     * @param id identificador de la lista de usuarios a eliminar
+     */
+    @DeleteMapping(&quot;/user_list/{id}&quot;)
+    public void deleteUserList(@PathVariable Long id, Authentication auth) {
+<span class="fc" id="L110">        UserList existing = userListService.getUserListById(id);</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        boolean isAdmin = auth != null &amp;&amp; auth.getAuthorities().stream()</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">                .anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+<span class="pc bpc" id="L113" title="2 of 6 branches missed.">        if (!isAdmin &amp;&amp; (auth == null || !auth.getName().equals(existing.getOwner()))) {</span>
+<span class="fc" id="L114">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;No tienes permiso para eliminar esta lista&quot;);</span>
+        }
+<span class="fc" id="L116">        userListService.deleteUserList(id);</span>
+<span class="fc" id="L117">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

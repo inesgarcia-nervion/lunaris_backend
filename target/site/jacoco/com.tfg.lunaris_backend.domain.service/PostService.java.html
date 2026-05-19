@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">PostService.java</span></div><h1>PostService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import com.tfg.lunaris_backend.data.repository.CommentRepository;
+import com.tfg.lunaris_backend.data.repository.PostRepository;
+import com.tfg.lunaris_backend.domain.model.Comment;
+import com.tfg.lunaris_backend.domain.model.Post;
+import java.util.List;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con los posts.
+ *
+ * Proporciona métodos para crear, obtener, actualizar y eliminar posts,
+ * así como gestionar likes y comentarios.
+ */
+@Service
+<span class="fc" id="L18">public class PostService {</span>
+
+    @Autowired
+    private PostRepository postRepository;
+
+    /**
+     * Obtiene todos los posts ordenados por ID de forma descendente.
+     * 
+     * @return lista de posts
+     */
+    public List&lt;Post&gt; getAllPosts() {
+<span class="fc" id="L29">        return postRepository.findAllByOrderByIdDesc();</span>
+    }
+
+    /**
+     * Obtiene un post por su ID.
+     * 
+     * @param id ID del post
+     * @return post encontrado o null si no existe
+     */
+    public Post getPostById(Long id) {
+<span class="fc" id="L39">        return postRepository.findById(id).orElse(null);</span>
+    }
+
+    /**
+     * Crea un nuevo post.
+     * 
+     * @param post post a crear
+     * @return post creado
+     */
+    public Post createPost(Post post) {
+<span class="fc" id="L49">        return postRepository.save(post);</span>
+    }
+
+    /**
+     * Actualiza el contenido e imágenes de un post existente.
+     * 
+     * @param id        ID del post a actualizar
+     * @param text      nuevo texto del post
+     * @param imageUrls nuevas imágenes del post
+     * @return post actualizado o null si no existe
+     */
+    public Post updatePost(Long id, String text, List&lt;String&gt; imageUrls) {
+<span class="nc" id="L61">        Post existing = postRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if (existing == null)</span>
+<span class="nc" id="L63">            return null;</span>
+<span class="nc" id="L64">        existing.setContent(text);</span>
+<span class="nc" id="L65">        existing.getImageUrls().clear();</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (imageUrls != null)</span>
+<span class="nc" id="L67">            existing.getImageUrls().addAll(imageUrls);</span>
+<span class="nc" id="L68">        return postRepository.save(existing);</span>
+    }
+
+    /**
+     * Alterna el like de un usuario en un post.
+     * 
+     * @param id       ID del post
+     * @param username nombre del usuario
+     * @return post actualizado o null si no existe
+     */
+    public Post toggleLike(Long id, String username) {
+<span class="nc" id="L79">        Post existing = postRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        if (existing == null)</span>
+<span class="nc" id="L81">            return null;</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (existing.getLikedByUsers().contains(username)) {</span>
+<span class="nc" id="L83">            existing.getLikedByUsers().remove(username);</span>
+<span class="nc" id="L84">            existing.setLikes(Math.max(0, existing.getLikes() - 1));</span>
+        } else {
+<span class="nc" id="L86">            existing.getLikedByUsers().add(username);</span>
+<span class="nc" id="L87">            existing.setLikes(existing.getLikes() + 1);</span>
+        }
+<span class="nc" id="L89">        return postRepository.save(existing);</span>
+    }
+
+    /**
+     * Añade un comentario a un post.
+     * 
+     * @param postId        ID del post
+     * @param text          texto del comentario
+     * @param username      autor del comentario
+     * @param userAvatarUrl avatar del autor
+     * @return comentario creado o null si el post no existe
+     */
+    public Post addComment(Long postId, String text, String username, String userAvatarUrl) {
+<span class="nc" id="L102">        Post post = postRepository.findById(postId).orElse(null);</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (post == null)</span>
+<span class="nc" id="L104">            return null;</span>
+<span class="nc" id="L105">        Comment comment = new Comment();</span>
+<span class="nc" id="L106">        comment.setText(text);</span>
+<span class="nc" id="L107">        comment.setUsername(username);</span>
+<span class="nc" id="L108">        comment.setUserAvatarUrl(userAvatarUrl);</span>
+<span class="nc" id="L109">        comment.setPost(post);</span>
+<span class="nc" id="L110">        post.getComments().add(comment);</span>
+<span class="nc" id="L111">        return postRepository.save(post);</span>
+    }
+
+    /**
+     * Elimina un comentario de un post y devuelve el post actualizado.
+     * 
+     * @param postId    ID del post
+     * @param commentId ID del comentario
+     * @return post actualizado o null si no existe
+     */
+    public Post deleteComment(Long postId, Long commentId) {
+<span class="nc" id="L122">        Post post = postRepository.findById(postId).orElse(null);</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        if (post == null)</span>
+<span class="nc" id="L124">            return null;</span>
+<span class="nc" id="L125">        post.getComments().removeIf(c -&gt; c.getId().equals(commentId));</span>
+<span class="nc" id="L126">        return postRepository.save(post);</span>
+    }
+
+    /**
+     * Elimina un post por su ID.
+     * 
+     * @param id ID del post a eliminar
+     */
+    public void deletePost(Long id) {
+<span class="fc" id="L135">        postRepository.deleteById(id);</span>
+<span class="fc" id="L136">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

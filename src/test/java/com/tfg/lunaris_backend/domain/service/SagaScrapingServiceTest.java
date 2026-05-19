@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Answers;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -82,10 +83,8 @@ class SagaScrapingServiceTest {
         when(repo.findByBookTitleIgnoreCase("T2")).thenReturn(Optional.of(saga));
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenThrow(new IOException("network error"));
 
             SagaScrapedDto result = svc.scrapeSaga("T2", null);
@@ -117,10 +116,8 @@ class SagaScrapingServiceTest {
         when(repo.findByBookTitleIgnoreCase("T3")).thenReturn(Optional.of(saga));
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenThrow(new IOException("network error"));
 
             SagaScrapedDto result = svc.scrapeSaga("T3", null);
@@ -140,10 +137,8 @@ class SagaScrapingServiceTest {
         when(repo.findByBookTitleIgnoreCase("T4")).thenReturn(Optional.empty());
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenThrow(new IOException("network error"));
 
             SagaScrapedDto result = svc.scrapeSaga("T4", null);
@@ -164,10 +159,8 @@ class SagaScrapingServiceTest {
         Document emptyDoc = Jsoup.parse("<html><body></body></html>");
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenReturn(emptyDoc);
 
             SagaScrapedDto result = svc.scrapeSaga("T5", "AuthorName");
@@ -194,10 +187,8 @@ class SagaScrapingServiceTest {
         Document bookDoc = Jsoup.parse(bookHtml);
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenReturn(searchDoc).thenReturn(bookDoc);
 
             SagaScrapedDto result = svc.scrapeSaga("T6", null);
@@ -236,10 +227,8 @@ class SagaScrapingServiceTest {
         Document seriesDoc = Jsoup.parse(seriesHtml);
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenReturn(searchDoc).thenReturn(bookDoc).thenReturn(seriesDoc);
 
             SagaScrapedDto result = svc.scrapeSaga("Book1", null);
@@ -270,10 +259,8 @@ class SagaScrapingServiceTest {
         Document seriesDoc = Jsoup.parse(seriesHtml);
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenReturn(searchDoc).thenReturn(bookDoc).thenReturn(seriesDoc);
 
             SagaScrapedDto result = svc.scrapeSaga("T7", null);
@@ -658,10 +645,8 @@ class SagaScrapingServiceTest {
         Document bookDoc = Jsoup.parse(bookHtml);
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenReturn(searchDoc).thenReturn(bookDoc);
 
             SagaScrapedDto result = svc.scrapeSaga("TF", null);
@@ -688,10 +673,8 @@ class SagaScrapingServiceTest {
         Document bookDoc = Jsoup.parse(bookHtml);
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenReturn(searchDoc).thenReturn(bookDoc);
 
             SagaScrapedDto result = svc.scrapeSaga("TA", null);
@@ -725,10 +708,8 @@ class SagaScrapingServiceTest {
         Document seriesDoc = Jsoup.parse(seriesHtml);
 
         try (MockedStatic<Jsoup> mockedJsoup = mockStatic(Jsoup.class, CALLS_REAL_METHODS)) {
-            Connection conn = mock(Connection.class);
+            Connection conn = mock(Connection.class, Answers.RETURNS_SELF);
             mockedJsoup.when(() -> Jsoup.connect(anyString())).thenReturn(conn);
-            when(conn.userAgent(anyString())).thenReturn(conn);
-            when(conn.timeout(anyInt())).thenReturn(conn);
             when(conn.get()).thenReturn(searchDoc).thenReturn(bookDoc).thenReturn(seriesDoc);
 
             SagaScrapedDto result = svc.scrapeSaga("TB", null);

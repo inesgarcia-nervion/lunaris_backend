@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NewsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">NewsController.java</span></div><h1>NewsController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.tfg.lunaris_backend.domain.dto.NewsRequestDto;
+import com.tfg.lunaris_backend.domain.model.News;
+import com.tfg.lunaris_backend.domain.service.NewsService;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+/**
+ * Controlador que gestiona las operaciones sobre noticias.
+ */
+@RestController
+<span class="fc" id="L21">public class NewsController {</span>
+
+    @Autowired
+    private NewsService newsService;
+
+    /**
+     * Obtiene todas las noticias.
+     * @return Lista de noticias.
+     */
+    @GetMapping(&quot;/news&quot;)
+    public List&lt;News&gt; getAll() {
+<span class="fc" id="L32">        return newsService.getAll();</span>
+    }
+
+    /**
+     * Obtiene una noticia por su ID.
+     * @param id ID de la noticia.
+     * @return Noticia encontrada.
+     */
+    @GetMapping(&quot;/news/{id}&quot;)
+    public News getById(@PathVariable Long id) {
+<span class="fc" id="L42">        News news = newsService.getById(id);</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        if (news == null)</span>
+<span class="fc" id="L44">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Noticia no encontrada&quot;);</span>
+<span class="fc" id="L45">        return news;</span>
+    }
+
+    /**
+     * Crea una nueva noticia. Solo los administradores pueden realizar esta operación.
+     * @param dto Datos de la noticia a crear.
+     * @param auth Información de autenticación del usuario.
+     * @return Noticia creada.
+     */
+    @PostMapping(&quot;/news&quot;)
+    public News create(@RequestBody NewsRequestDto dto, Authentication auth) {
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (auth == null)</span>
+<span class="fc" id="L57">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="fc" id="L58">        boolean isAdmin = auth.getAuthorities().stream()</span>
+<span class="fc" id="L59">                .anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (!isAdmin)</span>
+<span class="fc" id="L61">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;Solo los administradores pueden crear noticias&quot;);</span>
+
+<span class="fc" id="L63">        News news = new News();</span>
+<span class="fc" id="L64">        news.setTitle(dto.getTitle());</span>
+<span class="fc" id="L65">        news.setText(dto.getText());</span>
+<span class="fc" id="L66">        news.setBody(dto.getBody());</span>
+<span class="fc" id="L67">        news.setImage(dto.getImage());</span>
+<span class="fc" id="L68">        news.setDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd'T'HH:mm:ss.SSS&quot;)));</span>
+<span class="fc" id="L69">        return newsService.create(news);</span>
+    }
+
+    /**
+     * Elimina una noticia por su ID. Solo los administradores pueden realizar esta operación.
+     * @param id ID de la noticia a eliminar.
+     * @param auth Información de autenticación del usuario.
+     */
+    @DeleteMapping(&quot;/news/{id}&quot;)
+    public void delete(@PathVariable Long id, Authentication auth) {
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        if (auth == null)</span>
+<span class="fc" id="L80">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="fc" id="L81">        boolean isAdmin = auth.getAuthorities().stream()</span>
+<span class="fc" id="L82">                .anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (!isAdmin)</span>
+<span class="fc" id="L84">            throw new ResponseStatusException(HttpStatus.FORBIDDEN,</span>
+                    &quot;Solo los administradores pueden eliminar noticias&quot;);
+
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (newsService.getById(id) == null)</span>
+<span class="fc" id="L88">            throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Noticia no encontrada&quot;);</span>
+<span class="fc" id="L89">        newsService.delete(id);</span>
+<span class="fc" id="L90">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

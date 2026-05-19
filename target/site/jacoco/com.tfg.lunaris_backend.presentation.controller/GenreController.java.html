@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenreController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">GenreController.java</span></div><h1>GenreController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.tfg.lunaris_backend.domain.model.Genre;
+import com.tfg.lunaris_backend.domain.service.GenreService;
+
+import java.util.List;
+
+/**
+ * Controlador que maneja las operaciones relacionadas con los géneros.
+ * 
+ * Proporciona endpoints para crear, actualizar, eliminar y obtener géneros.
+ */
+@RestController
+<span class="fc" id="L23">public class GenreController {</span>
+    @Autowired
+    private GenreService genreService;
+
+    /**
+     * Endpoint para obtener todos los géneros.
+     * @return lista de géneros
+     */
+    @GetMapping(&quot;/genres&quot;)
+    public List&lt;Genre&gt; getAllGenres() {
+<span class="fc" id="L33">        return genreService.getAllGenres();</span>
+    }
+
+    /**
+     * Endpoint para obtener un género por su ID.
+     * @param id identificador del género
+     * @return género encontrado
+     */
+    @GetMapping(&quot;/genres/{id}&quot;)
+    public Genre getGenreById(@PathVariable Long id) {
+<span class="fc" id="L43">        return genreService.getGenreById(id);</span>
+    }
+
+    /**
+     * Endpoint para crear un nuevo género. Recibe un objeto `Genre` con 
+     * los datos necesarios para crear el género, y devuelve el género creado.
+     * @param genre objeto con los datos para crear el género
+     * @return género creado
+     */
+    @PostMapping(&quot;/genres&quot;)
+    public Genre createGenre(@RequestBody Genre genre) {
+<span class="fc" id="L54">        return genreService.createGenre(genre);</span>
+    }
+
+    /**
+     * Endpoint para actualizar un género existente. Recibe el ID del género a 
+     * actualizar y un objeto `Genre` con los detalles a actualizar.
+     * @param id identificador del género a actualizar
+     * @param genreDetails detalles del género a actualizar
+     * @return género actualizado
+     */
+    @PutMapping(&quot;/genres/{id}&quot;)
+    public Genre updateGenre(@PathVariable Long id, @RequestBody Genre genreDetails) {
+<span class="fc" id="L66">        return genreService.updateGenre(id, genreDetails);</span>
+    }
+
+    /**
+     * Endpoint para eliminar un género por su ID.
+      * @param id identificador del género a eliminar
+      */
+    @DeleteMapping(&quot;/genres/{id}&quot;)
+    public void deleteGenre(@PathVariable Long id) {
+<span class="fc" id="L75">        genreService.deleteGenre(id);</span>
+<span class="fc" id="L76">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

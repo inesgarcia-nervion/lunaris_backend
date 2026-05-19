@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import com.tfg.lunaris_backend.data.repository.UserRepository;
+import com.tfg.lunaris_backend.domain.dto.BookStatusRequest;
+import com.tfg.lunaris_backend.domain.model.User;
+import com.tfg.lunaris_backend.presentation.exceptions.UserNotFoundException;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con los usuarios.
+ * 
+ * Proporciona métodos para crear, actualizar, eliminar y obtener usuarios.
+ */
+@Service
+<span class="fc" id="L27">public class UserService {</span>
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+<span class="fc" id="L35">    private final ObjectMapper objectMapper = new ObjectMapper();</span>
+
+    /**
+     * Obtiene todos los usuarios.
+     * 
+     * @return lista de usuarios
+     */
+    public List&lt;User&gt; getAllUsers() {
+<span class="fc" id="L43">        return userRepository.findAll();</span>
+    }
+
+    /**
+     * Obtiene un usuario por su ID.
+     * 
+     * @param id ID del usuario
+     * @return usuario encontrado
+     * @throws UserNotFoundException si no se encuentra el usuario con el id
+     *                               proporcionado
+     */
+    public User getUserById(Long id) {
+<span class="fc" id="L55">        return userRepository.findById(id)</span>
+<span class="fc" id="L56">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;Usuario no encontrado con id &quot; + id));</span>
+    }
+
+    /**
+     * Crea un nuevo usuario.
+     * 
+     * @param user objeto con los datos del usuario a crear
+     * @return usuario creado
+     */
+    public User createUser(User user) {
+<span class="pc bpc" id="L66" title="3 of 4 branches missed.">        if (user.getUsername() != null &amp;&amp; userRepository.findByUsername(user.getUsername()).isPresent()) {</span>
+<span class="nc" id="L67">            throw new ResponseStatusException(HttpStatus.CONFLICT, &quot;Username already exists&quot;);</span>
+        }
+<span class="pc bpc" id="L69" title="3 of 4 branches missed.">        if (user.getEmail() != null &amp;&amp; userRepository.findByEmail(user.getEmail()).isPresent()) {</span>
+<span class="nc" id="L70">            throw new ResponseStatusException(HttpStatus.CONFLICT, &quot;Email already exists&quot;);</span>
+        }
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        if (user.getPassword() != null) {</span>
+<span class="fc" id="L73">            user.setPassword(passwordEncoder.encode(user.getPassword()));</span>
+        }
+<span class="fc" id="L75">        return userRepository.save(user);</span>
+    }
+
+    /**
+     * Actualiza un usuario existente.
+     * 
+     * @param id          ID del usuario a actualizar
+     * @param userDetails detalles del usuario a actualizar
+     * @return usuario actualizado
+     * @throws UserNotFoundException si no se encuentra el usuario con el id
+     *                               proporcionado
+     */
+    public User updateUser(Long id, User userDetails) {
+<span class="fc" id="L88">        User user = userRepository.findById(id)</span>
+<span class="fc" id="L89">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;Usuario no encontrado con id &quot; + id));</span>
+<span class="pc bpc" id="L90" title="1 of 4 branches missed.">        if (userDetails.getUsername() != null &amp;&amp; !userDetails.getUsername().isEmpty()) {</span>
+<span class="fc" id="L91">            user.setUsername(userDetails.getUsername());</span>
+        }
+<span class="pc bpc" id="L93" title="1 of 4 branches missed.">        if (userDetails.getEmail() != null &amp;&amp; !userDetails.getEmail().isEmpty()) {</span>
+<span class="fc" id="L94">            user.setEmail(userDetails.getEmail());</span>
+        }
+<span class="pc bpc" id="L96" title="1 of 4 branches missed.">        if (userDetails.getPassword() != null &amp;&amp; !userDetails.getPassword().isEmpty()) {</span>
+<span class="fc" id="L97">            user.setPassword(passwordEncoder.encode(userDetails.getPassword()));</span>
+        }
+<span class="fc" id="L99">        return userRepository.save(user);</span>
+    }
+
+    /**
+     * Elimina un usuario por su ID.
+     * 
+     * @param id ID del usuario a eliminar
+     */
+    public void deleteUser(Long id) {
+<span class="fc" id="L108">        userRepository.deleteById(id);</span>
+<span class="fc" id="L109">    }</span>
+
+    /**
+     * Actualiza un usuario existente por su nombre de usuario.
+     * 
+     * @param username    nombre de usuario del usuario a actualizar
+     * @param userDetails detalles del usuario a actualizar
+     * @return usuario actualizado
+     * @throws UserNotFoundException si no se encuentra el usuario con el nombre de
+     *                               usuario proporcionado
+     */
+    public User updateUserByUsername(String username, User userDetails) {
+<span class="fc" id="L121">        User user = userRepository.findByUsername(username)</span>
+<span class="fc" id="L122">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;Usuario no encontrado con username &quot; + username));</span>
+<span class="pc bpc" id="L123" title="1 of 4 branches missed.">        if (userDetails.getUsername() != null &amp;&amp; !userDetails.getUsername().isEmpty()) {</span>
+<span class="fc" id="L124">            user.setUsername(userDetails.getUsername());</span>
+        }
+<span class="pc bpc" id="L126" title="1 of 4 branches missed.">        if (userDetails.getEmail() != null &amp;&amp; !userDetails.getEmail().isEmpty()) {</span>
+<span class="fc" id="L127">            user.setEmail(userDetails.getEmail());</span>
+        }
+<span class="pc bpc" id="L129" title="1 of 4 branches missed.">        if (userDetails.getPassword() != null &amp;&amp; !userDetails.getPassword().isEmpty()) {</span>
+<span class="fc" id="L130">            user.setPassword(passwordEncoder.encode(userDetails.getPassword()));</span>
+        }
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if (userDetails.getAvatarUrl() != null) {</span>
+<span class="nc" id="L133">            user.setAvatarUrl(userDetails.getAvatarUrl());</span>
+        }
+<span class="fc" id="L135">        return userRepository.save(user);</span>
+    }
+
+    public User getUserByUsername(String username) {
+<span class="nc" id="L139">        return userRepository.findByUsername(username)</span>
+<span class="nc" id="L140">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;Usuario no encontrado con username &quot; + username));</span>
+    }
+
+    /**
+     * Devuelve las tres listas de estado de lectura del usuario como un mapa
+     * con claves &quot;planParaLeer&quot;, &quot;leyendo&quot; y &quot;leido&quot;, cada una con un array de
+     * objetos libro.
+     *
+     * @param username nombre del usuario
+     * @return mapa con las tres listas de estado
+     */
+    public Map&lt;String, List&lt;Object&gt;&gt; getBookStatusLists(String username) {
+<span class="nc" id="L152">        User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L153">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;Usuario no encontrado con username &quot; + username));</span>
+<span class="nc" id="L154">        Map&lt;String, List&lt;Object&gt;&gt; result = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L155">        result.put(&quot;planParaLeer&quot;, parseBookList(user.getPlanParaLeerJson()));</span>
+<span class="nc" id="L156">        result.put(&quot;leyendo&quot;, parseBookList(user.getLeyendoJson()));</span>
+<span class="nc" id="L157">        result.put(&quot;leido&quot;, parseBookList(user.getLeidoJson()));</span>
+<span class="nc" id="L158">        return result;</span>
+    }
+
+    /**
+     * Establece el estado de lectura de un libro para el usuario dado.
+     * El libro se elimina de cualquier otro estado antes de ser añadido al nuevo.
+     * Si status es null o vacío, el libro se elimina de todos los estados.
+     *
+     * @param username nombre del usuario
+     * @param request  solicitud con bookId, status y bookData
+     * @return mapa actualizado con las tres listas de estado
+     */
+    public Map&lt;String, List&lt;Object&gt;&gt; setBookStatus(String username, BookStatusRequest request) {
+<span class="nc" id="L171">        User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L172">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;Usuario no encontrado con username &quot; + username));</span>
+
+<span class="nc" id="L174">        String bookId = request.getBookId();</span>
+<span class="nc" id="L175">        String status = request.getStatus();</span>
+<span class="nc" id="L176">        Object bookData = request.getBookData();</span>
+
+<span class="nc" id="L178">        List&lt;Object&gt; planList = parseBookList(user.getPlanParaLeerJson());</span>
+<span class="nc" id="L179">        List&lt;Object&gt; leyendoList = parseBookList(user.getLeyendoJson());</span>
+<span class="nc" id="L180">        List&lt;Object&gt; leidoList = parseBookList(user.getLeidoJson());</span>
+
+<span class="nc" id="L182">        planList.removeIf(b -&gt; bookIdMatches(b, bookId));</span>
+<span class="nc" id="L183">        leyendoList.removeIf(b -&gt; bookIdMatches(b, bookId));</span>
+<span class="nc" id="L184">        leidoList.removeIf(b -&gt; bookIdMatches(b, bookId));</span>
+
+<span class="nc bnc" id="L186" title="All 4 branches missed.">        if (status != null &amp;&amp; !status.isBlank()) {</span>
+<span class="nc bnc" id="L187" title="All 4 branches missed.">            switch (status) {</span>
+<span class="nc" id="L188">                case &quot;Plan para leer&quot; -&gt; planList.add(bookData);</span>
+<span class="nc" id="L189">                case &quot;Leyendo&quot; -&gt; leyendoList.add(bookData);</span>
+<span class="nc" id="L190">                case &quot;Leído&quot; -&gt; leidoList.add(bookData);</span>
+<span class="nc" id="L191">                default -&gt; throw new ResponseStatusException(HttpStatus.BAD_REQUEST,</span>
+                        &quot;Estado no válido: &quot; + status + &quot;. Use 'Plan para leer', 'Leyendo' o 'Leído'&quot;);
+            }
+        }
+
+<span class="nc" id="L196">        user.setPlanParaLeerJson(serializeBookList(planList));</span>
+<span class="nc" id="L197">        user.setLeyendoJson(serializeBookList(leyendoList));</span>
+<span class="nc" id="L198">        user.setLeidoJson(serializeBookList(leidoList));</span>
+<span class="nc" id="L199">        userRepository.save(user);</span>
+
+<span class="nc" id="L201">        Map&lt;String, List&lt;Object&gt;&gt; result = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L202">        result.put(&quot;planParaLeer&quot;, planList);</span>
+<span class="nc" id="L203">        result.put(&quot;leyendo&quot;, leyendoList);</span>
+<span class="nc" id="L204">        result.put(&quot;leido&quot;, leidoList);</span>
+<span class="nc" id="L205">        return result;</span>
+    }
+
+    /**
+     * Es un método auxiliar para convertir una cadena JSON que representa una lista
+     * de
+     * objetos en una lista de objetos Java. Si la cadena es nula o vacía, devuelve
+     * una lista vacía.
+     *
+     * @param json cadena JSON que representa una lista de objetos
+     * @return lista de objetos Java
+     */
+    private List&lt;Object&gt; parseBookList(String json) {
+<span class="nc bnc" id="L218" title="All 4 branches missed.">        if (json == null || json.isBlank())</span>
+<span class="nc" id="L219">            return new ArrayList&lt;&gt;();</span>
+        try {
+<span class="nc" id="L221">            return objectMapper.readValue(json, new TypeReference&lt;List&lt;Object&gt;&gt;() {</span>
+            });
+<span class="nc" id="L223">        } catch (Exception e) {</span>
+<span class="nc" id="L224">            return new ArrayList&lt;&gt;();</span>
+        }
+    }
+
+    /**
+     * Es un método auxiliar para convertir una lista de objetos Java en una cadena
+     * JSON
+     * que representa esa lista. Si ocurre un error durante la conversión, devuelve
+     * una cadena JSON vacía &quot;[]&quot;.
+     * 
+     * @param list lista de objetos Java a convertir
+     * @return cadena JSON que representa la lista de objetos
+     */
+    private String serializeBookList(List&lt;Object&gt; list) {
+        try {
+<span class="nc" id="L239">            return objectMapper.writeValueAsString(list);</span>
+<span class="nc" id="L240">        } catch (Exception e) {</span>
+<span class="nc" id="L241">            return &quot;[]&quot;;</span>
+        }
+    }
+
+    /**
+     * Devuelve los IDs de las listas marcadas como favoritas por el usuario.
+     *
+     * @param username nombre del usuario
+     * @return lista de IDs de listas favoritas
+     */
+    public List&lt;String&gt; getFavoriteListIds(String username) {
+<span class="nc" id="L252">        User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L253">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;Usuario no encontrado con username &quot; + username));</span>
+<span class="nc bnc" id="L254" title="All 4 branches missed.">        if (user.getFavoriteListIdsJson() == null || user.getFavoriteListIdsJson().isBlank()) {</span>
+<span class="nc" id="L255">            return new ArrayList&lt;&gt;();</span>
+        }
+        try {
+<span class="nc" id="L258">            return objectMapper.readValue(user.getFavoriteListIdsJson(), new TypeReference&lt;List&lt;String&gt;&gt;() {</span>
+            });
+<span class="nc" id="L260">        } catch (Exception e) {</span>
+<span class="nc" id="L261">            return new ArrayList&lt;&gt;();</span>
+        }
+    }
+
+    /**
+     * Alterna el estado de favorito de una lista para el usuario dado.
+     * Si la lista ya es favorita se elimina; si no, se añade.
+     *
+     * @param username nombre del usuario
+     * @param listId   ID de la lista a alternar
+     * @return lista actualizada de IDs de listas favoritas
+     */
+    public List&lt;String&gt; toggleFavoriteList(String username, String listId) {
+<span class="nc" id="L274">        User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L275">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;Usuario no encontrado con username &quot; + username));</span>
+        List&lt;String&gt; ids;
+<span class="nc bnc" id="L277" title="All 4 branches missed.">        if (user.getFavoriteListIdsJson() == null || user.getFavoriteListIdsJson().isBlank()) {</span>
+<span class="nc" id="L278">            ids = new ArrayList&lt;&gt;();</span>
+        } else {
+            try {
+<span class="nc" id="L281">                ids = objectMapper.readValue(user.getFavoriteListIdsJson(), new TypeReference&lt;List&lt;String&gt;&gt;() {</span>
+                });
+<span class="nc" id="L283">            } catch (Exception e) {</span>
+<span class="nc" id="L284">                ids = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L285">            }</span>
+        }
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        if (ids.contains(listId)) {</span>
+<span class="nc" id="L288">            ids.remove(listId);</span>
+        } else {
+<span class="nc" id="L290">            ids.add(listId);</span>
+        }
+        try {
+<span class="nc" id="L293">            user.setFavoriteListIdsJson(objectMapper.writeValueAsString(ids));</span>
+<span class="nc" id="L294">        } catch (Exception e) {</span>
+<span class="nc" id="L295">            user.setFavoriteListIdsJson(&quot;[]&quot;);</span>
+<span class="nc" id="L296">        }</span>
+<span class="nc" id="L297">        userRepository.save(user);</span>
+<span class="nc" id="L298">        return ids;</span>
+    }
+
+    /**
+     * Es un método auxiliar para verificar si un objeto libro coincide con un
+     * bookId dado.
+     * El método intenta extraer los campos &quot;key&quot; y &quot;apiId&quot; del objeto libro
+     * (asumiendo que es un mapa) y compara su valor con el bookId proporcionado. Si
+     * alguno de los campos coincide, devuelve true. Si el objeto libro no tiene
+     * esos campos o si ocurre cualquier error durante la verificación, devuelve
+     * false.
+     * 
+     * @param book   objeto libro a verificar, se espera que sea un mapa con campos
+     *               &quot;key&quot; y/o &quot;api
+     * @param bookId ID del libro a comparar con los campos del objeto libro
+     * @return true si el objeto libro coincide con el bookId, false en caso
+     *         contrario
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private boolean bookIdMatches(Object book, String bookId) {
+<span class="nc bnc" id="L318" title="All 4 branches missed.">        if (book == null || bookId == null)</span>
+<span class="nc" id="L319">            return false;</span>
+        try {
+<span class="nc" id="L321">            Map&lt;String, Object&gt; map = (Map&lt;String, Object&gt;) book;</span>
+<span class="nc" id="L322">            Object key = map.get(&quot;key&quot;);</span>
+<span class="nc bnc" id="L323" title="All 4 branches missed.">            if (key != null &amp;&amp; bookId.equals(key.toString()))</span>
+<span class="nc" id="L324">                return true;</span>
+<span class="nc" id="L325">            Object apiId = map.get(&quot;apiId&quot;);</span>
+<span class="nc bnc" id="L326" title="All 4 branches missed.">            if (apiId != null &amp;&amp; bookId.equals(apiId.toString()))</span>
+<span class="nc" id="L327">                return true;</span>
+<span class="nc" id="L328">        } catch (Exception e) {</span>
+            // ignore
+<span class="nc" id="L330">        }</span>
+<span class="nc" id="L331">        return false;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

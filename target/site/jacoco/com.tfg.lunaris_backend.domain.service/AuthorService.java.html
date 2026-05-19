@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthorService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">AuthorService.java</span></div><h1>AuthorService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.tfg.lunaris_backend.data.repository.AuthorRepository;
+import com.tfg.lunaris_backend.domain.model.Author;
+import com.tfg.lunaris_backend.presentation.exceptions.AuthorNotFoundException;
+
+import java.util.List;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con los autores.
+ * 
+ * Proporciona métodos para obtener, crear, actualizar y eliminar autores.
+ */
+@Service
+<span class="fc" id="L18">public class AuthorService {</span>
+    @Autowired
+    private AuthorRepository authorRepository;
+
+    /**
+     * Obtiene una lista de todos los autores.
+     * @return lista de autores
+     */
+    public List&lt;Author&gt; getAllAuthors() {
+<span class="fc" id="L27">        return authorRepository.findAll();</span>
+    }
+
+    /**
+     * Obtiene un autor por su identificador.
+     * @param id identificador del autor
+     * @return autor encontrado
+     * @throws AuthorNotFoundException si no se encuentra el autor con el id proporcionado
+     */
+    public Author getAuthorById(Long id) {
+<span class="fc" id="L37">        return authorRepository.findById(id)</span>
+<span class="fc" id="L38">                .orElseThrow(() -&gt; new AuthorNotFoundException(&quot;Autor no encontrado con id &quot; + id));</span>
+    }
+
+    /**
+     * Crea un nuevo autor.
+     * @param author autor a crear
+     * @return autor creado
+     */
+    public Author createAuthor(Author author) {
+<span class="fc" id="L47">        return authorRepository.save(author);</span>
+    }
+
+    /**
+     * Actualiza un autor existente.
+     * @param id identificador del autor a actualizar
+     * @param authorDetails detalles del autor a actualizar
+     * @return autor actualizado
+     * @throws AuthorNotFoundException si no se encuentra el autor con el id proporcionado
+     */
+    public Author updateAuthor(Long id, Author authorDetails) {
+<span class="fc" id="L58">        Author author = authorRepository.findById(id)</span>
+<span class="fc" id="L59">                .orElseThrow(() -&gt; new AuthorNotFoundException(&quot;Autor no encontrado con id &quot; + id));</span>
+<span class="fc" id="L60">        author.setName(authorDetails.getName());</span>
+<span class="fc" id="L61">        author.setBooks(authorDetails.getBooks());</span>
+<span class="fc" id="L62">        return authorRepository.save(author);</span>
+    }
+
+    /**
+    * Elimina un autor por su identificador.
+    * @param id identificador del autor a eliminar
+    */
+    public void deleteAuthor(Long id) {
+<span class="fc" id="L70">        authorRepository.deleteById(id);</span>
+<span class="fc" id="L71">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenreService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">GenreService.java</span></div><h1>GenreService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.tfg.lunaris_backend.data.repository.GenreRepository;
+import com.tfg.lunaris_backend.domain.model.Genre;
+import com.tfg.lunaris_backend.presentation.exceptions.GenreNotFoundException;
+
+import java.util.List;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con los géneros.
+ * 
+ * Proporciona métodos para obtener, crear, actualizar y eliminar géneros.
+ */
+@Service
+<span class="fc" id="L18">public class GenreService {</span>
+
+    @Autowired
+    private GenreRepository genreRepository;
+
+    /**
+     * Obtiene una lista de todos los géneros.
+     * @return lista de géneros
+     */
+    public List&lt;Genre&gt; getAllGenres() {
+<span class="fc" id="L28">        return genreRepository.findAll();</span>
+    }
+
+    /**
+     * Obtiene un género por su identificador.
+     * @param id identificador del género
+     * @return género encontrado
+     * @throws GenreNotFoundException si no se encuentra el género con el id proporcionado
+     */
+    public Genre getGenreById(Long id) {
+<span class="fc" id="L38">        return genreRepository.findById(id)</span>
+<span class="fc" id="L39">                .orElseThrow(() -&gt; new GenreNotFoundException(&quot;Género no encontrado con id &quot; + id));</span>
+    }
+
+    /**
+     * Crea un nuevo género.
+     * @param genre género a crear
+     * @return género creado
+     */
+    public Genre createGenre(Genre genre) {
+<span class="fc" id="L48">        return genreRepository.findByNameIgnoreCase(genre.getName())</span>
+<span class="fc" id="L49">                .orElseGet(() -&gt; genreRepository.save(genre));</span>
+    }
+
+    /**
+     * Actualiza un género existente.
+     * @param id identificador del género a actualizar
+     * @param genreDetails detalles del género a actualizar
+     * @return género actualizado
+     * @throws GenreNotFoundException si no se encuentra el género con el id proporcionado
+     */
+    public Genre updateGenre(Long id, Genre genreDetails) {
+<span class="fc" id="L60">        Genre genre = genreRepository.findById(id)</span>
+<span class="fc" id="L61">                .orElseThrow(() -&gt; new GenreNotFoundException(&quot;Género no encontrado con id &quot; + id));</span>
+<span class="fc" id="L62">        genre.setName(genreDetails.getName());</span>
+<span class="fc" id="L63">        return genreRepository.save(genre);</span>
+    }
+
+    /**
+     * Elimina un género por su identificador.
+     * @param id identificador del género a eliminar
+     */
+    public void deleteGenre(Long id) {
+<span class="fc" id="L71">        genreRepository.deleteById(id);</span>
+<span class="fc" id="L72">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

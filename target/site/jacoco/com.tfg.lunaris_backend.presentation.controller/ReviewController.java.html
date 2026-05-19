@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReviewController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.presentation.controller</a> &gt; <span class="el_source">ReviewController.java</span></div><h1>ReviewController.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.presentation.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.tfg.lunaris_backend.domain.model.Review;
+import com.tfg.lunaris_backend.domain.service.ReviewService;
+
+import java.util.List;
+
+/**
+ * Controlador que maneja las operaciones relacionadas con las reseñas.
+ * 
+ * Proporciona endpoints para crear, obtener, actualizar y eliminar reseñas.
+ */
+@RestController
+<span class="fc" id="L26">public class ReviewController {</span>
+    @Autowired
+    private ReviewService reviewService;
+
+    /**
+     * Endpoint para obtener todas las reseñas. Devuelve una lista de todas las reseñas disponibles.
+     * @return lista de reseñas
+     */
+    @GetMapping(&quot;/reviews&quot;)
+    public List&lt;Review&gt; getAllReviews() {
+<span class="fc" id="L36">        return reviewService.getAllReviews();</span>
+    }
+
+    /**
+     * Endpoint para obtener una reseña por su ID. Devuelve la reseña correspondiente si existe.
+     * @param id identificador de la reseña
+     * @return reseña encontrada
+     */
+    @GetMapping(&quot;/reviews/{id}&quot;)
+    public Review getReviewById(@PathVariable Long id) {
+<span class="fc" id="L46">        return reviewService.getReviewById(id);</span>
+    }
+
+    /**
+     * Endpoint para obtener todas las reseñas asociadas a un identificador de libro externo. 
+     * Devuelve una lista de reseñas para el libro.
+     * @param apiId identificador externo del libro
+     * @return lista de reseñas para el libro
+     */
+    @GetMapping(&quot;/reviews/book&quot;)
+    public java.util.List&lt;Review&gt; getReviewsByBookApiId(@org.springframework.web.bind.annotation.RequestParam(&quot;apiId&quot;) String apiId) {
+<span class="fc" id="L57">        return reviewService.getReviewsByBookApiId(apiId);</span>
+    }
+
+    /**
+     * Endpoint para crear una nueva reseña. Si la autenticación está disponible, se establece 
+     * automáticamente el nombre de usuario.
+     * @param review objeto con los datos de la reseña a crear
+      * @param auth información de autenticación del usuario
+     * @return reseña creada
+     */
+    @PostMapping(&quot;/reviews&quot;)
+    public Review createReview(@RequestBody Review review) {
+<span class="fc" id="L69">        return reviewService.createReview(review);</span>
+    }
+
+    /**
+     * Endpoint para actualizar una reseña existente. Solo el autor de la reseña o un usuario 
+     * con rol ADMIN pueden actualizarla.
+     * @param id identificador de la reseña a actualizar
+     * @param reviewDetails detalles de la reseña a actualizar
+     * @return reseña actualizada
+     */
+    @PutMapping(&quot;/reviews/{id}&quot;)
+    public Review updateReview(@PathVariable Long id, @RequestBody Review reviewDetails) {
+<span class="fc" id="L81">        return reviewService.updateReview(id, reviewDetails);</span>
+    }
+
+    /**
+     * Endpoint para eliminar una reseña por su ID. Solo el autor de la reseña o un usuario con rol ADMIN pueden eliminarla.
+      * @param id identificador de la reseña a eliminar
+      * @param auth información de autenticación del usuario
+      * @throws ResponseStatusException si el usuario no está autorizado a eliminar la reseña
+      */
+    @DeleteMapping(&quot;/reviews/{id}&quot;)
+    public void deleteReview(@PathVariable Long id, Authentication auth) {
+<span class="fc" id="L92">        Review review = reviewService.getReviewById(id);</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        String currentUser = auth != null ? auth.getName() : null;</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        boolean isAdmin = auth != null &amp;&amp; auth.getAuthorities().stream()</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">                .anyMatch(a -&gt; &quot;ROLE_ADMIN&quot;.equals(a.getAuthority()));</span>
+
+<span class="fc bfc" id="L97" title="All 6 branches covered.">        if (isAdmin || (currentUser != null &amp;&amp; currentUser.equals(review.getUsername()))) {</span>
+<span class="fc" id="L98">            reviewService.deleteReview(id);</span>
+<span class="fc" id="L99">            return;</span>
+        }
+
+<span class="fc" id="L102">        throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;No autorizado a eliminar esta reseña&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

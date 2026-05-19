@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReviewService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tfg_backend</a> &gt; <a href="index.source.html" class="el_package">com.tfg.lunaris_backend.domain.service</a> &gt; <span class="el_source">ReviewService.java</span></div><h1>ReviewService.java</h1><pre class="source lang-java linenums">package com.tfg.lunaris_backend.domain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.tfg.lunaris_backend.data.repository.ReviewRepository;
+import com.tfg.lunaris_backend.domain.model.Review;
+import com.tfg.lunaris_backend.presentation.exceptions.ReviewNotFoundException;
+
+import java.util.List;
+import java.util.Map;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+
+/**
+ * Servicio que maneja la lógica de negocio relacionada con las reseñas.
+ * 
+ * Proporciona métodos para crear, obtener y eliminar reseñas.
+ */
+@Service
+<span class="fc" id="L23">public class ReviewService {</span>
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
+    private RestTemplate rest;
+
+    /**
+     * Obtiene todas las reseñas ordenadas por ID de forma descendente.
+     * Si alguna reseña tiene datos de libro faltantes, intenta enriquecerlos
+     * consultando la API de Open Library.
+     * 
+     * @return lista de reseñas
+     */
+    public List&lt;Review&gt; getAllReviews() {
+<span class="fc" id="L39">        List&lt;Review&gt; reviews = reviewRepository.findAllByOrderByIdDesc();</span>
+<span class="fc" id="L40">        enrichMissingBookData(reviews);</span>
+<span class="fc" id="L41">        return reviews;</span>
+    }
+
+    /**
+     * Obtiene todas las reseñas asociadas a un identificador de libro externo.
+     * Si alguna reseña tiene datos de libro faltantes, intenta enriquecerlos
+     * consultando la API de Open Library.
+     * 
+     * @param bookApiId identificador externo del libro
+     * @return lista de reseñas para el libro
+     */
+    public List&lt;Review&gt; getReviewsByBookApiId(String bookApiId) {
+<span class="fc" id="L53">        List&lt;Review&gt; reviews = reviewRepository.findByBookApiId(bookApiId);</span>
+<span class="fc" id="L54">        enrichMissingBookData(reviews);</span>
+<span class="fc" id="L55">        return reviews;</span>
+    }
+
+    /**
+     * Enriquecer los datos faltantes de los libros en las reseñas consultando la
+     * API de Open Library.
+     * 
+     * @param reviews lista de reseñas a enriquecer
+     */
+    private void enrichMissingBookData(List&lt;Review&gt; reviews) {
+<span class="pc bpc" id="L65" title="1 of 4 branches missed.">        if (reviews == null || reviews.isEmpty())</span>
+<span class="fc" id="L66">            return;</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        for (Review r : reviews) {</span>
+            try {
+<span class="fc bfc" id="L69" title="All 2 branches covered.">                if (r.getBookApiId() == null)</span>
+<span class="fc" id="L70">                    continue;</span>
+<span class="pc bpc" id="L71" title="3 of 4 branches missed.">                boolean missingTitle = r.getBookTitle() == null || r.getBookTitle().isBlank();</span>
+<span class="pc bpc" id="L72" title="3 of 4 branches missed.">                boolean missingCover = r.getCoverUrl() == null || r.getCoverUrl().isBlank();</span>
+<span class="pc bpc" id="L73" title="3 of 4 branches missed.">                if (!missingTitle &amp;&amp; !missingCover)</span>
+<span class="nc" id="L74">                    continue;</span>
+<span class="fc" id="L75">                String apiId = r.getBookApiId();</span>
+<span class="fc" id="L76">                String workKey = apiId;</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">                if (workKey.startsWith(&quot;/&quot;))</span>
+<span class="fc" id="L78">                    workKey = workKey.substring(1);</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">                if (workKey.startsWith(&quot;works/&quot;))</span>
+<span class="fc" id="L80">                    workKey = workKey.substring(&quot;works/&quot;.length());</span>
+<span class="pc bpc" id="L81" title="1 of 4 branches missed.">                if (!workKey.startsWith(&quot;OL&quot;) || !workKey.endsWith(&quot;W&quot;))</span>
+<span class="fc" id="L82">                    continue;</span>
+<span class="fc" id="L83">                String url = &quot;https://openlibrary.org/works/&quot; + workKey + &quot;.json&quot;;</span>
+<span class="fc" id="L84">                ResponseEntity&lt;Map&gt; resp = rest.getForEntity(url, Map.class);</span>
+<span class="fc bfc" id="L85" title="All 4 branches covered.">                if (resp.getStatusCode() != HttpStatus.OK || resp.getBody() == null)</span>
+<span class="fc" id="L86">                    continue;</span>
+<span class="fc" id="L87">                Map body = resp.getBody();</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">                if (missingTitle) {</span>
+<span class="fc" id="L89">                    Object title = body.get(&quot;title&quot;);</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">                    if (title instanceof String)</span>
+<span class="fc" id="L91">                        r.setBookTitle((String) title);</span>
+                }
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">                if (missingCover) {</span>
+<span class="fc" id="L94">                    Object covers = body.get(&quot;covers&quot;);</span>
+<span class="pc bpc" id="L95" title="1 of 4 branches missed.">                    if (covers instanceof java.util.List &amp;&amp; !((java.util.List) covers).isEmpty()) {</span>
+<span class="fc" id="L96">                        Object first = ((java.util.List) covers).get(0);</span>
+<span class="fc" id="L97">                        String coverUrl = null;</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">                        if (first != null) {</span>
+<span class="fc" id="L99">                            coverUrl = &quot;https://covers.openlibrary.org/b/id/&quot; + first.toString() + &quot;-M.jpg&quot;;</span>
+                        }
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                        if (coverUrl != null)</span>
+<span class="fc" id="L102">                            r.setCoverUrl(coverUrl);</span>
+<span class="fc" id="L103">                    } else {</span>
+<span class="fc" id="L104">                        r.setCoverUrl(&quot;https://covers.openlibrary.org/b/works/&quot; + workKey + &quot;-M.jpg&quot;);</span>
+                    }
+                }
+<span class="fc" id="L107">                reviewRepository.save(r);</span>
+<span class="fc" id="L108">            } catch (Exception e) {</span>
+                // Ignorar errores
+<span class="fc" id="L110">            }</span>
+<span class="fc" id="L111">        }</span>
+<span class="fc" id="L112">    }</span>
+
+    /**
+     * Obtiene una reseña por su ID.
+     * 
+     * @param id ID de la reseña
+     * @return reseña encontrada
+     * @throws ReviewNotFoundException si la reseña no existe
+     */
+    public Review getReviewById(Long id) {
+<span class="fc" id="L122">        return reviewRepository.findById(id)</span>
+<span class="fc" id="L123">                .orElseThrow(() -&gt; new ReviewNotFoundException(&quot;Reseña no encontrada con id &quot; + id));</span>
+    }
+
+    /**
+     * Crea una nueva reseña. Si la puntuación está presente, se valida que esté
+     * entre 0 y 5.
+     * 
+     * @param review objeto con los datos de la reseña a crear
+     * @return reseña creada
+     * @throws ResponseStatusException si la puntuación no está entre 0 y 5
+     */
+    public Review createReview(Review review) {
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">        if (review.getRating() != null) {</span>
+<span class="nc" id="L136">            double r = review.getRating();</span>
+<span class="nc bnc" id="L137" title="All 4 branches missed.">            if (r &lt; 0.0 || r &gt; 5.0) {</span>
+<span class="nc" id="L138">                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;La puntuación debe estar entre 0 y 5&quot;);</span>
+            }
+        }
+<span class="fc" id="L141">        return reviewRepository.save(review);</span>
+    }
+
+    /**
+     * Actualiza una reseña existente.
+     * 
+     * @param id            ID de la reseña a actualizar
+     * @param reviewDetails detalles de la reseña a actualizar
+     * @return reseña actualizada
+     * @throws ReviewNotFoundException si la reseña no existe
+     * @throws ResponseStatusException si la puntuación no está entre 0 y 5
+     */
+    public Review updateReview(Long id, Review reviewDetails) {
+<span class="fc" id="L154">        Review review = reviewRepository.findById(id)</span>
+<span class="fc" id="L155">                .orElseThrow(() -&gt; new ReviewNotFoundException(&quot;Reseña no encontrada con id &quot; + id));</span>
+<span class="fc" id="L156">        review.setComment(reviewDetails.getComment());</span>
+        // validate rating
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">        if (reviewDetails.getRating() != null) {</span>
+<span class="fc" id="L159">            double r = reviewDetails.getRating();</span>
+<span class="pc bpc" id="L160" title="2 of 4 branches missed.">            if (r &lt; 0.0 || r &gt; 5.0) {</span>
+<span class="nc" id="L161">                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;La puntuación debe estar entre 0 y 5&quot;);</span>
+            }
+<span class="fc" id="L163">            review.setRating(reviewDetails.getRating());</span>
+<span class="fc" id="L164">        } else {</span>
+<span class="nc" id="L165">            review.setRating(reviewDetails.getRating());</span>
+        }
+<span class="fc" id="L167">        review.setDate(reviewDetails.getDate());</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        if (reviewDetails.getBookTitle() != null)</span>
+<span class="fc" id="L169">            review.setBookTitle(reviewDetails.getBookTitle());</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">        if (reviewDetails.getCoverUrl() != null)</span>
+<span class="fc" id="L171">            review.setCoverUrl(reviewDetails.getCoverUrl());</span>
+<span class="fc" id="L172">        return reviewRepository.save(review);</span>
+    }
+
+    /**
+     * Elimina una reseña por su ID.
+     * 
+     * @param id ID de la reseña a eliminar
+     */
+    public void deleteReview(Long id) {
+<span class="fc" id="L181">        reviewRepository.deleteById(id);</span>
+<span class="fc" id="L182">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
