@@ -17,6 +17,7 @@ import com.tfg.lunaris_backend.presentation.exceptions.DuplicateBookException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,52 @@ import org.springframework.data.domain.Pageable;
  */
 @Service
 public class BookService {
+
+    private static final Map<String, String> OPENLIBRARY_GENRE_MAP;
+    static {
+        Map<String, String> m = new java.util.HashMap<>();
+        m.put("fantasy", "Fantasía");
+        m.put("fantasy fiction", "Fantasía");
+        m.put("fantasy & magic", "Fantasía");
+        m.put("legends, myths, fables", "Fantasía");
+        m.put("greek mythology", "Fantasía");
+        m.put("mythology, greek", "Fantasía");
+        m.put("mythology", "Fantasía");
+        m.put("science fiction", "Ciencia Ficción");
+        m.put("sci-fi", "Ciencia Ficción");
+        m.put("science fiction, fantasy, horror", "Ciencia Ficción");
+        m.put("fiction", "Ficción");
+        m.put("literature and fiction, juvenile", "Ficción");
+        m.put("mystery", "Misterio");
+        m.put("thriller", "Thriller");
+        m.put("adventure", "Aventura");
+        m.put("action & adventure", "Aventura");
+        m.put("adventure and adventurers", "Aventura");
+        m.put("adventure and adventurers, fiction", "Aventura");
+        m.put("historical fiction", "Histórico");
+        m.put("historical", "Histórico");
+        m.put("horror", "Terror");
+        m.put("romance", "Romance");
+        m.put("drama", "Drama");
+        m.put("humor", "Comedia");
+        m.put("comedy", "Comedia");
+        m.put("children's fiction", "Infantil");
+        m.put("children's books", "Infantil");
+        m.put("child and youth fiction", "Infantil");
+        m.put("juvenile fiction", "Juvenil");
+        m.put("young adult fiction", "Juvenil");
+        m.put("young adult", "Juvenil");
+        m.put("ficción juvenil", "Juvenil");
+        m.put("novela juvenil", "Juvenil");
+        m.put("biography", "Biografía");
+        m.put("self-help", "Autoayuda");
+        m.put("poetry", "Poesía");
+        m.put("philosophy", "Filosofía");
+        m.put("science", "Ciencia");
+        m.put("history", "Historia");
+        m.put("technology", "Tecnología");
+        OPENLIBRARY_GENRE_MAP = java.util.Collections.unmodifiableMap(m);
+    }
 
     @Autowired
     private BookRepository bookRepository;
@@ -218,10 +265,7 @@ public class BookService {
             Book existing = existingBook.get();
             if ((existing.getGenres() == null || existing.getGenres().isEmpty())
                     && openLibraryBook.getSubject() != null) {
-                List<Genre> genres = new ArrayList<>();
-                for (String subject : openLibraryBook.getSubject()) {
-                    genreRepository.findByNameIgnoreCase(subject).ifPresent(genres::add);
-                }
+                List<Genre> genres = resolveGenresFromSubjects(openLibraryBook.getSubject());
                 if (!genres.isEmpty()) {
                     existing.setGenres(genres);
                     bookRepository.save(existing);
@@ -242,13 +286,29 @@ public class BookService {
         book.setScore(openLibraryBook.getRatingsAverage() != null ? openLibraryBook.getRatingsAverage() : 0.0);
 
         if (openLibraryBook.getSubject() != null) {
-            List<Genre> genres = new ArrayList<>();
-            for (String subject : openLibraryBook.getSubject()) {
-                genreRepository.findByNameIgnoreCase(subject).ifPresent(genres::add);
-            }
-            book.setGenres(genres);
+            book.setGenres(resolveGenresFromSubjects(openLibraryBook.getSubject()));
         }
 
         return bookRepository.save(book);
+    }
+
+    private List<Genre> resolveGenresFromSubjects(List<String> subjects) {
+        List<Genre> genres = new ArrayList<>();
+        java.util.Set<Long> addedIds = new java.util.HashSet<>();
+        for (String subject : subjects) {
+            if (subject == null) continue;
+            Optional<Genre> direct = genreRepository.findByNameIgnoreCase(subject);
+            if (direct.isPresent() && addedIds.add(direct.get().getId())) {
+                genres.add(direct.get());
+                continue;
+            }
+            String mapped = OPENLIBRARY_GENRE_MAP.get(subject.toLowerCase(java.util.Locale.ROOT));
+            if (mapped != null) {
+                genreRepository.findByNameIgnoreCase(mapped).ifPresent(g -> {
+                    if (addedIds.add(g.getId())) genres.add(g);
+                });
+            }
+        }
+        return genres;
     }
 }

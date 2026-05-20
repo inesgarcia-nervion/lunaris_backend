@@ -45,7 +45,7 @@ public class SagaScrapingService {
     private static final String GOODREADS_BASE = "https://www.goodreads.com";
     private static final String GOODREADS_SEARCH_URL = GOODREADS_BASE + "/search?q=";
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-    private static final int TIMEOUT_MS = 15000;
+    private static final int TIMEOUT_MS = 5000;
     private static final String OPEN_LIBRARY_SUBJECTS_URL = "https://openlibrary.org/subjects/";
     private static final Pattern SERIES_NUMBER_PATTERN = Pattern.compile("#([\\d.]+(?:-[\\d.]+)?)\\)");
     private static final ObjectMapper objectMapper = new ObjectMapper();
